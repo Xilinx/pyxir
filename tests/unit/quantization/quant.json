@@ -1,0 +1,47 @@
+{
+    "network": [
+        {
+            "bw_layer_in": 8,
+            "bw_layer_out": 8,
+            "bw_params": 8,
+            "name": "conv1",
+            "postscale_shift": [
+                21
+            ],
+            "prescale_shift": [
+                0
+            ],
+            "scale": [
+                16513
+            ],
+            "sf_layer_in": 0.08661417322834646,
+            "sf_layer_out": 0.08661417322834646,
+            "sf_params": [
+                0.007874015718698502
+            ],
+            "th_layer_in": 11.0,
+            "th_layer_out": 11.0,
+            "th_params": [
+                1.0
+            ]
+        },
+        {
+            "bw_layer_in": 8,
+            "bw_layer_out": 8,
+            "name": "add1",
+            "postscale_shift": [
+                15
+            ],
+            "prescale_shift": [
+                0
+            ],
+            "scale": [
+                27727
+            ],
+            "sf_layer_in": 0.08661417322834646,
+            "sf_layer_out": 0.10236220472440945,
+            "th_layer_in": 11.0,
+            "th_layer_out": 13.0
+        }
+    ]
+}

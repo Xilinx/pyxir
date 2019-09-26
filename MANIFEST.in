@@ -1,0 +1,2 @@
+recursive-include include *.hpp
+include python/pyxir/contrib/dpuv1/dpuv1_arch.json

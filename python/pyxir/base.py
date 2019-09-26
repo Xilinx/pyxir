@@ -1,0 +1,570 @@
+# Copyright 2020 Xilinx Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+""" PyXIR base API """
+
+from __future__ import absolute_import
+
+import os
+import re
+import copy
+import json
+import warnings
+
+import numpy as np
+
+import logging
+
+from typing import List, Dict, Callable
+
+from pyxir.shared import fancy_logging
+
+from .type import TypeCode
+from .target_registry import TargetRegistry
+from .opaque_func_registry import register_opaque_func
+from .opaque_func import OpaqueFunc
+
+from pyxir.shared.xbuffer import XBuffer
+from pyxir.graph.xgraph import XGraph
+from pyxir.graph.io.xgraph_io import XGraphIO
+from pyxir.io.api import visualize, save, load
+from pyxir.runtime import runtime_factory
+from pyxir.runtime.base_runtime import BaseRuntime
+from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
+from pyxir.graph.optimization.optimizers.basic_optimizer \
+    import XGraphBasicOptimizer
+from pyxir.graph.transformers.layout_transformation_pass \
+    import XGraphLayoutTransformationPass
+
+logger = logging.getLogger("pyxir")
+fancy_logger = fancy_logging.getLogger("pyxir")
+
+xgraph_partitioner = XGraphPartitioner()
+target_registry = TargetRegistry()
+
+
+def stringify(name: str):
+    # Tensorflow raises invalid scope name errors if name is invalid
+    name = re.sub('[^A-Za-z0-9_.\\-/]', '-', name)
+    try:
+        # Some modules in Tensorflow subgraph contrib have issues with names
+        #   that look like ints
+        int(name)
+        return str(name) + "_"
+    except ValueError:
+        return str(name)
+
+
+################
+# Transformers #
+################
+
+
+def transform_layout(xgraph: XGraph, layout: str):
+    """ Transform the layout of the XGraph model to the given layout """
+
+    if layout not in ['NCHW', 'NHWC']:
+        raise ValueError("Unsupported layout for model: {}. The supported"
+                         " layouts are: `NCHW` and `NHWC`".format(layout))
+
+    layout_transform_pass = XGraphLayoutTransformationPass(layout)
+    xgraph = layout_transform_pass.execute(xgraph,
+                                           subgraphs_only=False)
+    return xgraph
+
+
+def partition(xgraph: XGraph, targets: List[str], last_layer: str=None):
+    """ Partition the model for the given targets """
+
+    p_xgraph = xgraph_partitioner.partition(
+        xgraph, targets, last_layer
+    )
+    return p_xgraph
+
+
+@register_opaque_func('pyxir.partition',
+                      [TypeCode.XGraph, TypeCode.vStr, TypeCode.Str])
+def partition_opaque_func(xgraph: XGraph,
+                          targets: List[str],
+                          last_layer: str = None):
+    """ Expose the XGraph partition function an opaque function
+        so it can be called from both Python and C++ """
+
+    if last_layer == "":
+        last_layer = None
+
+    p_xgraph = partition(xgraph, targets, last_layer)
+
+    xgraph.copy_from(p_xgraph)
+
+
+######################
+# Graph optimization #
+######################
+
+def optimize(xgraph: XGraph, target: str, **kwargs) -> XGraph:
+    """ Optimize the XGraph for the given target """
+
+    fancy_logger.banner("START GRAPH OPTIMIZATION FOR TARGET: {}"
+                        .format(target))
+    opt_xgraph = target_registry.get_target_optimizer(target)(
+        xgraph, target=target, **kwargs)
+
+    return opt_xgraph
+
+
+##############
+# SCHEDULING #
+##############
+
+def schedule(xgraph: XGraph, target: str, **kwargs) -> XGraph:
+    """
+    Schedule a xgraph for execution on the given target
+
+    Returns
+        XGraph containing only executable operations
+    """
+    fancy_logger.banner("SCHEDULE `{}` EXECUTION GRAPH".format(target))
+
+    xgraph = target_registry.get_target_build_func(target)(
+        xgraph.copy(), **kwargs)
+
+    return xgraph
+
+
+###############
+# Compilation #
+###############
+
+def compile(xgraph: XGraph, target: str, **kwargs) -> XGraph:
+    """ Compile the XGraph for the given target """
+
+    fancy_logger.banner("START GRAPH COMPILATION FOR TARGET: {}"
+                        .format(target))
+
+    c_xgraph = target_registry.get_target_compiler(target)(xgraph, **kwargs)
+
+    return c_xgraph
+
+
+@register_opaque_func('pyxir.compile', [TypeCode.XGraph, TypeCode.Str,
+                                        TypeCode.vStr, TypeCode.vStr,
+                                        TypeCode.XGraph])
+def compile_opaque_func(xgraph: XGraph,
+                        target: str,
+                        in_tensor_names: List[str],
+                        out_tensor_names: List[str],
+                        cb_scheduled_xgraph: XGraph) -> None:
+    """
+    Expose the compile function as an opaque function
+    so it can be called from both Python and C++
+
+    Arguments
+    ---------
+    xgraph: XGraph
+        the XGraph model
+    target: str
+        the target backend for executing this xgraph
+        the target should be registered with a corresponding
+        build function.
+    in_tensor_names: List[str]
+        the names of the input tensors (in the order that they will be
+        provided at runtime)
+    out_tensor_names: List[str]
+        the names of the output tensors (in the order that they will be
+        retrieved at runtime)
+    cb_scheduled_xgraph: XGraph
+        return the scheduled XGraph
+    """
+    in_tensor_names = [stringify(itn) for itn in in_tensor_names]
+    out_tensor_names = [stringify(otn) for otn in out_tensor_names]
+
+    # if work_dir is None:
+    work_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_build"))
+
+    c_xgraph = compile(xgraph, target, work_dir=work_dir)
+    # full_graph_input_names = xgraph.get_input_names()
+
+    # Create scheduled XGraph
+    scheduled_xgraph = schedule(c_xgraph, target, work_dir=work_dir)
+
+    # Save and add to meta file
+    model_file = os.path.join(work_dir, 'px_model')
+    save(scheduled_xgraph, model_file)
+
+    meta_file = os.path.join(work_dir, 'meta.json')
+
+    if (not os.path.isfile(meta_file)):
+        raise ValueError("Could not find meta file at: {}"
+                         .format(meta_file))
+
+    with open(meta_file, 'r') as json_file:
+        meta_d = json.load(json_file)
+
+    meta_d['px_model'] = 'px_model.json'
+    meta_d['px_params'] = 'px_model.h5'
+
+    with open(meta_file, 'w') as f:
+        json.dump(meta_d, f, indent=4, sort_keys=True)
+
+    # Set callback
+    cb_scheduled_xgraph.copy_from(scheduled_xgraph)
+
+
+################
+# Quantization #
+################
+
+def quantize(xgraph: XGraph, target: str, inputs_func: Callable,
+             **kwargs) -> XGraph:
+    """ Quantize the provided XGraph for the given target """
+
+    return _quantize(xgraph, target, inputs_func, **kwargs)
+
+
+def _quantize(xgraph: XGraph, target: str, inputs_func: Callable,
+              **kwargs) -> XGraph:
+    """ Quantize the provided XGraph for the given target """
+
+    fancy_logger.banner("START GRAPH QUANTIZATION FOR TARGET: {}"
+                        .format(target))
+
+    q_xgraph = target_registry.get_target_quantizer(target)(
+        xgraph, inputs_func, **kwargs
+    )
+
+    return q_xgraph
+
+
+@register_opaque_func('pyxir.quantize',
+                      [TypeCode.XGraph, TypeCode.Str, TypeCode.vStr,
+                       TypeCode.vXBuffer])
+def quantization_opaque_func(xgraph: XGraph,
+                             target: str,
+                             in_names: List[str],
+                             in_tensors: List[XBuffer]) -> None:
+    """
+    Expose quantization as an opaque function so it can be called from
+    both Python and C++
+
+    Arguments
+    ---------
+    xgraph: XGraph
+        the XGraph model
+    target: str
+        the target backend for executing this xgraph
+        the target should be registered with a corresponding
+        build function.
+    in_names: List[str]
+        the names of the input names (in the same order as the input data)
+    in_tensors: List[XBuffer]
+        The input tensors (in the same order as the )
+    """
+
+    def inputs_func(iter):
+        inputs = {in_name: it.to_numpy()
+                  for in_name, it in zip(in_names, in_tensors)}
+        return inputs
+
+    q_xgraph = _quantize(xgraph, target, inputs_func)
+
+    xgraph.copy_from(q_xgraph)
+
+
+#########
+# Build #
+#########
+
+def build(xgraph: XGraph,
+          target: str,
+          runtime: str = 'cpu-tf',
+          last_layers: List[str] = None,
+          work_dir: str = None,
+          **kwargs):
+    """
+    Build a runtime module from the provided XGraph model for the given
+    target
+
+    Arguments
+    ---------
+    xgraph: XGraph
+        the XGraph model
+    target: str
+        the target backend for executing this xgraph
+        the target should be registered with a corresponding
+        build function.
+    runtime: str
+        the target runtime to used for xgraph execution. Default is
+        'cpu-tf', which is the tensorflow runtime
+    last_layers: List[str]
+        the list of last layers for execution/quantization simulation.
+    work_dir: str
+        the directory where to put build files
+    """
+
+    fancy_logger.banner("BUILD `{}` RUNTIME GRAPH".format(target))
+
+    if work_dir is None:
+        work_dir = os.path.join(os.getcwd(), target + "_build")
+
+    c_xgraph = compile(xgraph, target, work_dir=work_dir)
+
+    rt_xgraph = target_registry.get_target_build_func(target)(
+        copy.deepcopy(c_xgraph), work_dir=work_dir, **kwargs)
+
+    return runtime_factory.build_runtime(
+        xgraph=rt_xgraph,
+        runtime=runtime,
+        target=target,
+        last_layers=last_layers
+    )
+
+
+@register_opaque_func('pyxir.build_rt', [TypeCode.XGraph, TypeCode.Str,
+                                         TypeCode.Str, TypeCode.vStr,
+                                         TypeCode.vStr, TypeCode.OpaqueFunc])
+def build_rt_opaque_func(xgraph: XGraph,
+                         target: str,
+                         runtime: str,
+                         in_tensor_names: List[str],
+                         out_tensor_names: List[str],
+                         rt_callback: OpaqueFunc) -> None:
+    """
+    Expose the build runtime function as an opaque function
+    so it can be called from both Python and C++
+
+    Arguments
+    ---------
+    xgraph: XGraph
+        the XGraph model
+    target: str
+        the target backend for executing this xgraph
+        the target should be registered with a corresponding
+        build function.
+    runtime: str
+        the target runtime to used for xgraph execution
+    in_tensor_names: List[str]
+        the names of the input tensor names (in the order that they will be
+        provided at runtime)
+    out_tensor_names: List[str]
+        the names of the output tensor names (in the order that they will be
+        retrieved at runtime)
+    rt_callback: OpaqueFunc
+        The callback function to be initialized with an opaque runtime
+        function that takes a list of input buffers and output buffers and
+        executes the model. This enables runtime modules in both C++ and
+        Python.
+    """
+    in_tensor_names = [stringify(itn) for itn in in_tensor_names]
+    out_tensor_names = [stringify(otn) for otn in out_tensor_names]
+
+    rt_mod = build(
+        xgraph=xgraph,
+        target=target,
+        runtime=runtime,
+        last_layers=None
+    )
+
+    def rt_func(in_tensors, out_tensors):
+        """ The Python runtime function around the created runtime module """
+        inputs = {it_name: it.to_numpy()
+                  for it_name, it in zip(in_tensor_names, in_tensors)}
+
+        outs = rt_mod.run(inputs, out_tensor_names)
+
+        for out, out_tensor in zip(outs, out_tensors):
+            out_tensor.copy_from(out)
+
+    # Set the internal function in the rt_callback OpaqueFunc
+    rt_callback.set_func(rt_func, [TypeCode.vXBuffer, TypeCode.vXBuffer])
+
+
+@register_opaque_func('pyxir.build_online_quant_rt',
+                      [TypeCode.XGraph, TypeCode.Str, TypeCode.Str,
+                       TypeCode.vStr, TypeCode.vStr,
+                       TypeCode.OpaqueFunc, TypeCode.OpaqueFunc])
+def build_online_quant_rt_opaque_func(xgraph: XGraph,
+                                      target: str,
+                                      runtime: str,
+                                      in_tensor_names: List[str],
+                                      out_tensor_names: List[str],
+                                      quantization_callback: OpaqueFunc,
+                                      rt_cpu_callback: OpaqueFunc) -> None:
+    """
+    Expose the online quantization build runtime function as an
+    opaque function so it can be called from both Python and C++
+
+    Arguments
+    ---------
+    xgraph: XGraph
+        the XGraph model
+    target: str
+        the target backend for executing this xgraph
+        the target should be registered with a corresponding
+        build function.
+    runtime: str
+        the target runtime to used for xgraph execution
+    in_tensor_names: List[str]
+        the names of the input tensor names (in the order that they will be
+        provided at runtime)
+    out_tensor_names: List[str]
+        the names of the output tensor names (in the order that they will be
+        retrieved at runtime)
+    quantization_callback: OpaqueFunc
+        the callback to be used for starting calibration based
+        quantization using the collected input data
+    rt_cpu_callback: OpaqueFunc
+        The callback function to be initialized with an opaque runtime
+        function that takes a list of input buffers and output buffers and
+        executes the model in CPU.
+    """
+
+    in_tensor_names = [stringify(itn) for itn in in_tensor_names]
+    out_tensor_names = [stringify(otn) for otn in out_tensor_names]
+
+    # Quantization callback function
+
+    calibration_inputs = {}
+
+    def inputs_func(iter):
+        return calibration_inputs
+
+    def quant_func():
+        opt_xgraph = optimize(xgraph, target)
+        q_xgraph = _quantize(opt_xgraph, target, inputs_func)
+        # TODO
+        xgraph.meta_attrs = q_xgraph.meta_attrs.to_dict()
+        # xgraph.copy_from(q_xgraph)
+
+    quantization_callback.set_func(quant_func, [])
+
+    # CPU runtime function to be used during online quantization
+    rt_mod = build(
+        xgraph=xgraph,
+        target="cpu",
+        runtime="cpu-tf",
+        last_layers=None
+    )
+
+    def rt_func(in_tensors, out_tensors):
+        """ The Python runtime function around the created runtime module """
+
+        # Collect data for quantization
+        for in_name, it in zip(in_tensor_names, in_tensors):
+            if in_name in calibration_inputs:
+                calibration_inputs[in_name] = \
+                    np.concatenate([calibration_inputs[in_name],
+                                    it.to_numpy(copy=True)],
+                                   axis=0)
+            else:
+                calibration_inputs[in_name] = it.to_numpy(copy=True)
+
+        # Run on inputs
+        inputs = {it_name: it.to_numpy()
+                  for it_name, it in zip(in_tensor_names, in_tensors)}
+
+        outs = rt_mod.run(inputs, out_tensor_names)
+
+        for out, out_tensor in zip(outs, out_tensors):
+            out_tensor.copy_from(out)
+
+    # Set the internal function in the rt_cpu_callback OpaqueFunc
+    rt_cpu_callback.set_func(rt_func, [TypeCode.vXBuffer, TypeCode.vXBuffer])
+
+
+###########
+# Runtime #
+###########
+
+
+def run(rt_mod: BaseRuntime,
+        inputs: Dict[str, np.ndarray],
+        outputs: List[str] = [],
+        batch_size: int = 100,
+        stop: str = None,
+        force_stepwise: bool = False) -> List[np.ndarray]:
+    """
+    Execute this computational graph on the given inputs and retrieve
+    the requested outputs
+
+    Arguments
+    ---------
+    inputs: Dict[str, numpy.ndarray]
+        the inputs for this executable computational graph
+    outputs: List[str]
+        the output(s) to be returned
+    batch_size: int
+        the batch size to be used to computing outputs for the given inputs
+    stop: str
+        the operation at which to stop running
+    force_stepwise: bool
+        whether to force a stepwise calculation of the computational graph
+        on the provided inputs (used for debugging purposes)
+
+    Returns
+    -------
+    res: List[numpy.ndarray]
+        a list of outputs if requested, otherwise list containing the last
+        output
+    """
+    if rt_mod.device not in ['cpu', 'qsim'] and batch_size != 1:
+        warnings.warn("[WARNING] For the moment device type != 'cpu'"
+                      " only supports batch size one! Changing batch size"
+                      " from {} to 1".format(batch_size))
+        batch_size = 1
+
+    # Stringify because internal dependencies have issues with certain names
+    inputs = {stringify(in_name): data for in_name, data in inputs.items()}
+
+    input_keys = list(inputs.keys())
+
+    inptsz = inputs[input_keys[0]].shape[0] \
+        if isinstance(inputs[input_keys[0]], np.ndarray) \
+        else len(inputs[input_keys[0]])
+    # round up
+    nb_batches = inptsz // batch_size + (inptsz % batch_size > 0)
+
+    res = {}
+
+    for batch_idx in range(nb_batches):
+
+        logger.info("-----------------------")
+        logger.info("Run batch: {}/{}".format(batch_idx + 1, nb_batches))
+
+        input_batch = {}
+        for inpt_key in inputs.keys():
+            input_batch[inpt_key] = inputs[inpt_key][
+                batch_idx*batch_size:(batch_idx+1)*batch_size]
+
+        batch_outpts = rt_mod.run(input_batch, outputs, stop)
+
+        # TODO: can we make the next two blocks more elegant?
+        for idx, output_name in enumerate(outputs):
+            if output_name in res:
+                res[output_name] = np.concatenate([res[output_name],
+                                                   batch_outpts[idx]])
+            else:
+                res[output_name] = batch_outpts[idx]
+
+        if len(outputs) == 0:
+            if 'output' in res:
+                res['output'] = [np.concatenate([res['output'][i],
+                                                 batch_outpts[i]])
+                                 for i in range(len(batch_outpts))]
+            else:
+                res['output'] = batch_outpts
+
+    return [res[outpt] for outpt in outputs]\
+        if len(outputs) > 0\
+        else res['output']

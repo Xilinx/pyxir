@@ -1,0 +1,34 @@
+{
+    "network": [
+        {
+            "bw_layer_in": 8, 
+            "bw_layer_out": 8, 
+            "bw_params": 8, 
+            "name": "conv2d0", 
+            "postscale_shift": [
+                22, 
+                24
+            ], 
+            "prescale_shift": [
+                0, 
+                0
+            ], 
+            "scale": [
+                16584, 
+                22112
+            ], 
+            "sf_layer_in": 1.220472440944882, 
+            "sf_layer_out": 7.291338582677166, 
+            "sf_params": [
+                0.023622047156095505, 
+                0.007874015718698502
+            ], 
+            "th_layer_in": 155.0, 
+            "th_layer_out": 926.0, 
+            "th_params": [
+                3.0, 
+                1.0
+            ]
+        }
+    ]
+}
