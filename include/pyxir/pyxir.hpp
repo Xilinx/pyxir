@@ -59,6 +59,17 @@ PX_API RtModHolder build_rt(std::shared_ptr<graph::XGraph> &xg,
                             const std::string &runtime = runtime::pxCpuTfRuntimeModule,
                             RunOptionsHolder const &run_options = nullptr);
 
+
+/**
+ * @brief Load an XGraph model from file
+ * @param model_path The path to the model graph file
+ * @param params_path The path to the model params file
+ * @returns A shared pointer to the loaded XGraph object
+ */
+PX_API std::shared_ptr<graph::XGraph> load(const std::string &model_path,
+                                           const std::string &params_path);
+
+
 /**
  * @brief Return whether the Python interpreter is initialized (for
  *  internal use)

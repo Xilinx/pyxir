@@ -57,7 +57,24 @@ PX_API RtModHolder build_rt(std::shared_ptr<graph::XGraph> &xg,
   );
 }
 
+PX_API std::shared_ptr<graph::XGraph> load(
+  const std::string &model_path, const std::string &params_path
+) {
+  if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.io.load"))
+    throw std::runtime_error("Cannot import ONNX model from file because"
+                             " `pyxir.io.load` opaque function is"
+                             " not registered");
+  
+  std::shared_ptr<pyxir::graph::XGraph> xg = 
+    std::make_shared<pyxir::graph::XGraph>("empty_xgraph");
+  
+  OpaqueFunc load_func = 
+    pyxir::OpaqueFuncRegistry::Get("pyxir.io.load");
 
+  load_func(model_path, params_path, xg);
+
+  return xg;
+}
 
 // INITIALIZATION RELATED CODE
 
