@@ -128,7 +128,7 @@ class TestONNXFrontend(unittest.TestCase):
         )
 
         pool_node = onnx.helper.make_node(
-            'AvgPool',
+            'AveragePool',
             inputs=['y'],
             outputs=['z'],
             kernel_shape=[2, 2],
@@ -221,7 +221,7 @@ class TestONNXFrontend(unittest.TestCase):
         )
 
         pool_node = onnx.helper.make_node(
-            'AvgPool',
+            'AveragePool',
             inputs=['y'],
             outputs=['z'],
             kernel_shape=[2, 2],
@@ -347,7 +347,7 @@ class TestONNXFrontend(unittest.TestCase):
         )
 
         pool_node = onnx.helper.make_node(
-            'AvgPool',
+            'AveragePool',
             inputs=['y'],
             outputs=['z'],
             kernel_shape=[2, 2],

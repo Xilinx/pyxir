@@ -66,7 +66,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
                         [7, 8, 9]]]]).astype(np.float32)
 
         node = onnx.helper.make_node(
-            'AvgPool',
+            'AveragePool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[2, 2],
@@ -102,7 +102,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
                         [13, 14, 15, 16]]]]).astype(np.float32)
 
         node = onnx.helper.make_node(
-            'AvgPool',
+            'AveragePool',
             inputs=['x'],
             outputs=['y'],
             kernel_shape=[3, 3],
@@ -330,7 +330,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
                         [7, 8, 9]]]]).astype(np.float32)
 
         node = onnx.helper.make_node(
-            'GlobalAvgPool',
+            'GlobalAveragePool',
             inputs=['x'],
             outputs=['y']
         )

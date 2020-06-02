@@ -35,13 +35,13 @@ from .tools import eltwise_any_op
 logger = logging.getLogger('pyxir')
 
 
-@register_onnx_2_xlayer_converter("AvgPool")
+@register_onnx_2_xlayer_converter("AveragePool")
 def avg_pool(node: NodeWrapper,
              params: Dict[str, np.ndarray],
              xmap: Dict[str, XLayer]):
-    """ ONNX AvgPool to XLayer Pooling (Avg) conversion function """
+    """ ONNX AveragePool to XLayer Pooling (Avg) conversion function """
 
-    logger.info("ONNX AvgPool -> XLayer Pooling (Avg)")
+    logger.info("ONNX AveragePool -> XLayer Pooling (Avg)")
 
     assert len(node.get_outputs()) == 1
     name = node.get_outputs()[0]
@@ -67,8 +67,8 @@ def avg_pool(node: NodeWrapper,
     stride_h, stride_w = strides
 
     if auto_pad != 'NOTSET':
-        raise ValueError("AvgPool autopad attribute not supported but was: {}"
-                         .format(auto_pad))
+        raise ValueError("AveragePool autopad attribute not supported but was:"
+                         " {}".format(auto_pad))
 
     padding = pads if pads is not None else [0, 0, 0, 0]
 
@@ -427,7 +427,7 @@ def global_avg_pool(node, params, xmap):
     #   -> List[XLayer]
     """ ONNX GlobalAveragePool to XLayer Pooling (Avg) conversion function """
 
-    logger.info("ONNX GlobalAvgPool -> XLayer Pooling (Avg)")
+    logger.info("ONNX GlobalAveragePool -> XLayer Pooling (Avg)")
 
     assert len(node.get_outputs()) == 1
     name = node.get_outputs()[0]
