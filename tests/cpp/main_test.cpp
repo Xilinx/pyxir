@@ -19,8 +19,12 @@
 #include <iostream>
 #include <catch2/catch.hpp>
 
+#include "pyxir/contrib/dpuv1.hpp"
+
 int main(int argc, char* argv[] ) {
   // global setup...
+
+  pyxir::contrib::import_dpuv1_target();
 
   int result = Catch::Session().run(argc, argv);
 

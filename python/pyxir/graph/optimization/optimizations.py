@@ -22,7 +22,6 @@ passes
 import logging
 import numpy as np
 
-from pyxir.graph import pydot_tools
 from pyxir.graph.layer import xlayer
 from pyxir.graph.xop_registry import XOpRegistry
 

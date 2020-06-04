@@ -26,6 +26,11 @@ namespace pyxir {
 namespace onnx {
 
 /**
+ * @brief Import ONNX Python APIs
+ */
+PX_API void import_py_onnx();
+
+/**
  * @brief Import ONNX model from the given input file
  * @param file_path The location of the input file
  * @returns An XGraph representation of the provided ONNX model

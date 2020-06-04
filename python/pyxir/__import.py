@@ -25,8 +25,8 @@ FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # import cvx modules if not yet in path
 if sys.version_info >= (3, 0):
-    import importlib
-    cvx_spec = importlib.util.find_spec("cvx")
+    from importlib import util
+    cvx_spec = util.find_spec("cvx")
 else:
     import imp
     try:

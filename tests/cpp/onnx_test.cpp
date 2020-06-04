@@ -170,7 +170,7 @@ TEST_CASE("Load model from ONNX file and build runtime")
 TEST_CASE("Load model from ONNX file and build online quantization runtime")
 {
   typedef std::shared_ptr<pyxir::graph::XGraph> XGraphHolder;
-  
+
   XGraphHolder xg = pyxir::onnx::import_onnx_model("./test.onnx");
 
   pyxir::RunOptionsHolder run_options(new pyxir::runtime::RunOptions());

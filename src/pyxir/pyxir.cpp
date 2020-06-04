@@ -97,8 +97,8 @@ struct PyInitializer
     if (!py_is_initialized()) {
       py::initialize_interpreter();
       auto pyxir = py::module::import("pyxir");
-      auto pyxir_onnx = py::module::import("pyxir.frontend.onnx");
-      pyxir::contrib::import_dpuv1_target();
+      // auto pyxir_onnx = py::module::import("pyxir.frontend.onnx");
+      // pyxir::contrib::import_dpuv1_target();
     }
   }
 

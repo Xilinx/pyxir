@@ -29,7 +29,6 @@ from pyxir.quantization.base_quantizer import XGraphBaseQuantizer
 from pyxir.shared import QuantParams, QuantParamFactory, LayerParams
 from pyxir.shared.quantizer_output import QuantizerOutput
 from pyxir.quantization.quant_scaling_pass import XGraphQuantScalingPass
-from pyxir.graph.pydot_tools import get_bottom_layers, get_top_layers
 import pyxir.contrib.tools.classification as xfdnn_classification
 
 from .xgraph_pass_add_mse_quant_layers import XGraphPassAddMSEQuantLayers

@@ -20,12 +20,10 @@ Module for XGraph definition
 """
 
 import copy
-import pydot
 import logging
 import warnings
 import libpyxir as lpx
 
-from . import pydot_tools
 from .layer.xlayer import XLayer
 from .layer.xattr_dict import XAttrDict
 from .schedule import Schedule
@@ -417,6 +415,14 @@ class XGraph(object):
     def visualize(self, outputfile):
         # type: () -> None
         """ Visualize this xgraph using pydot """
+        try:
+            from . import pydot_tools
+            import pydot
+        except ImportError:
+            raise ImportError("XGraph functionality depends on the 'pydot'"
+                              " package. Please make sure that Pydot is"
+                              " installed before trying to visualize XGraphs")
+
         pdg = pydot.Dot(self.get_name(), graph_type='digraph', rankdir='BT')
 
         cm_idx = 1

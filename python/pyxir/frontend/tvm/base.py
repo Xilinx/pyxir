@@ -24,7 +24,6 @@ import logging
 
 from pyxir.graph.xgraph import XGraph
 from pyxir.graph.xgraph_factory import XGraphFactory
-from pyxir.graph import pydot_tools
 
 logger = logging.getLogger("pyxir")
 

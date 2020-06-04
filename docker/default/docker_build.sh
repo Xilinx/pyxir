@@ -30,4 +30,4 @@ docker build \
   --build-arg gname=$gname \
   -f $SCRIPT_DIR/Dockerfile \
   -t $user/pyxir \
-  .
+  $SCRIPT_DIR

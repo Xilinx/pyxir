@@ -17,17 +17,26 @@
 #include <memory>
 #include <stdexcept>
 
+#include <pybind11/pybind11.h>
+#include <pybind11/embed.h>
+
 #include "pyxir/frontend/onnx.hpp"
 #include "pyxir/opaque_func_registry.hpp"
+
+namespace py = pybind11;
 
 namespace pyxir {
 namespace onnx {
 
-// extern "C" int __attribute__((visibility("default"))) import_onnx_model(const char *file_path);
+PX_API void import_py_onnx()
+{
+  auto onnx_api = py::module::import("pyxir.frontend.onnx");
+}
 
 PX_API std::shared_ptr<graph::XGraph> import_onnx_model(
   const std::string &file_path
 ) {
+  pyxir::onnx::import_py_onnx();
   if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.onnx.from_onnx"))
     throw std::runtime_error("Cannot import ONNX model from file because"
                              " `pyxir.onnx.from_onnx` opaque function is"
@@ -48,6 +57,7 @@ PX_API std::shared_ptr<graph::XGraph> import_onnx_model(
 PX_API std::shared_ptr<graph::XGraph> import_onnx_model(
   std::istringstream &sstream
 ) {
+  pyxir::onnx::import_py_onnx();
   if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.onnx.from_onnx_bytes"))
     throw std::runtime_error("Cannot import ONNX model from file because"
                              " `pyxir.onnx.from_onnx_bytes` opaque function is"

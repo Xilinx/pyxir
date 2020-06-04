@@ -105,7 +105,6 @@ def partition_opaque_func(xgraph: XGraph,
         last_layer = None
 
     p_xgraph = partition(xgraph, targets, last_layer)
-
     xgraph.copy_from(p_xgraph)
 
 
@@ -429,6 +428,8 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
         function that takes a list of input buffers and output buffers and
         executes the model in CPU.
     """
+
+    logger.info("Build On-the-fly quantization rt func")
 
     in_tensor_names = [stringify(itn) for itn in in_tensor_names]
     out_tensor_names = [stringify(otn) for otn in out_tensor_names]
