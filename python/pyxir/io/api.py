@@ -71,7 +71,7 @@ def load(net_file, params_file):
 
 @register_opaque_func('pyxir.io.load', [TypeCode.Str, TypeCode.Str, TypeCode.XGraph])
 def load_opaque_func(net_file, params_file, xg_callback):
-    xg_callback = load(net_file, params_file)
+    xg_callback.copy_from(load(net_file, params_file))
 
 
 

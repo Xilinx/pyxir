@@ -76,6 +76,34 @@ class OpaqueFuncRegistry {
     }
 
     /**
+     * @brief Initialize the internal opaque func with a lambda function
+     * @param func_ The lambda function to be used for the internal OpaqueFunc
+     * @param args_type_codes_ The type codes of the function arguments
+     * @return Reference to this registry
+     */
+    PX_API OpaqueFuncRegistry &set_func(void* func_, 
+                                        const std::vector<int64_t> &args_type_codes_)
+    {
+      FuncType f = *static_cast<FuncType*>(func_);
+      func = OpaqueFunc(f, args_type_codes_);
+      return *this;
+    }
+
+    /**
+     * @brief Initialize the internal opaque func with a lambda function
+     * @param func_ The lambda function to be used for the internal OpaqueFunc
+     * @param args_type_codes_ The type codes of the function arguments
+     * @return Reference to this registry
+     */
+    PX_API OpaqueFuncRegistry &set_func(void* func_, 
+                                        const std::vector<pxTypeCode> &args_type_codes_)
+    {
+      FuncType f = *static_cast<FuncType*>(func_);
+      func = OpaqueFunc(f, args_type_codes_);
+      return *this;
+    }
+
+    /**
      * @brief Initialize the internal opaque func with the given lambda
      * @param func_ The lambda to be used for the internal OpaqueFunc
      * @param args_type_codes_ The type codes of the function arguments
@@ -165,5 +193,15 @@ class OpaqueFuncRegistry {
   private:
     OpaqueFunc func;
 };
+
+#define STR_CONCAT_(__x, __y) __x##__y
+#define STR_CONCAT(__x, __y) STR_CONCAT_(__x, __y)
+
+#define OPAQUE_FUNC_REG_VAR_DEF                         \
+  static ::pyxir::OpaqueFuncRegistry&  __mk_ ## PX
+
+#define REGISTER_OPAQUE_FUNC(OFName)\
+  STR_CONCAT(OPAQUE_FUNC_REG_VAR_DEF, __COUNTER__) = \
+  OpaqueFuncRegistry::Register(OFName)
 
 } // pyxir

@@ -14,17 +14,21 @@
  *  limitations under the License.
  */
 
-#pragma once
+// Register Transpose operation as an Opaque Function
 
-#include <string>
+#include <functional>
+
+#include "pyxir/opaque_func_registry.hpp"
 
 namespace pyxir {
 namespace runtime {
+             
+REGISTER_OPAQUE_FUNC("cpu.Transpose")
+  ->set_func([](pyxir::OpaqueArgs &args) 
+    {
+      std::cout << "Test" << std::endl;
+    }, std::vector<pxTypeCode>{});
 
-const std::string pxCpuTfRuntimeModule = "cpu-tf";
-const std::string pxCpuNpRuntimeModule = "cpu-np";
-const std::string pxCpuRuntimeModule = "cpu";
-const std::string pxVaiRuntimeModule = "vai";
 
 } // namespace runtime
 } // namespace pyxir

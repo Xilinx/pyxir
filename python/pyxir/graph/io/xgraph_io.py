@@ -150,9 +150,6 @@ class XGraphIO(object):
 
         xlayers = []
         for node in net['nodes']:
-            # pydot_attrs = copy.copy(pydot_tools.LAYER_STYLE_DEFAULT)
-            # pydot_attrs['shape'] = node['shape']
-            # pydot_attrs['fillcolor'] = node['fillcolor']
 
             X = xlayer.XLayer(**node['LayerParameter'])
             if X.type and \
@@ -263,8 +260,9 @@ class XGraphIO(object):
 
         h5f.close()
 
-        # TODO Graph is not necessarily completely the identical to the saved
-        #   one e.g. colors
+        stored_name = net['name']
+
         xgraph = XGraphIO.xgraph_factory.build_from_xlayer(net=xlayers)
+        xgraph.set_name(stored_name)
 
         return xgraph

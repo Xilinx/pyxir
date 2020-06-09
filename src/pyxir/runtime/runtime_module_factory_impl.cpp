@@ -87,14 +87,8 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
     return rt_mod;
   }
 
-  // If on-the-fly quantization is not enabled, we just try to build the runtime
-  //   OpaqueFunc build_rt_func = OpaqueFuncRegistry::Get("pyxir.build_rt");
-
-  //   OpaqueFuncHolder rt_mod_of = std::make_shared<OpaqueFunc>(OpaqueFunc());
-  //   build_rt_func(xg, target, rt_name_, in_tensor_names, out_tensor_names,
-  //                 rt_mod_of);
-
-  //   ComputeFuncHolder cf(new OpaqueComputeFunc(rt_mod_of));
+  // If on-the-fly quantization is not enabled, we just try to create
+  //    the compute func
   ComputeFuncHolder cf = ComputeFuncFactory::GetComputeFunc(
     xg, target, in_tensor_names, out_tensor_names, rt_name_
   );
