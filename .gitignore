@@ -19,4 +19,6 @@ pyxir.egg-info
 dist
 build
 
-tests/cpp/pyxir_test
+python/libpyxir.*
+
+tests/cpp/pyxir_test*

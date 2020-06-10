@@ -46,7 +46,3 @@ install(
     FILES_MATCHING # install only matched files
     PATTERN "*.hpp" # select header files
 )
-
-if (${PYXIR_UNIT_TEST_ENABLE})
-    add_subdirectory(tests)
-endif()

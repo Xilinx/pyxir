@@ -182,16 +182,19 @@ class CMakeBuild(build_ext):
         print(self.build_lib)
         # Copy libpyxir.so to python/ next to python/pyxir for rapid
         #   prototyping
-        lib_bin = os.path.join(self.build_lib, 'libpyxir.so')
+        lib_bin = os.path.join(self.build_lib, 'libpyxir.so.' + str(__version__))
         lib_dest_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'python')
         self.copy_file(lib_bin, lib_dest_dir)
+        # Create symlink
+        os.symlink(lib_dest_dir + '/libpyxir.so.' + str(__version__),
+                   lib_dest_dir + "/libpyxir.so")
 
         # Copy *_test file to tests directory
-        test_bin = os.path.join(self.build_temp, 'tests/pyxir_test')
-        test_dest_dir = os.path.join(os.path.dirname(
-            os.path.abspath(__file__)), 'tests', 'cpp')
-        self.copy_file(test_bin, test_dest_dir)
+        # test_bin = os.path.join(self.build_temp, 'tests/pyxir_test')
+        # test_dest_dir = os.path.join(os.path.dirname(
+        #     os.path.abspath(__file__)), 'tests', 'cpp')
+        # self.copy_file(test_bin, test_dest_dir)
         print()  # Add empty line for nicer output
 
     # From https://www.benjack.io/2018/02/02/python-cpp-revisited.html
