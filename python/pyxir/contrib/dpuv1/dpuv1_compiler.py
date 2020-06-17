@@ -50,6 +50,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
                  xgraph,
                  arch,
                  work_dir=os.path.join(os.getcwd(), 'work'),
+                 build_dir=None,
                  mode='debug'):
 
         super(DPUV1Compiler, self).__init__(xgraph)
@@ -67,6 +68,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
                            for q_key in q_output.keys()}
         assert(len(self.netcfgs) == 1)
         self.work_dir = work_dir
+        self.build_dir = build_dir if build_dir is not None else work_dir
         self.arch = arch
         self.mode = mode
         self.c_output = CompilerOutput(name=xgraph.get_name())
@@ -116,7 +118,6 @@ class DPUV1Compiler(XGraphBaseCompiler):
             raise NotImplementedError("DPUV1Compiler only handles models with"
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
-        output_dir = self.work_dir
         opt_input_shapes = {in_name: [e if e != -1 else 1 for e in input_shape]
                             for in_name, input_shape
                             in zip(input_names, input_shapes)}
@@ -133,7 +134,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
             --output_dir {} \
             --net_name {}\
             --options "{}"
-        """.format(netcfg, self.arch, self.work_dir, 'compiler', opts)
+        """.format(netcfg, self.arch, self.build_dir, 'compiler', opts)
         logger.info("command: {}".format(command))
         process = subprocess.Popen(command,
                                    shell=True,
@@ -152,7 +153,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
 
         logger.debug("Output: {}".format(output))
         logger.debug("Error: {}".format(error))
-        compiler_json_file = self.work_dir + '/compiler.json'
+        compiler_json_file = self.build_dir + '/compiler.json'
         with open(compiler_json_file) as json_file:
             json_graph = json.load(json_file)
         graph_inputs = json_graph["inputs"]

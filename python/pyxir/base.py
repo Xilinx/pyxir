@@ -119,7 +119,9 @@ def optimize(xgraph: XGraph, target: str, **kwargs) -> XGraph:
                         .format(target))
     opt_xgraph = target_registry.get_target_optimizer(target)(
         xgraph, target=target, **kwargs)
-
+    if xgraph.is_quantized():
+        opt_xgraph.set_quantizer_output(xgraph.get_quantizer_output())
+    
     return opt_xgraph
 
 
@@ -190,19 +192,23 @@ def compile_opaque_func(xgraph: XGraph,
     out_tensor_names = [stringify(otn) for otn in out_tensor_names]
 
     # if work_dir is None:
-    work_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_build"))
-
-    c_xgraph = compile(xgraph, target, work_dir=work_dir)
+    work_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_work"))
+    build_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_build"))
+    
+    opt_xgraph = optimize(xgraph, target)
+    c_xgraph = compile(opt_xgraph, target, work_dir=work_dir,
+                       build_dir=build_dir)
     # full_graph_input_names = xgraph.get_input_names()
 
     # Create scheduled XGraph
-    scheduled_xgraph = schedule(c_xgraph, target, work_dir=work_dir)
+    # TODO: work_dir <-> build_dir
+    scheduled_xgraph = schedule(c_xgraph, target, work_dir=build_dir)
 
     # Save and add to meta file
-    model_file = os.path.join(work_dir, 'px_model')
+    model_file = os.path.join(build_dir, 'px_model')
     save(scheduled_xgraph, model_file)
 
-    meta_file = os.path.join(work_dir, 'meta.json')
+    meta_file = os.path.join(build_dir, 'meta.json')
 
     if (not os.path.isfile(meta_file)):
         raise ValueError("Could not find meta file at: {}"
@@ -290,6 +296,7 @@ def build(xgraph: XGraph,
           runtime: str = 'cpu-tf',
           last_layers: List[str] = None,
           work_dir: str = None,
+          build_dir: str = None,
           **kwargs):
     """
     Build a runtime module from the provided XGraph model for the given
@@ -309,15 +316,17 @@ def build(xgraph: XGraph,
     last_layers: List[str]
         the list of last layers for execution/quantization simulation.
     work_dir: str
-        the directory where to put build files
+        the directory where to put the temporary work files
+    build_dir: str
+        the directory where to put the build files
     """
 
     fancy_logger.banner("BUILD `{}` RUNTIME GRAPH".format(target))
 
     if work_dir is None:
-        work_dir = os.path.join(os.getcwd(), target + "_build")
+        work_dir = os.path.join(os.getcwd(), target + "_work")
 
-    c_xgraph = compile(xgraph, target, work_dir=work_dir)
+    c_xgraph = compile(xgraph, target, work_dir=work_dir, build_dir=build_dir)
 
     rt_xgraph = target_registry.get_target_build_func(target)(
         copy.deepcopy(c_xgraph), work_dir=work_dir, **kwargs)

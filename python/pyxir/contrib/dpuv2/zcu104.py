@@ -49,11 +49,6 @@ def xgraph_dpu_v2_zcu104_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
 def xgraph_dpu_v2_zcu104_compiler(xgraph, **kwargs):
 
-    # dcf = "/opt/vitis_ai/compiler/arch/dpuv2/ZCU104/ZCU104.dcf"
-
-    # compiler = DNNCCompiler(xgraph, dcf=dcf, **kwargs)
-    # c_xgraph = compiler.compile()
-
     meta = {
         "lib": "/usr/local/lib/libn2cube.so",
         # "vitis_dpu_kernel": "tf_resnet50_0",

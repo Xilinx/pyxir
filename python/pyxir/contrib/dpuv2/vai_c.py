@@ -38,9 +38,8 @@ FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class VAICompiler(XGraphBaseCompiler):
 
-    """
-    TODO
-    """
+    """ Vitis-AI compiler wrapper for DPUv2 """
+
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
 
@@ -50,6 +49,7 @@ class VAICompiler(XGraphBaseCompiler):
                  meta,
                  cpu_arch='arm64',
                  work_dir=os.path.join(os.getcwd(), 'work'),
+                 build_dir=os.getcwd(),
                  mode='debug'):
 
         super(VAICompiler, self).__init__(xgraph)
@@ -72,12 +72,16 @@ class VAICompiler(XGraphBaseCompiler):
         self.meta = meta
         self.cpu_arch = cpu_arch
         self.work_dir = work_dir
+        if not os.path.exists(self.work_dir):
+            os.makedirs(self.work_dir)
+        self.build_dir = build_dir if build_dir is not None else work_dir
+        if not os.path.exists(self.build_dir):
+            os.makedirs(self.build_dir)
         self.mode = mode
         self.c_output = CompilerOutput(name=xgraph.get_name())
 
-    def compile(self):
-        # type: () -> None
-        """ """
+    def compile(self) -> None:
+        """ Start DPUv2 compilation """
 
         net_name = list(self.netcfgs.keys())[0]
         netcfg = list(self.netcfgs.values())[0]
@@ -98,10 +102,6 @@ class VAICompiler(XGraphBaseCompiler):
             raise NotImplementedError("VAICompiler only handles models with"
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
-        # if len(output_names) > 1:
-        #    raise NotImplementedError("DNNCCompiler only handles models with
-        #       one output at the"\
-        #        " moment but found: {}".format(len(output_names)))
 
         command = """
         vai_c_tensorflow \
@@ -181,12 +181,12 @@ class VAICompiler(XGraphBaseCompiler):
         logger.debug("Error: {}".format(error))
 
         lib_file = "{}/libdpumodel{}.so".format(self.work_dir, net_name)
-        to_lib_file = "{}/libdpumodel{}.so".format(os.getcwd(), net_name)
+        to_lib_file = "{}/libdpumodel{}.so".format(self.build_dir, net_name)
         shutil.move(lib_file, to_lib_file)
 
         # meta_file = "{}/meta.json".format(self.work_dir)
         self.meta["vitis_dpu_kernel"] = net_name
-        to_meta_file = "{}/meta.json".format(os.getcwd())
+        to_meta_file = "{}/meta.json".format(self.build_dir)
         # shutil.move(meta_file, to_meta_file)
 
         with open(to_meta_file, 'w') as f:
