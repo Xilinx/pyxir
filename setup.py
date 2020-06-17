@@ -186,6 +186,7 @@ class CMakeBuild(build_ext):
         lib_dest_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'python')
         self.copy_file(lib_bin, lib_dest_dir)
+
         # Create symlink
         lib_symlink = lib_dest_dir + "/libpyxir.so"
         if os.path.exists(lib_symlink):
