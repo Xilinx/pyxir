@@ -41,7 +41,9 @@ Follow the setup instructions below before running this example.
 #    Download minimal ImageNet validation dataset:
 #    $ python3 -m ck pull repo:ck-env
 #    $ python3 -m ck install package:imagenet-2012-val-min
-# 3. (Optional) set the number of inputs to be used for 
+# 3. Install ONNX and Pillow packages
+#    $ pip3 install --user onnx pillow
+# 4. (Optional) set the number of inputs to be used for 
 #    on-the-fly quantization to a lower number (e.g. 8) to
 #    decrease the quantization time (potentially at the cost
 #    of a lower accuracy):
@@ -112,6 +114,18 @@ def softmax(x: np.ndarray):
     x_exp = np.exp(x - np.max(x))
     return x_exp / x_exp.sum()
 
+def resize_smallest_side(img: np.ndarray, size: int):
+
+    def get_size(height: int, width: int, aspect_ratio: float):
+        return (int(round(width * aspect_ratio)), int(round(height * aspect_ratio)))
+
+    smallest_side_size = img.shape[0] if img.shape[0] < img.shape[1] \
+        else img.shape[1]
+    aspect_ratio = float(size) / float(smallest_side_size)
+
+    new_size = get_size(img.shape[0], img.shape[1], aspect_ratio)
+    return cv2.resize(img, new_size, cv2.INTER_LINEAR)
+
 def central_crop(img: np.ndarray, size: List[int]):
     # !! img should be in HWC layout
     img_h, img_w, _ = img.shape
@@ -151,7 +165,9 @@ def inputs_func(img_files: List[str]):
     inputs = []
     for img_path in img_files:
         img = Image.open(img_path)
-        img_data = central_crop(np.array(img, dtype=np.float32), (224, 224))
+        img = img.convert('RGB')
+        img_data = resize_smallest_side(np.array(img, dtype=np.float32), 224)
+        img_data = central_crop(img_data, (224, 224))
         img_data = np.array(img_data).transpose(2, 0, 1)
         inputs.append(preprocess(img_data))
     return inputs
