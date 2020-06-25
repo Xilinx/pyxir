@@ -49,7 +49,7 @@ VaiComputeFunc::VaiComputeFunc(
     if (!is_op_supported(X->xtype[0]))
       throw std::invalid_argument("VAI Runtime got unsupported operation of"
                                   " type: " + X->xtype[0]);
-    else if (X->xtype[0] == "DPUV1")
+    else if (X->xtype[0] == "DPU")
       dpu_X = X;
   }
 

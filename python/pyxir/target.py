@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for Device (e.g. CPU, DPUV1, DPUV2) definition and functionality """
+"""
+Module for Device (e.g. CPU, DPUCADX8G, DPUCZDX8G) definition
+and functionality 
+"""
 
 
 class Target(object):

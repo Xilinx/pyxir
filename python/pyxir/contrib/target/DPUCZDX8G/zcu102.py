@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for registering DPUv2 (now DPUCZDX8G) zcu104 target """
+""" Module for registering DPUCZDX8G zcu102 target """
 
 import os
 import pyxir
@@ -20,13 +20,13 @@ import logging
 
 from pyxir.graph.transformers import subgraph
 
-from pyxir.contrib.target.DPUCZDX8G.zcu104 import xgraph_dpu_optimizer,\
-    xgraph_dpu_quantizer, xgraph_dpu_zcu104_compiler
+from .common import xgraph_dpu_optimizer, xgraph_dpu_quantizer
+from .vai_c import VAICompiler
 
 logger = logging.getLogger('pyxir')
 
 
-def xgraph_dpuv2_zcu104_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
+def xgraph_dpu_zcu102_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     # TODO here or in optimizer, both?
     # DPU layers are in NHWC format because of the tensorflow
@@ -35,14 +35,42 @@ def xgraph_dpuv2_zcu104_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     return subgraph.xgraph_build_func(
         xgraph=xgraph,
-        target='dpuv2-zcu104',
+        target='DPUCZDX8G-zcu102',
         xtype='DPU',
         layout='NHWC',
         work_dir=work_dir
     )
 
-pyxir.register_target('dpuv2-zcu104',
+
+def xgraph_dpu_zcu102_compiler(xgraph, **kwargs):
+
+    meta = {
+        "lib": "/usr/local/lib/libn2cube.so",
+        # "vitis_dpu_kernel": "tf_resnet50_0",
+        "pre_processing_pool": 4,
+        "post_processing_pool": 4,
+        "dpu_thread_pool": 3,
+        "dpu_task_pool": 16
+    }
+
+    # Vitis-AI 1.1
+    old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/ZCU102/ZCU102.json"
+    # Vitis-AI 1.2 - ...
+    new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/ZCU102/arch.json"
+
+    if os.path.exists(new_arch):
+        arch = new_arch
+    else:
+        arch = old_arch
+
+    compiler = VAICompiler(xgraph, arch=arch, meta=meta, **kwargs)
+    c_xgraph = compiler.compile()
+
+    return c_xgraph
+
+
+pyxir.register_target('DPUCZDX8G-zcu102',
                       xgraph_dpu_optimizer,
                       xgraph_dpu_quantizer,
-                      xgraph_dpu_zcu104_compiler,
-                      xgraph_dpuv2_zcu104_build_func)
+                      xgraph_dpu_zcu102_compiler,
+                      xgraph_dpu_zcu102_build_func)

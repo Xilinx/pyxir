@@ -29,7 +29,7 @@ from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.target_registry import TargetRegistry
 
 
-class TestDPUV1Contrib(unittest.TestCase):
+class TestDPUContrib(unittest.TestCase):
 
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
@@ -56,10 +56,11 @@ class TestDPUV1Contrib(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         # Unregister dpu for other tests
-        TestDPUV1Contrib.target_registry.unregister_target('dpuv1')
+        TestDPUContrib.target_registry.unregister_target('dpuv1')
+        TestDPUContrib.target_registry.unregister_target('DPUCADX8G')
 
     def test_supported_ops(self):
-        dpuv1_ops = TestDPUV1Contrib.target_registry\
+        dpuv1_ops = TestDPUContrib.target_registry\
             .get_supported_op_check_names('dpuv1')
 
         assert 'BatchNorm' in dpuv1_ops
@@ -67,7 +68,7 @@ class TestDPUV1Contrib(unittest.TestCase):
         assert 'Concat' in dpuv1_ops
         assert 'Convolution' in dpuv1_ops
         assert 'Conv2DTranspose' in dpuv1_ops
-        assert 'DPUV1' in dpuv1_ops
+        assert 'DPU' in dpuv1_ops
         assert 'Eltwise' in dpuv1_ops
         assert 'Pad' in dpuv1_ops
         assert 'Pooling' in dpuv1_ops

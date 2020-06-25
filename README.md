@@ -7,7 +7,7 @@ At the moment PyXIR integrates with following frameworks:
 * [TVM Open Deep Learning compiler stack](https://github.com/apache/incubator-tvm) (coming up)
 
 and with following Vitis-AI accelerators:
-* DPUv1
-* DPUv2
+* DPUCADX8G (formerly DPUv1)
+* DPUCZDX8G (formerly DPUv2)
 
-Note that not all accelerators are enabled through all frameworks at the moment. For example, through the ONNXRuntime framework only the DPUv1 accelerator is supported for now.
+Note that not all accelerators are enabled through all frameworks at the moment. For example, through the ONNXRuntime framework only the DPUCADX8G accelerator is supported for now.

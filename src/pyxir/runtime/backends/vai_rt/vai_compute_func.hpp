@@ -67,7 +67,7 @@ class VaiComputeFunc {
     std::unique_ptr<vitis::ai::DpuRunner> dpu_runner_;
 
     std::unordered_set<std::string> supported_ops_ =
-      {"Input", "Output", "DPUV1", "TupleGetItem"};
+      {"Input", "Output", "DPU", "TupleGetItem"};
 };
 
 } // vai_rt

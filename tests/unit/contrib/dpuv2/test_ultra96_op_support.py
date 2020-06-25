@@ -43,6 +43,7 @@ class TestUltra96OpSupport(unittest.TestCase):
     def tearDownClass(cls):
         # Unregister dpu for other tests
         TestUltra96OpSupport.target_registry.unregister_target('dpuv2-ultra96')
+        TestUltra96OpSupport.target_registry.unregister_target('DPUCZDX8G-ultra96')
 
     def test_batchnorm_support(self):
         from pyxir.contrib.dpuv2.ultra96_op_support import \
@@ -228,10 +229,10 @@ class TestUltra96OpSupport(unittest.TestCase):
 
     def test_dpuv2_support(self):
         from pyxir.contrib.dpuv2.ultra96_op_support import \
-            dpuv2_op_support
+            dpu_op_support
 
         X = XLayer(
-            type=['DPUV2'],
+            type=['DPU'],
             name='layer1',
             shapes=[[-1, 2, 4, 4], [-1, 1, 4, 4]],
             sizes=[32],
@@ -241,7 +242,7 @@ class TestUltra96OpSupport(unittest.TestCase):
             attrs={}
         )
 
-        assert dpuv2_op_support(X, [], [])
+        assert dpu_op_support(X, [], [])
 
     def test_eltwise_support(self):
         from pyxir.contrib.dpuv2.ultra96_op_support import \

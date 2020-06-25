@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for DPU V1 target registration
+""" Module for DPUv1 target registration """
 
+import warnings
 
-"""
+warnings.warn("DPUv1 name is deprecated and will be removed in the future."\
+              " Please replace 'import pyxir.contrib.dpuv1.dpuv1' with"\
+              " 'import pyxir.contrib.target.DPUCADX8G'")

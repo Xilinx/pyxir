@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for registering DPUV2 device
-
-
-"""
+""" Module for registering common functionality"""
 
 import logging
 
@@ -26,10 +22,11 @@ from pyxir.graph.transformers.layout_transformation_pass \
 
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
 
+
 logger = logging.getLogger('pyxir')
 
 
-def xgraph_dpu_v2_optimizer(xgraph, target=None, **kwargs):
+def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
 
     layout_transform_pass = \
         XGraphLayoutTransformationPass('NHWC', target=target)
@@ -41,7 +38,7 @@ def xgraph_dpu_v2_optimizer(xgraph, target=None, **kwargs):
     return dpu_xgraph
 
 
-def xgraph_dpu_v2_quantizer(xgraph, inputs_func, **kwargs):
+def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
 
     quantizer = DECENTQuantizer(xgraph, inputs_func, **kwargs)
     q_xgraph = quantizer.quantize()

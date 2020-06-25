@@ -38,21 +38,20 @@ logger = logging.getLogger('pyxir')
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-class DPUV1Compiler(XGraphBaseCompiler):
+class DPUCompiler(XGraphBaseCompiler):
 
-    """
-    TODO
-    """
+    """ TODO """
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
 
     def __init__(self,
                  xgraph,
+                 target,
                  arch,
                  work_dir=os.path.join(os.getcwd(), 'work'),
                  mode='debug'):
 
-        super(DPUV1Compiler, self).__init__(xgraph)
+        super(DPUCompiler, self).__init__(xgraph)
 
         if not os.path.isfile(arch):
             raise ValueError("Arch file: {} does not exist".format(arch))
@@ -67,6 +66,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
                            for q_key in q_output.keys()}
         assert(len(self.netcfgs) == 1)
         self.work_dir = work_dir
+        self.target = target
         self.arch = arch
         self.mode = mode
         self.c_output = CompilerOutput(name=xgraph.get_name())
@@ -93,7 +93,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
         # type: () -> None
         """ """
         layout_transform_pass = \
-            XGraphLayoutTransformationPass('NHWC', target="dpuv1")
+            XGraphLayoutTransformationPass('NHWC', target=self.target)
         self.xgraph = layout_transform_pass.execute(self.xgraph,
                                                     subgraphs_only=False)
 
@@ -101,9 +101,9 @@ class DPUV1Compiler(XGraphBaseCompiler):
         netcfg = list(self.netcfgs.values())[0]  # orig pb file
         quant_info_file = list(self.quant_info.values())[0]  # quant info file
 
-        subxg_layers = DPUV1Compiler.xgraph_partitioner\
+        subxg_layers = DPUCompiler.xgraph_partitioner\
             .get_subgraphs(self.xgraph)[0].subgraph_data
-        xgraph = DPUV1Compiler.xgraph_factory.build_from_xlayer(subxg_layers)
+        xgraph = DPUCompiler.xgraph_factory.build_from_xlayer(subxg_layers)
         # assert xgraph.get_name() == net_name
 
         input_names = xgraph.get_input_names()
@@ -113,7 +113,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
         output_shapes = [xgraph.get(out_name).shapes.tolist()[:]
                          for out_name in output_names]
         if len(input_names) > 1:
-            raise NotImplementedError("DPUV1Compiler only handles models with"
+            raise NotImplementedError("DPUCompiler only handles models with"
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
         output_dir = self.work_dir

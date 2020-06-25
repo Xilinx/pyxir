@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for DPU target registration
+""" Module for DPUCZDX8G/DPUv2 target registration """
 
+import warnings
 
-"""
+warnings.warn("DPUv2 name is deprecated and will be removed in the future."\
+              " Please replace 'import pyxir.contrib.dpuv2.dpuv2' with"\
+              " 'import pyxir.contrib.target.DPUCZDX8G'")

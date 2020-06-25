@@ -13,28 +13,21 @@
 # limitations under the License.
 
 """
-Module for registering DPU v1 target and corresponding graph optimizer,
+Module for registering DPUCADX8G target and corresponding graph optimizer,
 quantizer, compiler and build function
 """
 
 import os
 import logging
-import warnings
-import numpy as np
 import pyxir
 
-from pyxir.runtime import base
-from pyxir.runtime.rt_layer import BaseLayer
 from pyxir.graph.transformers import subgraph
-from pyxir.graph.optimization.optimizers.q_optimizer import\
-    QOptimizer
-from pyxir.quantization.default_quantizer import XGraphDefaultQuantizer
-from pyxir.quantization.mse_quantization.mse_threshold_quantizer import\
-    XGraphMSEThresholdQuantizer
-from pyxir.graph.transformers.layout_transformation_pass import \
-    XGraphLayoutTransformationPass
-from pyxir.quantization.decent_quantizer import DECENTQuantizer
-from .dpuv1_compiler import DPUV1Compiler
+
+from pyxir.contrib.target.DPUCADX8G.dpu_target import xgraph_dpu_optimizer,\
+    xgraph_dpu_quantizer
+from pyxir.contrib.target.DPUCADX8G.dpu_compiler import DPUCompiler
+
+import pyxir.contrib.target.DPUCADX8G.dpu_target
 
 logger = logging.getLogger('pyxir')
 
@@ -43,117 +36,39 @@ logger = logging.getLogger('pyxir')
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-def xgraph_dpu_v1_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
+def xgraph_dpuv1_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     # NOTE DPU V1 layers are in NHWC format because of the tensorflow
     #   intemediate structure we use to communicate with dpu v1 compiler
     return subgraph.xgraph_build_func(
         xgraph=xgraph,
         target='dpuv1',
-        xtype='DPUV1',
+        xtype='DPU',
         layout='NCHW',
         work_dir=work_dir
     )
 
+def xgraph_dpuv1_compiler(xgraph, **kwargs):
 
-def xgraph_dpu_v1_optimizer(xgraph, target=None, **kwargs):
+    # TODO: can we move to docker paths to arch file?
+    # Vitis-AI 1.1
+    old_arch = "/opt/vitis_ai/compiler/arch/dpuv1/ALVEO/ALVEO.json"
+    # Vitis-AI 1.2 - ...
+    new_arch = "/opt/vitis_ai/compiler/arch/DPUCADX8G/ALVEO/arch.json"
 
-    layout_transform_pass = \
-        XGraphLayoutTransformationPass('NHWC', target=target)
-    dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
-
-    optimizer = QOptimizer(dpu_xgraph)
-    optimizer.optimize()
-
-    return dpu_xgraph
-
-
-def xgraph_dpu_v1_quantizer(xgraph, inputs_func, **kwargs):
-
-    # quantizer = XGraphDefaultQuantizer(xgraph, inputs_func, **kwargs)
-    # q_xgraph = quantizer.quantize()
-
-    # quantizer = XGraphMSEThresholdQuantizer(xgraph, inputs_func, **kwargs)
-    # q_xgraph = quantizer.quantize()
-
-    quantizer = DECENTQuantizer(xgraph, inputs_func, **kwargs)
-    q_xgraph = quantizer.quantize()
-
-    return q_xgraph
-
-
-def xgraph_dpu_v1_compiler(xgraph, **kwargs):
-    arch = os.path.join(FILE_PATH, 'dpuv1_arch.json')
-    compiler = DPUV1Compiler(xgraph, arch, **kwargs)
+    if os.path.exists(new_arch):
+        arch = os.path.join(FILE_PATH, '../target/DPUCADX8G/arch.json')
+    else:
+        arch = os.path.join(FILE_PATH, '../target/DPUCADX8G/arch_vai_11.json')
+    
+    compiler = DPUCompiler(xgraph, 'dpuv1', arch, **kwargs)
     c_xgraph = compiler.compile()
 
     return c_xgraph
 
 
 pyxir.register_target('dpuv1',
-                      xgraph_dpu_v1_optimizer,
-                      xgraph_dpu_v1_quantizer,
-                      xgraph_dpu_v1_compiler,
-                      xgraph_dpu_v1_build_func)
-
-
-# Register DPUV1 numpy layer
-
-
-class DPUV1Layer(BaseLayer):
-
-    try:
-        from vai.dpuv1.rt.vitis.python.dpu.runner import Runner
-    except Exception as e:
-        warnings.warn("Could not import Vitis-AI Runner")
-
-    def init(self):
-        # Setup
-        input_names = self.attrs['input_names']
-        assert(len(input_names) == 1)
-        output_names = self.attrs['output_names']
-        assert(len(output_names) >= 1)
-        self.runner = self.Runner(self.attrs['work_dir'])
-        logger.debug("SHAPE: {}".format(self.shape))
-
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        # For now
-        assert(len(inputs) == 1)
-        assert(inputs[0].shape[0] == 1)
-        X = inputs[0]
-
-        res = []
-        inTensors = self.runner.get_input_tensors()
-        outTensors = self.runner.get_output_tensors()
-
-        batch_sz = 1
-
-        fpgaBlobs = []
-        for io in [inTensors, outTensors]:
-            blobs = []
-            for t in io:
-                shape = (batch_sz,) + tuple([t.dims[i]
-                                             for i in range(t.ndims)][1:])
-                blobs.append(np.empty((shape), dtype=np.float32, order='C'))
-            fpgaBlobs.append(blobs)
-
-        fpgaInput = fpgaBlobs[0][0]
-        np.copyto(fpgaInput[0], X[0])
-
-        jid = self.runner.execute_async(fpgaBlobs[0], fpgaBlobs[1])
-        self.runner.wait(jid)
-
-        res.append(fpgaBlobs[1][0])
-        
-
-        return tuple(res)
-
-    def __del__(self):
-        """ Cleanup DPU resources """
-        # self.runner.__del__()
-        pass
-
-
-pyxir.register_op('cpu-np', 'DPUV1', base.get_layer(DPUV1Layer))
+                      xgraph_dpu_optimizer,
+                      xgraph_dpu_quantizer,
+                      xgraph_dpuv1_compiler,
+                      xgraph_dpuv1_build_func)

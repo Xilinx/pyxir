@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module wrapping parsing DNNC compiler output
-
-
-"""
+""" Module wrapping parsing DNNC compiler output """
 
 import abc
 

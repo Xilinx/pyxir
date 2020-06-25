@@ -17,8 +17,6 @@ Module for declaring and specifying supported operations for
 DPU V2 zcu104 target.
 
 NOTE: https://www.xilinx.com/support/documentation/ip_documentation/dpu/v3_0/pg338-dpu.pdf # noqa
-
-
 """
 
 import math
@@ -155,10 +153,10 @@ def conv2d_transpose_op_support(X, bXs, tXs):
 #     return True
 
 
-@pyxir.register_op_support_check('dpuv2-zcu104', 'DPUV2')
-def dpuv2_op_support(X, bXs, tXs):
+@pyxir.register_op_support_check('dpuv2-zcu104', 'DPU')
+def dpu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided DPUV2 operator
+    """ Check whether we can execute the provided DPU operator
         on the zcu104 target """
 
     # TODO out_ch
