@@ -129,7 +129,15 @@ def xgraph_build_func(xgraph,
                 
                 if Xp.name in compiler_output_keys:
                     attrs['rt_in_map'] = compiler_output.get_in_map(Xp.name)
+                    for in_name in input_names:
+                        for merged_layer in attrs['input_layers'][in_name]:
+                            attrs['rt_in_map'][merged_layer] = \
+                                attrs['rt_in_map'][in_name]
                     attrs['rt_out_map'] = compiler_output.get_out_map(Xp.name)
+                    for out_name in output_names:
+                        for merged_layer in attrs['output_layers'][out_name]:
+                            attrs['rt_out_map'][merged_layer] = \
+                                attrs['rt_out_map'][out_name]
 
                 Xp.attrs.update(attrs)
 
@@ -153,9 +161,12 @@ def xgraph_build_func(xgraph,
                 top_tensors = Xp.attrs['__top_tensors']
 
                 for i, output_name in enumerate(output_names):
-                    tgi_name = output_name
+                    # Handle merged layers
+                    out_tensor = Xp.attrs['output_layers'][output_name][-1]
+                    tgi_name = out_tensor
                     # tgi_name = subgraph_X.name + '_tgi' + str(i)
-                    output_tensors = top_tensors[output_name]
+                    
+                    top_tensor = top_tensors[output_name]
 
                     shapes = subgraph_X.shapes[i][:]
                     X_tgi = defaultXLayer()
@@ -165,7 +176,7 @@ def xgraph_build_func(xgraph,
                         shapes=shapes,
                         sizes=shapes.get_size(),
                         layer=[tgi_name],
-                        tops=output_tensors[:],
+                        tops=top_tensor[:],
                         bottoms=[subgraph_X.name],
                         internal=1,
                         attrs={'index': i}

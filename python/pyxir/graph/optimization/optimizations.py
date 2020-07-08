@@ -244,17 +244,45 @@ def sweep_transposes_flow(xgraph, bottom_Xs, X, top_Xs, target=None, **kwargs):
                     bbX.tops.append(X.name)
                     X.bottoms = [b if b != bX.name else bbX.name
                                  for b in X.bottoms]
-            # Insert transposes
-            for i, tX in enumerate(top_Xs):
 
-                if len(top_Xs) > 1:
-                    t_name = "{}_split_{}".format(
-                        i, "_".join(bottom_names))
-                    # bX.name for bX in bottom_Xs
-                elif len(bottom_Xs) > 1:
-                    t_name = "merge_{}".format(
-                        "_".join(bottom_names))
-                    # [bX.name for bX in bottom_Xs]
+            if len(top_Xs) > 0:
+                # Insert transposes
+                for i, tX in enumerate(top_Xs):
+
+                    if len(top_Xs) > 1:
+                        t_name = "{}_split_{}".format(
+                            i, "_".join(bottom_names))
+                        # bX.name for bX in bottom_Xs
+                    elif len(bottom_Xs) > 1:
+                        t_name = "merge_{}".format("_".join(bottom_names))
+                        # [bX.name for bX in bottom_Xs]
+                    else:
+                        t_name = "moved_" + bX.name
+
+                    t_shape = X.shapes[:]
+                    logger.debug("-- -- t_shape: {}".format(t_shape))
+                    attrs = {'axes': axes}
+
+                    T = xlayer.defaultXLayer()
+                    T = T._replace(
+                        name=t_name,
+                        type=['Transpose'],
+                        shapes=t_shape,
+                        sizes=X.sizes[:],
+                        layer=[t_name],
+                        tops=[tX.name],
+                        bottoms=[X.name],
+                        internal=1,
+                        attrs=attrs
+                    )
+
+                    # logger.debug("-- -- insert: {}".format(T))
+
+                    xgraph.insert(T)
+            else:
+                # No top layers: Insert 1 transpose
+                if len(bottom_Xs) > 1:
+                    t_name = "merge_{}".format("_".join(bottom_names))
                 else:
                     t_name = "moved_" + bX.name
 
@@ -269,15 +297,14 @@ def sweep_transposes_flow(xgraph, bottom_Xs, X, top_Xs, target=None, **kwargs):
                     shapes=t_shape,
                     sizes=X.sizes[:],
                     layer=[t_name],
-                    tops=[tX.name],
+                    tops=[],
                     bottoms=[X.name],
                     internal=1,
                     attrs=attrs
                 )
 
-                # logger.debug("-- -- insert: {}".format(T))
+                xgraph.add(T)
 
-                xgraph.insert(T)
 
             # TRANSFORM X
             axes_t = [axes[i] for i in axes]

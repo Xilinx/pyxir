@@ -42,27 +42,12 @@ struct XBuffer {
             shape(xb.shape), strides(xb.strides), size(xb.size),
             own_data(true)
   {
-    // std::cout << "XBuffer copy " << this << std::endl;
     // TODO: transfer data instead of copying
     // data = xb.data;
     // xb.own_data = false;
     data = ::operator new(size * itemsize);
     memcpy(data, xb.data, size * itemsize);
   }
-
-  // XBuffer(XBuffer &&xb)
-  //         : itemsize(xb.itemsize), format(xb.format), ndim(xb.ndim),
-  //           shape(xb.shape), strides(xb.strides), size(xb.size),
-  //           own_data(xb.own_data)
-  // {
-  //   std::cout << "XBuffer move " << this << std::endl;
-  //   // TODO: transfer data instead of copying
-  //   // data = xb.data;
-  //   // xb.own_data = false;
-  //   // data = ::operator new(size * itemsize);
-  //   // memcpy(data, xb.data, size * itemsize);
-  //   data = xb.data;
-  // }
 
   XBuffer(void *data_, ssize_t itemsize_, std::string format_, ssize_t ndim_,
           std::vector<ssize_t> shape_, std::vector<ssize_t> strides_,
@@ -77,31 +62,12 @@ struct XBuffer {
     for (ssize_t i = 0; i < (ssize_t) ndim; ++i)
       size *= shape[i];
 
-    // std::cout << "-- size: " << size << std::endl;
-    // std::cout << "-- item size: " << itemsize << std::endl;
-    // std::cout << "-- format: " << format << std::endl;
-    // std::cout << "-- ndim: " << ndim << std::endl;
-    // std::cout << "-- shape size: " << shape.size() << ", data: [";
-    // for (auto &e : shape)
-    //   std::cout << e << ", ";
-    // std::cout << "]" << std::endl;
-    // if (!strides.empty()) {
-    //   std::cout << "-- strides size: " << strides.size() << ", data: [";
-    //   for (auto &e : strides)
-    //     std::cout << e << ", ";
-    //   std::cout << "]" << std::endl;
-    // }
-
     if (copy) {
       data = ::operator new(size * itemsize);
       memcpy(data, data_, size * itemsize);
     } else {
       data = data_;
     }
-    // std::cout << "data address: " << data << ", values: [";
-    // for (int i = 0; i < size; ++i)
-    //   std::cout << *(((float*) data) + i) << ", ";
-    // std::cout << std::endl;
   }
 
   XBuffer(void *data_, ssize_t itemsize_, std::string format_, ssize_t ndim_,
@@ -109,7 +75,6 @@ struct XBuffer {
           : data(data_), itemsize(itemsize_), format(format_), ndim(ndim_),
             shape(shape_), size(1), own_data(own_data_)
   {
-    // std::cout << "Initialize XBuffer " << this << std::endl;
     if (ndim != (ssize_t) shape.size()) // || ndim != (ssize_t) strides.size()
       throw std::invalid_argument("XBuffer: ndim doesn't match shape and/or"
                                   " strides length");
@@ -123,21 +88,6 @@ struct XBuffer {
       strides.push_back(nxt_stride);
     }
 
-    // std::cout << "-- size: " << size << std::endl;
-    // std::cout << "-- item size: " << itemsize << std::endl;
-    // std::cout << "-- format: " << format << std::endl;
-    // std::cout << "-- ndim: " << ndim << std::endl;
-    // std::cout << "-- shape size: " << shape.size() << ", data: [";
-    // for (auto &e : shape)
-    //   std::cout << e << ", ";
-    // std::cout << "]" << std::endl;
-    // if (!strides.empty()) {
-    //   std::cout << "-- strides size: " << strides.size() << ", data: [";
-    //   for (auto &e : strides)
-    //     std::cout << e << ", ";
-    //   std::cout << "]" << std::endl;
-    // }
-
     if (copy) {
       data = ::operator new(size * itemsize);
       memcpy(data, data_, size * itemsize);
@@ -146,43 +96,8 @@ struct XBuffer {
     }
   }
 
-  // XBuffer &operator =(const XBuffer &xb)
-  // {
-  //   std::cout << "XBuffer operator= copy from " << &xb << " to " << this << std::endl;
-  //   // TODO: transfer data instead of copying
-  //   itemsize = xb.itemsize;
-  //   format = xb.format;
-  //   ndim = xb.ndim;
-  //   shape = xb.shape;
-  //   strides = xb.strides;
-  //   size = xb.size;
-  //   own_data = true;
-  //   data = ::operator new(size * itemsize);
-  //   memcpy(data, xb.data, size * itemsize);
-
-  //   return *this;
-  // }
-
-  // XBuffer &operator =(XBuffer &&xb)
-  // {
-  //   std::cout << "XBuffer operator= move from " << &xb << " to " << this << std::endl;
-  //   // TODO: transfer data instead of copying
-  //   itemsize = xb.itemsize;
-  //   format = xb.format;
-  //   ndim = xb.ndim;
-  //   shape = xb.shape;
-  //   strides = xb.strides;
-  //   size = xb.size;
-  //   own_data = xb.own_data;
-  //   data = xb.data;
-
-  //   return *this;
-  // }
-
   ~XBuffer() {
-    // std::cout << "Delete xbuffer: " << this << std::endl;
     if (own_data) {
-      // std::cout << "delete XBuffer data" << std::endl;
       ::operator delete(data);
     }
       

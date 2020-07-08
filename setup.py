@@ -153,7 +153,8 @@ class CMakeBuild(build_ext):
         if use_vai_rt:
             cmake_args.append('-DUSE_VAI_RT=ON')
         if self.debug:
-            cmake_args.append('-DDEBUG=1')
+            cmake_args.append('-DDEBUG=ON')
+            # cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON')
 
         cfg = 'Debug' if self.debug else 'Release'
         print("Cfg: {}".format(cfg))

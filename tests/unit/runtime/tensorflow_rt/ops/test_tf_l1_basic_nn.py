@@ -304,4 +304,4 @@ class TestRuntimeTF(unittest.TestCase):
         outpt = layers[0].forward_exec([inpt])
 
         assert (outpt.shape) == (1, 1, 2, 2)
-        np.testing.assert_array_equal(outpt, expected_outpt)
+        np.testing.assert_array_almost_equal(outpt, expected_outpt)

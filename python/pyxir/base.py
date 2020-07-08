@@ -194,7 +194,7 @@ def compile_opaque_func(xgraph: XGraph,
     # if work_dir is None:
     work_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_work"))
     build_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_build"))
-    
+
     opt_xgraph = optimize(xgraph, target)
     c_xgraph = compile(opt_xgraph, target, work_dir=work_dir,
                        build_dir=build_dir)

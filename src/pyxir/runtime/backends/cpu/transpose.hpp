@@ -16,24 +16,27 @@
 
 #pragma once
 
-#include <iostream>
+#include <unordered_set>
+#include <dpu/dpu_runner.hpp>
 
-#ifndef PX_API
-#define PX_API __attribute__((visibility("default")))
-#endif
+#include "pyxir/pyxir_api.hpp"
+#include "pyxir/graph/xlayer.hpp"
+#include "pyxir/common/xbuffer.hpp"
+#include "pyxir/runtime/kernel_func.hpp"
 
-#ifndef PX_UNUSED
-#define PX_UNUSED __attribute__((visibility("default")))
-#endif
+namespace pyxir {
+namespace runtime {
+namespace cpu {
 
-inline void pxDebugMsg(const char * msg, const char *funcname,
-                       const char *fname, int lineno)
-{
-  std::cout << "PYXIR(" << funcname << "): " << msg << " (" 
-    << fname << ":" << lineno << ")" << std::endl;
-}
-#ifdef DEBUG
-#define pxDebug(x) pxDebugMsg(x,__FUNCTION__,__FILE__,__LINE__);
-#else
-#define pxDebug(x)
-#endif
+class TransposeFunc : public KernelFunc {
+
+  public:
+    TransposeFunc(XLayerHolder &xl);
+
+    void operator()(std::vector<XBufferHolder> &in_tensors,
+                    std::vector<XBufferHolder> &out_tensors);
+};
+
+} // namespace cpu
+} // namespace runtime
+} // namespace pyxir

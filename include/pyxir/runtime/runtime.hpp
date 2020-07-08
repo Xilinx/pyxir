@@ -19,6 +19,7 @@
 #include "../pyxir_api.hpp"
 #include "constants.hpp"
 #include "runtime_module_factory.hpp"
+#include "kernel_func_factory.hpp"
 
 #define STR_CONCAT_(__x, __y) __x##__y
 #define STR_CONCAT(__x, __y) STR_CONCAT_(__x, __y)
@@ -29,4 +30,11 @@
 #define REGISTER_RUNTIME_FACTORY_IMPL(RtName)\
   STR_CONCAT(RUNTIME_FACTORY_REG_VAR_DEF, __COUNTER__) = \
   pyxir::runtime::RuntimeModuleFactory::RegisterImpl(RtName)
+
+#define KERNEL_FUNC_REG_VAR_DEF                         \
+  static ::pyxir::runtime::KernelFuncFactory&  __mk_ ## PX
+
+#define REGISTER_KERNEL_FUNC(KernelName)\
+  STR_CONCAT(KERNEL_FUNC_REG_VAR_DEF, __COUNTER__) = \
+  pyxir::runtime::KernelFuncFactory::RegisterImpl(KernelName)
   

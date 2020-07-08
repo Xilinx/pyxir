@@ -14,26 +14,27 @@
  *  limitations under the License.
  */
 
-#pragma once
+#include "pyxir/runtime/runtime.hpp"
+#include "transpose.hpp"
 
-#include <iostream>
+namespace pyxir {
+namespace runtime {
+namespace cpu {
 
-#ifndef PX_API
-#define PX_API __attribute__((visibility("default")))
-#endif
+TransposeFunc::TransposeFunc(XLayerHolder &xl)
+  : KernelFunc(xl)
+{}
 
-#ifndef PX_UNUSED
-#define PX_UNUSED __attribute__((visibility("default")))
-#endif
+void TransposeFunc::operator()(
+  std::vector<XBufferHolder> &in_tensors,
+  std::vector<XBufferHolder> &out_tensors)
+{}
 
-inline void pxDebugMsg(const char * msg, const char *funcname,
-                       const char *fname, int lineno)
-{
-  std::cout << "PYXIR(" << funcname << "): " << msg << " (" 
-    << fname << ":" << lineno << ")" << std::endl;
-}
-#ifdef DEBUG
-#define pxDebug(x) pxDebugMsg(x,__FUNCTION__,__FILE__,__LINE__);
-#else
-#define pxDebug(x)
-#endif
+REGISTER_KERNEL_FUNC("cpu.Transpose")
+  .set_impl([](XLayerHolder &xl, KernelFuncHolder &kfh) {
+    kfh = std::move(KernelFuncHolder(new TransposeFunc(xl)));
+  });
+
+} // namespace cpu
+} // namespace runtime
+} // namespace pyxir
