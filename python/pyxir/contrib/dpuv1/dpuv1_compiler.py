@@ -167,7 +167,7 @@ class DPUV1Compiler(XGraphBaseCompiler):
         for i in range(len(out_nodes)):
             out_node_merged.append([layer['merged'][-1] for layer in json_graph['network'] if layer['name'] == out_nodes[i]][0])
         in_map = {in_name: in_name for in_name in input_names}
-        out_map = {out_name: t for out_name,t in zip(output_names,out_node_merged)}
+        out_map = {out_name: t for out_name,t in zip(output_names, out_nodes)}
         #out_map = {out_name: out_name for out_name in output_names}
 
         self.c_output.add(net_name, ['dpuv1lib.so'], in_map, out_map)
