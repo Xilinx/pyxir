@@ -620,7 +620,7 @@ def multiply(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         # Create beta name
         beta_name = 'beta-' + str(hash(expr))
 
-        beta = scale_layer.data * 0  # numpy.ndarray
+        beta = scale_layer.data[0] * 0  # numpy.ndarray
         beta_layer = \
             xlf.get_xop_factory_func('Constant', internal=True)(beta_name,
                                                                 beta)
@@ -645,7 +645,7 @@ def multiply(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         X = xlf.get_xop_factory_func('Constant')(op_name, data,
                                                  relay_id=[hash(expr)])
 
-    elif 'Constant' in lhs_layer.type and 'Constant' not in rhs_layer:
+    elif 'Constant' in lhs_layer.type and 'Constant' not in rhs_layer.type:
         X = add_scale_layer(rhs_layer, lhs_layer)
 
         # Update schedule with child layers
@@ -657,7 +657,7 @@ def multiply(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         # !Important: set input layer tops:
         rhs_layer.tops.append(X.name)
 
-    elif 'Constant' in rhs_layer.type and 'Constant' not in lhs_layer:
+    elif 'Constant' in rhs_layer.type and 'Constant' not in lhs_layer.type:
         X = add_scale_layer(lhs_layer, rhs_layer)
 
         # Update schedule with child layers

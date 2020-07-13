@@ -165,6 +165,93 @@ class TestRelayL1BasicConversions(unittest.TestCase):
         assert 'relay_id' in layers[1].attrs
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_multiply(self):
+        left = relay.var(
+            "left",
+            relay.TensorType((-1, 4, 2, 2), "float32")
+        )
+
+        right = relay.var(
+            "right",
+            relay.TensorType((-1, 4, 2, 2), "float32")
+        )
+
+        net = relay.multiply(left, right)
+
+        net = relay.Function([left, right], net)
+
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert 'relay_id' in layers[0].attrs
+
+        assert layers[1].type[0] == 'Input'
+        assert 'relay_id' in layers[1].attrs
+
+        assert layers[2].type[0] == 'Multiply'
+        assert layers[2].shapes == [-1, 4, 2, 2]
+        assert 'relay_id' in layers[1].attrs
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_multiply_right_constant(self):
+        left = relay.var(
+            "left",
+            relay.TensorType((-1, 4, 2, 2), "float32")
+        )
+
+        right = relay.expr.const(np.zeros((2, 2), dtype=np.float32))
+
+        net = relay.multiply(left, right)
+
+        net = relay.Function([left], net)
+
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert 'relay_id' in layers[0].attrs
+
+        assert layers[1].type[0] == 'Scale'
+        assert layers[1].shapes == [-1, 4, 2, 2]
+        assert 'relay_id' in layers[1].attrs
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_multiply_left_constant(self):
+        right = relay.var(
+            "right",
+            relay.TensorType((-1, 4, 2, 2), "float32")
+        )
+
+        left = relay.expr.const(np.zeros((2, 2), dtype=np.float32))
+
+        net = relay.multiply(left, right)
+
+        net = relay.Function([right], net)
+
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert 'relay_id' in layers[0].attrs
+
+        assert layers[1].type[0] == 'Scale'
+        assert layers[1].shapes == [-1, 4, 2, 2]
+        assert 'relay_id' in layers[1].attrs
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_rsqrt(self):
         data = relay.var(
             "data",
