@@ -218,6 +218,8 @@ class TupleGetItemLayer(rt_layer.BaseLayer, RtLayerTF):
                      .format(self.shape))
 
         self.index = self.attrs['index']
+        self.transpose = 'transpose' in self.attrs and self.attrs['transpose']
+        self.axes = list(self.attrs['axes']) if self.transpose else []
 
         self.inpt = []
         assert len(self.input_shapes) == 1
@@ -232,11 +234,15 @@ class TupleGetItemLayer(rt_layer.BaseLayer, RtLayerTF):
     def get_output_tensors(self, inpts):
         # type: (List[tf.Tensor]) -> tf.Tensor
         res = inpts[0][self.index]
+
+        if self.transpose:
+            return [tf.transpose(res, list(self.axes))]
+
         return [res]
 
     def forward_exec(self, inputs):
         # type: (List[List[str]]) -> numpy.ndarray
-        assert(len(inputs) == len(self.inputs))
+        assert len(inputs) == len(self.inpt)
 
         with tf.compat.v1.Session() as sess:
             feed_dict = \

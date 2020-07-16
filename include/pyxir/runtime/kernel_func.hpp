@@ -32,7 +32,7 @@ class KernelFunc {
     virtual ~KernelFunc() {}
 
     virtual void operator()(std::vector<XBufferHolder> &in_tensors,
-                            std::vector<XBufferHolder> &out_tensors) = 0;
+                            std::vector<XBufferHolder> &out_tensors) {};
 
   public:
     XLayerHolder xl_;

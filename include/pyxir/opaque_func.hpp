@@ -40,6 +40,7 @@ struct OpaqueValue {
   union {
     // int i;
     // double f;
+    std::vector<int64_t> *ints;
     std::string *s;
     std::vector<std::string> *strings;
     std::shared_ptr<graph::XGraph> xg;
@@ -54,15 +55,17 @@ struct OpaqueValue {
   /// @brief Implement move constructor
   OpaqueValue(OpaqueValue &&ov_)
   { 
-    // std::cout << "Start move OpaqueValue: " << this << std::endl;
     move(ov_);
-    // std::cout << "End move OpaqueValue: " << this << std::endl;
   }
 
   /// @brief Implement copy constructor
-  OpaqueValue(const OpaqueValue &ov_) { 
-    // std::cout << "Start copy OpaqueValue: " << &ov_ << " to " << this << std::endl;
+  OpaqueValue(const OpaqueValue &ov_) {
     copy(ov_);
+  }
+
+  OpaqueValue(const std::vector<int64_t> &ints_)
+  { 
+    set_ints(ints_); 
   }
 
   OpaqueValue(const std::string &s_) { set_string(s_); }
@@ -73,10 +76,7 @@ struct OpaqueValue {
   }
 
   OpaqueValue(std::shared_ptr<graph::XGraph> &xg_)
-  { 
-    // std::cout << "Create OV from XGraph: " << xg_ << std::endl;
-    // std::cout << "this: " << this << std::endl;
-    // std::cout << "this xg: " << xg << std::endl;
+  {
     set_xgraph(xg_);
   }
 
@@ -102,6 +102,7 @@ struct OpaqueValue {
   {
     switch (ov_.type_code)
     {
+      case pxVInt: set_ints(*ov_.ints); break;
       case pxStrHandle: set_string(*ov_.s); break;
       case pxVStrHandle: set_strings(*ov_.strings); break;
       case pxXGraphHandle: set_xgraph(ov_.xg); break;
@@ -123,6 +124,7 @@ struct OpaqueValue {
     switch (type_code)
     {
       case pxUndefined: break;
+      case pxVInt: ints = ov_.ints; ov_.set_undefined(); break;
       case pxStrHandle: s = ov_.s; ov_.set_undefined(); break;
       case pxVStrHandle: strings = ov_.strings; ov_.set_undefined(); break;
       case pxXGraphHandle: {
@@ -194,6 +196,25 @@ struct OpaqueValue {
   {
     type_code = pxUndefined;
     handle = nullptr;
+  }
+
+  // INTS
+  std::vector<int64_t> &get_ints()
+  { 
+    if (type_code != pxVInt)
+      throw std::runtime_error("Trying to retrieve OpaqueValue of type: "
+                               + get_type_code_str() + " as type: " 
+                               + px_type_code_to_string(pxVInt));
+    return *ints;
+  }
+
+  void set_ints(const std::vector<int64_t> &ints_)
+  { 
+    if (type_code != pxUndefined)
+      clean_up();
+
+    type_code = pxVInt;
+    ints = new std::vector<int64_t>(ints_);
   }
 
   // STRING
@@ -323,6 +344,7 @@ struct OpaqueValue {
     // std::cout << "clean up: " << this << ", type code: " << get_type_code_str() << std::endl;
     switch (type_code)
     {
+      case pxVInt: delete ints; break;
       case pxStrHandle: delete s; break;
       case pxVStrHandle: delete strings; break;
       case pxXGraphHandle: xg.~shared_ptr(); break;

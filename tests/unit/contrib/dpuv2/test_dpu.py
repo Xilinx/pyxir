@@ -182,7 +182,7 @@ class TestDPUContrib(unittest.TestCase):
         dpu_xgraph = TestDPUContrib.target_registry\
             .get_target_build_func('dpuv2-zcu104')(p_xgraph)
 
-        assert(len(dpu_xgraph) == 7)
+        assert(len(dpu_xgraph) == 6)
         layers = dpu_xgraph.get_layers()
 
         assert layers[0].type[0] == 'Input'
@@ -209,24 +209,26 @@ class TestDPUContrib(unittest.TestCase):
         assert layers[2].attrs['orig_bottom_tensors'] ==\
             {'xinput0': ['in1']}
 
+        # Merged TupleGetItem and Transpose layer
         assert layers[3].type[0] == 'TupleGetItem'
         assert layers[3].name == 'pool1'
         assert layers[3].shapes == [1, 2, 2, 2]
         assert layers[3].bottoms == ['xp0']
-        assert layers[3].tops == ['pool1_top_NHWC>NCHW']
+        assert layers[3].tops == ['dense1']
+        assert layers[3].attrs['transpose'] is True
 
-        assert layers[4].type[0] == 'Transpose'
-        assert layers[4].name == 'pool1_top_NHWC>NCHW'
-        assert layers[4].shapes == [1, 2, 2, 2]
-        assert layers[4].bottoms == ['pool1']
+        # assert layers[4].type[0] == 'Transpose'
+        # assert layers[4].name == 'pool1_top_NHWC>NCHW'
+        # assert layers[4].shapes == [1, 2, 2, 2]
+        # assert layers[4].bottoms == ['pool1']
+        # assert layers[4].tops == ['dense1']
+
+        assert layers[4].type[0] == 'Input'
+        assert layers[4].name == 'in2'
         assert layers[4].tops == ['dense1']
 
-        assert layers[5].type[0] == 'Input'
-        assert layers[5].name == 'in2'
-        assert layers[5].tops == ['dense1']
-
-        assert layers[6].type[0] == 'Dense'
-        assert layers[6].name == 'dense1'
-        assert layers[6].shapes == [1, 20]
-        assert layers[6].bottoms == ['pool1_top_NHWC>NCHW', 'in2']
-        assert layers[6].tops == []
+        assert layers[5].type[0] == 'Dense'
+        assert layers[5].name == 'dense1'
+        assert layers[5].shapes == [1, 20]
+        assert layers[5].bottoms == ['pool1', 'in2']
+        assert layers[5].tops == []

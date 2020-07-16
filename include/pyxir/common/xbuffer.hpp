@@ -61,6 +61,8 @@ struct XBuffer {
                                   " strides length");
     for (ssize_t i = 0; i < (ssize_t) ndim; ++i)
       size *= shape[i];
+    if (size < 0)
+      size *= -1;
 
     if (copy) {
       data = ::operator new(size * itemsize);
@@ -80,6 +82,8 @@ struct XBuffer {
                                   " strides length");
     for (ssize_t i = 0; i < (ssize_t) ndim; ++i)
       size *= shape[i];
+    if (size < 0)
+      size *= -1;
 
     ssize_t nxt_stride = (size > 0) ? size * itemsize : itemsize;
     strides.push_back(nxt_stride);

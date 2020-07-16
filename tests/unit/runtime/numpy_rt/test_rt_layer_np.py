@@ -458,6 +458,81 @@ class TestXfDNNTFOperations(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    def test_tuple_get_item(self):
+        A = np.array([0.1, 0.05], dtype=np.float32)
+        B = np.array([0.1, 0.05, 0.1], dtype=np.float32)
+
+        layers = [
+            TupleLayer(
+                name='tuple',
+                xtype='Tuple',
+                shape=TupleShape([TensorShape([2]), TensorShape([3])]),
+                dtype='float32',
+                inputs=['input1', 'input2'],
+                input_shapes=[TensorShape([2]), TensorShape([3])],
+                data=[],
+                attrs={},
+                subgraph=None
+            ),
+            TupleGetItemLayer(
+                name='tgi',
+                xtype='TupleGetItem',
+                shape=TensorShape([3]),
+                dtype='float32',
+                inputs=['tuple'],
+                input_shapes=[TupleShape([TensorShape([2]), TensorShape([3])])],
+                subgraph=None,
+                data=[],
+                attrs={
+                    'index': 1
+                }
+            )
+        ]
+
+        tupl = layers[0].forward_exec([A, B])
+        outpt = layers[1].forward_exec([tupl])
+
+        np.testing.assert_array_equal(outpt, B)
+
+    def test_tuple_get_item_transpose(self):
+        A = np.ones((1, 4, 4, 3), dtype=np.float32)
+        B = np.ones((1, 4, 4, 3), dtype=np.float32)
+
+        layers = [
+            TupleLayer(
+                name='tuple',
+                xtype='Tuple',
+                shape=TupleShape([TensorShape([1, 4, 4, 3]), TensorShape([1, 4, 4, 3])]),
+                dtype='float32',
+                inputs=['input1', 'input2'],
+                input_shapes=[TensorShape([1, 4, 4, 3]), TensorShape([1, 4, 4, 3])],
+                data=[],
+                attrs={},
+                subgraph=None
+            ),
+            TupleGetItemLayer(
+                name='tgi',
+                xtype='TupleGetItem',
+                shape=TensorShape([1, 3, 4, 4]),
+                dtype='float32',
+                inputs=['tuple'],
+                input_shapes=[TupleShape([TensorShape([1, 4, 4, 3]),
+                                          TensorShape([1, 4, 4, 3])])],
+                subgraph=None,
+                data=[],
+                attrs={
+                    'index': 1,
+                    'transpose': True,
+                    'axes': [0, 3, 1, 2]
+                }
+            )
+        ]
+
+        tupl = layers[0].forward_exec([A, B])
+        outpt = layers[1].forward_exec([tupl])
+
+        assert outpt.shape == (1, 3, 4, 4)
+
 
 if __name__ == '__main__':
     unittest.main()

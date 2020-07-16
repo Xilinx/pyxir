@@ -138,6 +138,20 @@ void DpuFunc::operator()(
   std::vector<XBufferHolder> &out_tensors)
 {
   pxDebug("Inside VaiComputeFunc::()");
+  if (out_tensors.empty()) {
+    for (const auto &shape : xl_->shapes) {
+      int64_t size = 1;
+      for (const int64_t &e : shape)
+        size *= e;
+      if (size < 0)
+        size *= -1;
+      void* input_data = malloc(4 * size); 
+      out_tensors.push_back(
+        std::shared_ptr<XBuffer>(
+          new XBuffer(input_data, 4, "f", shape.size(), shape, false, true)));
+    }
+  }
+    
 
   std::vector<vitis::ai::CpuFlatTensorBuffer> inputs_cpu, outputs_cpu;
   std::vector<vitis::ai::TensorBuffer*> in_buffer, out_buffer;

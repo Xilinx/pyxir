@@ -101,12 +101,18 @@ class TupleGetItemLayer(rt_layer.BaseLayerMultiOutputInput):
                      .format(self.shape))
 
         self.index = self.attrs['index']
+        self.transpose = 'transpose' in self.attrs and self.attrs['transpose']
+        self.axes = list(self.attrs['axes']) if self.transpose else []
 
     def forward_exec(self, inputs):
         # type: (List[numpy.ndarray]) -> numpy.ndarray
         assert(isinstance(inputs[0], tuple))
+        res = inputs[0][self.index]
 
-        return inputs[0][self.index]
+        if self.transpose:
+            return np.transpose(res, tuple(self.axes))
+
+        return res
 
 ###################
 # DATA STRUCTURES #

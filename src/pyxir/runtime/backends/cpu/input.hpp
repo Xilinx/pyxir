@@ -20,26 +20,18 @@
 #include "pyxir/graph/xlayer.hpp"
 #include "pyxir/common/xbuffer.hpp"
 #include "pyxir/runtime/kernel_func.hpp"
-#include "pyxir/opaque_func_registry.hpp"
 
 namespace pyxir {
 namespace runtime {
 namespace cpu {
 
-/**
- * @brief TransposeFunc for executing a Transpose layer
- */ 
-class TransposeFunc : public KernelFunc {
+class InputFunc : public KernelFunc {
 
   public:
-    TransposeFunc(XLayerHolder &xl);
+    InputFunc(XLayerHolder &xl);
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
-
-  private:
-    std::vector<int64_t> axes_;
-    OpaqueFunc transpose_of_;
 };
 
 } // namespace cpu

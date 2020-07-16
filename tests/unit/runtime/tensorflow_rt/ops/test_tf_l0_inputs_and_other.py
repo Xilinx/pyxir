@@ -25,7 +25,7 @@ import numpy as np
 from pyxir.runtime import base
 from pyxir.graph.layer import xlayer
 from pyxir.graph.io import xlayer_io
-
+from pyxir.shapes import TupleShape, TensorShape
 from pyxir.runtime.tensorflow.x_2_tf_registry import X_2_TF
 
 
@@ -84,3 +84,52 @@ class TestRuntimeTF(unittest.TestCase):
             outpt = layer.forward_exec(inpts)
 
         np.testing.assert_array_almost_equal(outpt, V)
+
+    def test_tuple_get_item(self):
+        A = np.array([0.1, 0.05], dtype=np.float32)
+        B = np.array([0.1, 0.05, 0.1], dtype=np.float32)
+
+        X = xlayer.XLayer(
+            name='tgi',
+            type=['TupleGetItem'],
+            shapes=[3],
+            sizes=[3],
+            bottoms=['in'],
+            tops=[],
+            attrs={'index': 1},
+            targets=[]
+        )
+
+        input_shapes = {'in': TupleShape([TensorShape([2]), TensorShape([3])])}
+        params = {}
+        layers = X_2_TF['TupleGetItem'](X, input_shapes, params)
+        assert len(layers) == 1
+
+        outpt = layers[0].forward_exec([A, B])
+
+        np.testing.assert_array_almost_equal(outpt, B)
+
+    def test_tuple_get_item_transpose(self):
+        A = np.ones((1, 4, 4, 3), dtype=np.float32)
+        B = np.ones((1, 4, 4, 3), dtype=np.float32)
+
+        X = xlayer.XLayer(
+            name='tgi',
+            type=['TupleGetItem'],
+            shapes=[1, 3, 4, 4],
+            sizes=[48],
+            bottoms=['in'],
+            tops=[],
+            attrs={'index': 1, 'transpose': True, 'axes': [0, 3, 1, 2]},
+            targets=[]
+        )
+
+        input_shapes = {'in': TupleShape([TensorShape([1, 4, 4, 3]),
+                                          TensorShape([1, 4, 4, 3])])}
+        params = {}
+        layers = X_2_TF['TupleGetItem'](X, input_shapes, params)
+        assert len(layers) == 1
+
+        outpt = layers[0].forward_exec([A, B])
+
+        assert outpt.shape == (1, 3, 4, 4)

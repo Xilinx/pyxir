@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <memory>
 #include <unordered_set>
 // #include <dpu/dpu_runner.hpp>
 
@@ -57,19 +58,14 @@ class VaiComputeFunc {
     std::vector<std::string> in_tensor_names_;
     std::vector<std::string> out_tensor_names_;
 
-    // The input tensors and output tensors of the accelerator might be
-    //  different than the original input and output tensors
-    // std::unordered_map<std::string, std::string> rt_in_to_in_map_;
-    // std::unordered_map<std::string, std::string> rt_out_to_out_map_;
-    std::vector<vitis::ai::Tensor*> dpu_runner_in_tensors_;
-    std::vector<vitis::ai::Tensor*> dpu_runner_out_tensors_;
     std::vector<int> in_tensor_order_;
     std::vector<int> out_tensor_order_;
 
-    std::unique_ptr<vitis::ai::DpuRunner> dpu_runner_;
-
     std::unordered_set<std::string> supported_ops_ =
-      {"Input", "Output", "DPUV1", "Tuple", "TupleGetItem", "Transpose"};
+      {"Input", "Output", "DPUV1", "DPUV2", "Tuple", "TupleGetItem", "Transpose"};
+
+    std::vector<std::unique_ptr<KernelFunc>> kernel_funcs_;
+    std::vector<XLayerHolder> Xs_;
 
     DpuFunc dpu_func_;
     XLayerHolder dpu_X_;

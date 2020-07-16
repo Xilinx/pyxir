@@ -433,7 +433,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         layers = dpu_xgraph.get_layers()
         # print(layers)
-        assert(len(dpu_xgraph) == 7)
+        assert(len(dpu_xgraph) == 6)
 
         assert(layers[0].type[0] == 'Input')
         assert(layers[0].name == 'in1')
@@ -462,23 +462,25 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         assert(layers[3].type[0] == 'TupleGetItem')
         assert(layers[3].bottoms == ['xp0'])
-        assert(layers[3].tops == ['pool1_top_NHWC>NCHW'])
+        assert(layers[3].tops == ['add1'])
+        assert layers[3].attrs['transpose'] is True
+        assert layers[3].attrs['axes'] == [0, 3, 1, 2]
 
-        assert(layers[4].type[0] == 'Transpose')
-        assert(layers[4].name == 'pool1_top_NHWC>NCHW')
-        assert(layers[4].bottoms == ['pool1'])
-        assert(layers[4].tops == ['add1'])
-        assert layers[4].attrs['axes'] == [0, 3, 1, 2]
+        # assert(layers[4].type[0] == 'Transpose')
+        # assert(layers[4].name == 'pool1_top_NHWC>NCHW')
+        # assert(layers[4].bottoms == ['pool1'])
+        # assert(layers[4].tops == ['add1'])
+        # assert layers[4].attrs['axes'] == [0, 3, 1, 2]
 
-        assert(layers[5].type[0] == 'Input')
-        assert(layers[5].name == 'in2')
-        assert(layers[5].bottoms == [])
-        assert(layers[5].tops == ['add1'])
+        assert layers[4].type[0] == 'Input'
+        assert layers[4].name == 'in2'
+        assert layers[4].bottoms == []
+        assert layers[4].tops == ['add1']
 
-        assert layers[6].type[0] == 'Eltwise'
-        assert layers[6].name == 'add1'
-        assert layers[6].bottoms == ['pool1_top_NHWC>NCHW', 'in2']
-        assert layers[6].tops == []
+        assert layers[5].type[0] == 'Eltwise'
+        assert layers[5].name == 'add1'
+        assert layers[5].bottoms == ['pool1', 'in2']
+        assert layers[5].tops == []
 
     def test_two_partition_inputs(self):
         net = [
@@ -583,7 +585,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             .get_target_build_func('test')(p_xgraph)
 
         layers = dpu_xgraph.get_layers()
-        assert len(dpu_xgraph) == 8
+        assert len(dpu_xgraph) == 7
 
         assert layers[0].type[0] == 'Input'
         assert layers[0].name == 'in1'
@@ -643,26 +645,25 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[5].type[0] == 'TupleGetItem'
         assert layers[5].name == 'concat1'
         assert layers[5].bottoms == ['xp2']
-        assert layers[5].tops ==\
-            ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']
+        assert layers[5].tops == ['dense1']
         assert layers[5].target == 'cpu'
         assert layers[5].subgraph is None
+        assert layers[5].attrs['transpose'] is True
 
-        assert layers[6].type[0] == 'Transpose'
-        assert layers[6].name ==\
-            'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
+        # assert layers[6].type[0] == 'Transpose'
+        # assert layers[6].name ==\
+        #     'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
+        # assert layers[6].bottoms == ['concat1']
+        # assert layers[6].tops == ['dense1']
+        # assert layers[6].target == 'cpu'
+        # assert layers[6].subgraph is None
+
+        assert layers[6].type[0] == 'Dense'
+        assert layers[6].name == 'dense1'
         assert layers[6].bottoms == ['concat1']
-        assert layers[6].tops == ['dense1']
+        assert layers[6].tops == []
         assert layers[6].target == 'cpu'
         assert layers[6].subgraph is None
-
-        assert layers[7].type[0] == 'Dense'
-        assert layers[7].name == 'dense1'
-        assert layers[7].bottoms ==\
-            ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']
-        assert layers[7].tops == []
-        assert layers[7].target == 'cpu'
-        assert layers[7].subgraph is None
 
     def test_two_partition_diff_layout(self):
         net = [
@@ -953,7 +954,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             .get_target_build_func('test')(p_xgraph)
 
         layers = dpu_xgraph.get_layers()
-        assert(len(dpu_xgraph) == 8)
+        assert len(dpu_xgraph) == 7
 
         assert layers[0].type[0] == 'Input'
         assert layers[0].name == 'in1'
@@ -1016,24 +1017,24 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         assert layers[5].type[0] == 'TupleGetItem'
         assert layers[5].name == 'concat1'
-        assert layers[5].shapes == [1, 2, 2, 4]
+        assert layers[5].shapes == [1, 4, 2, 2]
         assert layers[5].bottoms == ['xp2']
-        assert layers[5].tops ==\
-            ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']
+        assert layers[5].tops == ['dense1']
+        assert layers[5].attrs['transpose'] is True
+        assert layers[5].attrs['axes'] == [0, 3, 1, 2]
 
-        assert layers[6].type[0] == 'Transpose'
-        assert layers[6].name ==\
-            'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
-        assert layers[6].shapes == [1, 4, 2, 2]
+        # assert layers[6].type[0] == 'Transpose'
+        # assert layers[6].name ==\
+        #     'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
+        # assert layers[6].shapes == [1, 4, 2, 2]
+        # assert layers[6].bottoms == ['concat1']
+        # assert layers[6].tops == ['dense1']
+
+        assert layers[6].type[0] == 'Dense'
+        assert layers[6].name == 'dense1'
+        assert layers[6].shapes == [1, 20]
         assert layers[6].bottoms == ['concat1']
-        assert layers[6].tops == ['dense1']
-
-        assert layers[7].type[0] == 'Dense'
-        assert layers[7].name == 'dense1'
-        assert layers[7].shapes == [1, 20]
-        assert layers[7].bottoms ==\
-            ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']
-        assert layers[7].tops == []
+        assert layers[6].tops == []
 
     def test_inception_like_block(self):
         net = [
@@ -1149,7 +1150,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             .get_target_build_func('test')(p_xgraph)
 
         layers = dpu_xgraph.get_layers()
-        assert(len(dpu_xgraph) == 8)
+        assert len(dpu_xgraph) == 7
 
         assert layers[0].type[0] == 'Input'
         assert layers[0].name == 'in1'
@@ -1219,21 +1220,19 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         assert layers[5].type[0] == 'TupleGetItem'
         assert layers[5].name == 'concat2'
-        assert layers[5].shapes == [1, 2, 2, 8]
+        assert layers[5].shapes == [1, 8, 2, 2]
         assert layers[5].bottoms == ['xp0']
-        assert layers[5].tops ==\
-            ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']
+        assert layers[5].tops == ['dense1']
 
-        assert layers[6].type[0] == 'Transpose'
-        assert layers[6].name ==\
-            'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
-        assert layers[6].shapes == [1, 8, 2, 2]
+        # assert layers[6].type[0] == 'Transpose'
+        # assert layers[6].name ==\
+        #     'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
+        # assert layers[6].shapes == [1, 8, 2, 2]
+        # assert layers[6].bottoms == ['concat2']
+        # assert layers[6].tops == ['dense1']
+
+        assert layers[6].type[0] == 'Dense'
+        assert layers[6].name == 'dense1'
+        assert layers[6].shapes == [1, 20]
         assert layers[6].bottoms == ['concat2']
-        assert layers[6].tops == ['dense1']
-
-        assert layers[7].type[0] == 'Dense'
-        assert layers[7].name == 'dense1'
-        assert layers[7].shapes == [1, 20]
-        assert layers[7].bottoms ==\
-            ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']
-        assert layers[7].tops == []
+        assert layers[6].tops == []

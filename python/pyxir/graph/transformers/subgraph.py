@@ -24,6 +24,7 @@ import logging
 
 from pyxir.graph.algorithms.topological_sorting import sort_topologically
 from pyxir.shared import fancy_logging
+from pyxir.shapes import TensorShape, TupleShape
 
 from pyxir.graph.layer.xlayer import XLayer, defaultXLayer
 from pyxir.graph.xgraph_factory import XGraphFactory
@@ -86,6 +87,8 @@ def xgraph_build_func(xgraph,
     #   new layers (TupleGetItem or Transpose)
     xp_out_tensors_2_layers = {}
 
+    name_changes = {}
+    net_map = {}
     net = []
     for X in xgraph.get_layers():
 
@@ -152,7 +155,8 @@ def xgraph_build_func(xgraph,
                     tops=[],
                     subgraph_data=[]
                 )
-                net.append(subgraph_X)
+                net.append(subgraph_X.name)
+                net_map[Xp.name] = subgraph_X
 
                 # Subgraph layers have multiple outputs (Tuple) so we
                 #   retrieve the different subgraph outputs
@@ -181,20 +185,47 @@ def xgraph_build_func(xgraph,
                         internal=1,
                         attrs={'index': i}
                     )
-                    net.append(X_tgi)
+                    net.append(X_tgi.name)
+                    net_map[tgi_name] = X_tgi
 
                     subgraph_X.tops.append(tgi_name)
 
                     xp_out_tensors_2_layers[output_name] = tgi_name
 
             else:
-                net.append(X)
+                net.append(X.name)
+                net_map[X.name] = X
 
         elif X.subgraph is not None and X.subgraph in visited_xps:
             # Remove layer
             visited_xps[X.subgraph].add(X.name)
+        elif 'Transpose' in X.type:
+            # Possibly merge transpose in TupleGetItem layer
+            bX = net_map[X.bottoms[0]]
+            if 'TupleGetItem' in bX.type:
+                new_X = bX._replace(
+                    tops=[t if t != X.name else X.tops[0] for t in bX.tops ]
+                )
+                new_X.attrs['transpose'] = True
+                new_X.attrs['axes'] = X.attrs['axes']
+                new_X.shapes[:] = TensorShape(X.shapes[:])
+                net_map[new_X.name] = new_X
+                name_changes[X.name] = bX.name
+            else:
+                net.append(X.name)
+                net_map[X.name] = X
         else:
-            net.append(X)
+            net.append(X.name)
+            net_map[X.name] = X
+
+        # Reflect possibly merged layers
+        new_bottoms = [b if b not in name_changes else name_changes[b] 
+                       for b in X.bottoms]
+        if new_bottoms != X.bottoms:
+            new_X = X._replace(
+                bottoms=new_bottoms
+            )
+            net_map[X.name] = new_X
 
     # Set tops and bottoms  & enforce topological sequence
     for xp in visited_xps.keys():
@@ -207,18 +238,6 @@ def xgraph_build_func(xgraph,
                         else top_name)
                        for bXt in bX.tops]
 
-            # NOTE: It's possible that bX was added after the Xp layer in the
-            #   new network -> swap
-            # bXi = find_indices(net, lambda X: X.name == b)[0]
-            # Xpi = find_indices(net, lambda X: X.name == Xp.name)[0]
-
-            # if bXi > Xpi:
-            #     bXreal = net[bXi]
-            #     # Remove
-            #     net = list(filter(lambda X: X.name != b, net))
-            #     # Insert just before Xp subgraph
-            #     net.insert(Xpi, bXreal)
-
         for t in Xp.tops:
             tX = xgraph.get(t)
             tX.bottoms = [(tXb if tXb not in visited_xps[Xp.name]
@@ -226,7 +245,8 @@ def xgraph_build_func(xgraph,
                           for tXb in tX.bottoms]
 
     # Topological sorting
-    top_net = sort_topologically(net)
+    X_net = [net_map[e] for e in net]
+    top_net = sort_topologically(X_net)
 
     sub_xgraph = xgraph_factory.build_from_xlayer(top_net)
 

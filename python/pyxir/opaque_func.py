@@ -26,7 +26,7 @@ from typing import Callable, Any, List
 from pyxir.type import TypeCode
 from pyxir.graph.xgraph import XGraph
 from pyxir.shared.xbuffer import XBuffer
-from pyxir.shared.vector import StrVector
+from pyxir.shared.vector import StrVector, IntVector
 
 
 class OpaqueFunc(object):
@@ -35,6 +35,9 @@ class OpaqueFunc(object):
     # First: C++ -> Python
     # Second: Python -> C++
     type_codes_ = {
+        TypeCode.vInt: (
+            lambda arg_: IntVector(arg_.ints),
+            lambda arg_: lpx.OpaqueValue(lpx.IntVector(arg_))),
         TypeCode.Str: (
             lambda arg_: arg_.s,
             lambda arg_: lpx.OpaqueValue(arg_)),

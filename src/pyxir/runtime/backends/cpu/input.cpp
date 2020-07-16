@@ -14,44 +14,33 @@
  *  limitations under the License.
  */
 
-#include <pybind11/pybind11.h>
-#include <pybind11/embed.h>
+#include <cassert>
 
 #include "pyxir/runtime/runtime.hpp"
-#include "transpose.hpp"
-
-namespace py = pybind11;
+#include "input.hpp"
 
 namespace pyxir {
 namespace runtime {
 namespace cpu {
 
-TransposeFunc::TransposeFunc(XLayerHolder &xl)
+InputFunc::InputFunc(XLayerHolder &xl)
   : KernelFunc(xl)
-{
-  axes_ = xl_->get_attr("axes").get_ints();
+{}
 
-  // Import Python global Transpose function for now
-  auto transpose = py::module::import("pyxir.runtime.globals.transpose");
-
-  if (!pyxir::OpaqueFuncRegistry::Exists("px.globals.Transpose"))
-    throw std::runtime_error("Cannot import global Transpose function because"
-                             " `px.global.Transpose` opaque function is"
-                             " not registered");
-
-  transpose_of_ = pyxir::OpaqueFuncRegistry::Get("px.globals.Transpose");
-}
-
-void TransposeFunc::operator()(
+void InputFunc::operator()(
   std::vector<XBufferHolder> &in_tensors,
   std::vector<XBufferHolder> &out_tensors)
 {
-  transpose_of_(in_tensors, out_tensors, axes_);
+  assert(in_tensors.size() == 1);
+  if (out_tensors.size() == 0)
+    out_tensors.push_back(in_tensors[0]);
+  else
+    out_tensors[0] = in_tensors[0];
 }
 
-REGISTER_KERNEL_FUNC("cpu.Transpose")
+REGISTER_KERNEL_FUNC("cpu.Input")
   .set_impl([](XLayerHolder &xl, KernelFuncHolder &kfh) {
-    kfh = std::move(KernelFuncHolder(new TransposeFunc(xl)));
+    kfh = std::move(KernelFuncHolder(new InputFunc(xl)));
   });
 
 } // namespace cpu

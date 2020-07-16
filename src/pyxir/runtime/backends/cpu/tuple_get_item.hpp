@@ -20,25 +20,31 @@
 #include "pyxir/graph/xlayer.hpp"
 #include "pyxir/common/xbuffer.hpp"
 #include "pyxir/runtime/kernel_func.hpp"
-#include "pyxir/opaque_func_registry.hpp"
 
 namespace pyxir {
 namespace runtime {
 namespace cpu {
 
 /**
- * @brief TransposeFunc for executing a Transpose layer
+ * @brief TupleGetItemFunc for executing a TupleGetItem layer, possibly including a transpose
+ *  operation.
  */ 
-class TransposeFunc : public KernelFunc {
+class TupleGetItemFunc : public KernelFunc {
 
   public:
-    TransposeFunc(XLayerHolder &xl);
+    TupleGetItemFunc(XLayerHolder &xl);
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
 
   private:
+    // The index indicating the element of the incoming tuple input to be returined
+    int index_;
+    // Whether to perform a transpose operation after retrieval of the input tensor
+    bool transpose_;
+    // The transpose axes
     std::vector<int64_t> axes_;
+    // Opaque Transpose function for execution
     OpaqueFunc transpose_of_;
 };
 
