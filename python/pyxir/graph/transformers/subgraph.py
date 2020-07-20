@@ -202,9 +202,15 @@ def xgraph_build_func(xgraph,
         elif 'Transpose' in X.type:
             # Possibly merge transpose in TupleGetItem layer
             bX = net_map[X.bottoms[0]]
+            new_tops = []
+            for t in bX.tops:
+                if t != X.name:
+                    new_tops.append(t)
+                elif len(X.tops) > 0:
+                    new_tops.append(X.tops[0])
             if 'TupleGetItem' in bX.type:
                 new_X = bX._replace(
-                    tops=[t if t != X.name else X.tops[0] for t in bX.tops ]
+                    tops=new_tops
                 )
                 new_X.attrs['transpose'] = True
                 new_X.attrs['axes'] = X.attrs['axes']
