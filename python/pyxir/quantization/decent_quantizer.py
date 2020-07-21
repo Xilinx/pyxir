@@ -24,7 +24,7 @@ import logging
 import warnings
 import subprocess
 from progressbar import ProgressBar
-import tensorflow as tf
+# import tensorflow as tf
 
 from pyxir.contrib.tools import classification
 from pyxir.shared.quantizer_output import QuantizerOutput
@@ -48,6 +48,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
     #     warnings.warn("Could not import decent_q module")
     try:
         #     from tensorflow.contrib import decent_q
+        import tensorflow as tf
         if hasattr(tf.contrib, 'decent_q'):
             from tensorflow.contrib import decent_q
         else:
@@ -78,6 +79,9 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
     def quantize_subgraph(self, xgraph, inputs, input_names, output_names):
         # type: (XGraph, Dict[str, numpy.ndarray])
         """ Quantize subgraph with inputs """
+        
+        # Import Tensorflow only when needed to avoid strict dependency
+        import tensorflow as tf
 
         frozen_graph = self.partition_graphs[xgraph.get_name()]
         logger.info("Load frozen graph from: {}".format(frozen_graph))
@@ -172,6 +176,9 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         add the information to the corresponding XLayers
         """
 
+        # Import tensorflow only when needed to avoid strict dependency
+        import tensorflow as tf
+
         quant_info = []
 
         input_graph_def = tf.GraphDef()
@@ -224,6 +231,9 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         """
         Retrieve the quantization info from the provided quantized model
         """
+
+        # import tensorflow only when needed to avoid strict dependency
+        import tensorflow as tf
 
         quant_info = []
 

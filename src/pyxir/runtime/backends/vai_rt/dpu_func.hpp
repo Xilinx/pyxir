@@ -17,7 +17,7 @@
 #pragma once
 
 #include <unordered_set>
-#include <dpu/dpu_runner.hpp>
+#include <dpu_runner.hpp>
 
 #include "pyxir/pyxir_api.hpp"
 #include "pyxir/graph/xlayer.hpp"

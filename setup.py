@@ -57,6 +57,12 @@ else:
    	use_vai_rt = False
 
 
+if '--use_vai_rt_dpuv2' in sys.argv:
+    use_vai_rt_dpuv2 = True
+    sys.argv.remove('--use_vai_rt_dpuv2')
+else:
+    use_vai_rt_dpuv2 = False
+
 ###############
 # STATIC DATA #
 ###############
@@ -152,6 +158,8 @@ class CMakeBuild(build_ext):
 
         if use_vai_rt:
             cmake_args.append('-DUSE_VAI_RT=ON')
+        if use_vai_rt_dpuv2:
+            cmake_args.append('-DUSE_VAI_RT_DPUV2=ON')
         if self.debug:
             cmake_args.append('-DDEBUG=ON')
             # cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON')
