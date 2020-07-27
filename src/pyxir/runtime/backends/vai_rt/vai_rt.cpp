@@ -15,12 +15,9 @@
  */
 
 /* header file for Vitis-AI Runner APIs */
-#include <dpu/dpu_runner.hpp>
 
 #include "pyxir/runtime/runtime.hpp"
 #include "vai_compute_func_factory.hpp"
-
-using namespace vitis;
 
 namespace pyxir {
 namespace runtime {

@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include <unordered_set>
-#include <dpu_runner.hpp>
-
 #include "pyxir/pyxir_api.hpp"
 #include "pyxir/graph/xlayer.hpp"
 #include "pyxir/common/xbuffer.hpp"
@@ -26,31 +23,17 @@
 
 namespace pyxir {
 namespace runtime {
-namespace vai_rt {
+namespace cpu {
 
-class DpuFunc : public KernelFunc {
+class TupleFunc : public KernelFunc {
 
   public:
-    DpuFunc() {}
-    DpuFunc(XLayerHolder &xl);
+    TupleFunc(XLayerHolder &xl);
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
-
-  private:
-    std::vector<std::string> in_tensor_names_;
-    std::vector<std::string> out_tensor_names_;
-
-    // The input tensors and output tensors of the accelerator might be
-    //  different than the original input and output tensors
-    std::vector<vitis::ai::Tensor*> dpu_runner_in_tensors_;
-    std::vector<vitis::ai::Tensor*> dpu_runner_out_tensors_;
-    std::vector<int> in_tensor_order_;
-    std::vector<int> out_tensor_order_;
-
-    std::unique_ptr<vitis::ai::DpuRunner> dpu_runner_;
 };
 
-} // vai_rt
+} // namespace cpu
 } // namespace runtime
 } // namespace pyxir

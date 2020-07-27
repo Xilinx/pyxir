@@ -12,16 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for generating a tensorflow graph from an XGraph
-
-
-"""
+""" Module for generating a tensorflow graph from an XGraph """
 
 import os
 import logging
 
-import tensorflow as tf
+# import tensorflow as tf
 
 from pyxir.graph.optimization import optimizations, conditions
 from pyxir.graph.optimization.xgraph_optimization_pass \
@@ -94,6 +90,9 @@ class TfGenerator(object):
         """
         # layout_transform_pass = XGraphLayoutTransformationPass(layout)
         # xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
+        
+        # Import tensorflow only when needed
+        import tensorflow as tf
 
         executors = []
         if not subgraphs_only:
@@ -143,6 +142,9 @@ class TfGenerator(object):
     def run(self, xgraph, pb_file, inputs):
         # type: (XGraph, str, dict[str, numpy.ndarray])
         """ Run frozen tensorflow graph for corresponding XGraph """
+       
+        # Import Tensorflow only when needed
+        import tensorflow as tf
 
         input_graph_def = tf.GraphDef()
         with tf.gfile.GFile(frozen_graph, "rb") as f:

@@ -27,6 +27,7 @@
 #include "../cpu/input.hpp"
 #include "../cpu/transpose.hpp"
 #include "../cpu/tuple_get_item.hpp"
+#include "../cpu/tuple.hpp"
 
 
 void vaiDebugMsg(const char * msg, const char *funcname,
@@ -69,6 +70,9 @@ VaiComputeFunc::VaiComputeFunc(
     } else if (X->xtype[0] == "TupleGetItem") {
       std::unique_ptr<KernelFunc> tgi_func(new cpu::TupleGetItemFunc(X));
       kernel_funcs_.push_back(std::move(tgi_func));
+    } else if (X->xtype[0] == "Tuple") {
+      std::unique_ptr<KernelFunc> tuple_func(new cpu::TupleFunc(X));
+      kernel_funcs_.push_back(std::move(tuple_func));
     } else if (X->xtype[0] == "Transpose") {
       std::unique_ptr<KernelFunc> transpose_func(new cpu::TransposeFunc(X));
       kernel_funcs_.push_back(std::move(transpose_func));

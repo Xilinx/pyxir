@@ -30,6 +30,8 @@ from shutil import copyfile, copymode
 from distutils.version import LooseVersion
 from distutils.command.install_headers import install_headers
 from distutils.command.build_py import build_py
+from setuptools.command.install_lib import install_lib
+from distutils.command.install_data import install_data
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
@@ -56,6 +58,12 @@ if '--use_vai_rt' in sys.argv:
 else:
    	use_vai_rt = False
 
+
+if '--use_vai_rt_dpuv2' in sys.argv:
+    use_vai_rt_dpuv2 = True
+    sys.argv.remove('--use_vai_rt_dpuv2')
+else:
+    use_vai_rt_dpuv2 = False
 
 ###############
 # STATIC DATA #
@@ -152,6 +160,8 @@ class CMakeBuild(build_ext):
 
         if use_vai_rt:
             cmake_args.append('-DUSE_VAI_RT=ON')
+        if use_vai_rt_dpuv2:
+            cmake_args.append('-DUSE_VAI_RT_DPUV2=ON')
         if self.debug:
             cmake_args.append('-DDEBUG=ON')
             # cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON')
@@ -171,8 +181,9 @@ class CMakeBuild(build_ext):
             build_args += ['--', '-j{}'.format(multiprocessing.cpu_count())]
 
         env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'\
-            .format(env.get('CXXFLAGS', ''), self.distribution.get_version())
+        # env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'\
+        #     .format(env.get('CXXFLAGS', ''), self.distribution.get_version())
+        env['CXXFLAGS'] = '{}'.format(env.get('CXXFLAGS', ''))
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args,
@@ -183,16 +194,20 @@ class CMakeBuild(build_ext):
         print(self.build_lib)
         # Copy libpyxir.so to python/ next to python/pyxir for rapid
         #   prototyping
-        lib_bin = os.path.join(self.build_lib, 'libpyxir.so.' + str(__version__))
+        lib_bin = os.path.join(self.build_lib, 'libpyxir.so')
         lib_dest_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'python')
         self.copy_file(lib_bin, lib_dest_dir)
+        # lib_bin = os.path.join(self.build_lib, 'libpyxir.so.' + str(__version__))
+        # lib_dest_dir = os.path.join(os.path.dirname(
+        #     os.path.abspath(__file__)), 'python')
+        # self.copy_file(lib_bin, lib_dest_dir)
 
         # Create symlink
-        lib_symlink = lib_dest_dir + "/libpyxir.so"
-        if os.path.exists(lib_symlink):
-            os.remove(lib_symlink)
-        os.symlink(lib_dest_dir + '/libpyxir.so.' + str(__version__), lib_symlink)
+        # lib_symlink = lib_dest_dir + "/libpyxir.so"
+        # if os.path.exists(lib_symlink):
+        #     os.remove(lib_symlink)
+        # os.symlink(lib_dest_dir + '/libpyxir.so.' + str(__version__), lib_symlink)
 
         # Copy *_test file to tests directory
         # test_bin = os.path.join(self.build_temp, 'tests/pyxir_test')

@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <unordered_set>
-// #include <dpu/dpu_runner.hpp>
+#include <dpu_runner.hpp>
 
 #include "pyxir/graph/xgraph.hpp"
 #include "pyxir/common/xbuffer.hpp"

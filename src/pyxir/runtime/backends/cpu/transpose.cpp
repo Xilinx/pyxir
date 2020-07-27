@@ -30,9 +30,8 @@ TransposeFunc::TransposeFunc(XLayerHolder &xl)
   : KernelFunc(xl)
 {
   axes_ = xl_->get_attr("axes").get_ints();
-
   // Import Python global Transpose function for now
-  auto transpose = py::module::import("pyxir.runtime.globals.transpose");
+  // auto transpose = py::module::import("pyxir.runtime.globals.transpose");
 
   if (!pyxir::OpaqueFuncRegistry::Exists("px.globals.Transpose"))
     throw std::runtime_error("Cannot import global Transpose function because"
@@ -46,6 +45,24 @@ void TransposeFunc::operator()(
   std::vector<XBufferHolder> &in_tensors,
   std::vector<XBufferHolder> &out_tensors)
 {
+  if (out_tensors.size() == 0) {
+    for (const auto &shape : xl_->shapes) {
+      int64_t size = 1;
+      std::vector<ssize_t> buffer_shape;
+      for (const int64_t &e : shape) {
+        size *= e;
+	buffer_shape.push_back(e);
+      }
+      // Set correct batch size
+      buffer_shape[0] = in_tensors[0]->shape[0];
+      if (size < 0)
+        size *= -1;
+      void* input_data = malloc(4 * size); 
+      out_tensors.push_back(
+        std::shared_ptr<XBuffer>(
+          new XBuffer(input_data, 4, "f", buffer_shape.size(), buffer_shape, false, true)));
+    }
+  }
   transpose_of_(in_tensors, out_tensors, axes_);
 }
 

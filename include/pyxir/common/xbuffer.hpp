@@ -86,7 +86,7 @@ struct XBuffer {
       size *= -1;
 
     ssize_t nxt_stride = (size > 0) ? size * itemsize : itemsize;
-    strides.push_back(nxt_stride);
+    strides.push_back(nxt_stride / shape[0]);
     for (ssize_t i = 1; i < (ssize_t) ndim; ++i) {
       nxt_stride /= shape[i];
       strides.push_back(nxt_stride);
@@ -111,5 +111,20 @@ struct XBuffer {
 };
 
 typedef std::shared_ptr<XBuffer> XBufferHolder;
+
+inline XBufferHolder create_buffer(std::vector<ssize_t> &shape)
+{
+  int64_t size = 1;
+  std::vector<ssize_t> buffer_shape;
+  for (const int64_t &e : shape) {
+    size *= e;
+    buffer_shape.push_back(e);
+  }
+  if (size < 0)
+    size *= -1;
+  void* input_data = malloc(4 * size); 
+  return std::shared_ptr<XBuffer>(
+    new XBuffer(input_data, 4, "f", buffer_shape.size(), shape, false, true));
+}
 
 } // pyxir

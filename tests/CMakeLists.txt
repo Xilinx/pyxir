@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 
 set(TARGET pyxir)
-project(${TARGET}_test VERSION 0.1.0)
+project(${TARGET}_test)
 
 set(CMAKE_CXX_STANDARD 11)
 set(PYXIR_SHARED_LIB libpyxir.so)
@@ -45,4 +45,4 @@ add_executable("${TARGET}_test" ${TEST_SOURCES})
 add_dependencies("${TARGET}_test" ${TARGET})
 target_link_libraries("${TARGET}_test" PUBLIC pyxir Catch2::Catch2)
 
-set_target_properties("${TARGET}_test" PROPERTIES VERSION ${PROJECT_VERSION} RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/cpp)
+set_target_properties("${TARGET}_test" PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/cpp)

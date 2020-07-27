@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(pyxir VERSION 0.1.0)
+project(pyxir)
+
+set(CMAKE_CXX_STANDARD 14)
 
 set(TARGET pyxir)
 set(pyxir_EXT_LIBRARIES "")
@@ -18,8 +20,8 @@ file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 if (USE_VAI_RT)
-	set(vitisai_ROOT_DIR $ENV{CONDA_PREFIX})
-  set(vitisai_INCLUDE_DIRS ${vitisai_ROOT_DIR}/lib/python3.6/site-packages/vai/dpuv1/rt/vitis/include)
+  set(vitisai_ROOT_DIR $ENV{CONDA_PREFIX})
+  set(vitisai_INCLUDE_DIRS ${vitisai_ROOT_DIR}/lib/python3.6/site-packages/vai/dpuv1/rt/vitis/include/dpu)
   set(vitisai_LIBRARIES ${vitisai_ROOT_DIR}/lib)
   set(VITISAI_SHARED_LIB libxfdnn.so)  
   include_directories(${vitisai_INCLUDE_DIRS})
@@ -27,6 +29,15 @@ if (USE_VAI_RT)
   set_property(TARGET vitisai_rt PROPERTY IMPORTED_LOCATION ${vitisai_LIBRARIES}/${VITISAI_SHARED_LIB})
   list(APPEND pyxir_EXT_LIBRARIES vitisai_rt)
   # list(APPEND pyxir_EXT_DEPENDENCIES vitisai_rt)
+elseif (USE_VAI_RT_DPUV2)
+  message("VAI RT DPUV2")
+  set(vitisai_INCLUDE_DIRS /usr/include/vai)
+  set(vitisai_LIBRARIES /usr/lib)
+  set(VITISAI_SHARED_LIB libn2cube.so)
+  include_directories(${vitisai_INCLUDE_DIRS})
+  add_library(vitisai_rt SHARED IMPORTED)
+  set_property(TARGET vitisai_rt PROPERTY IMPORTED_LOCATION ${vitisai_LIBRARIES}/${VITISAI_SHARED_LIB})
+  list(APPEND pyxir_EXT_LIBRARIES vitisai_rt)
 else()
   # Remove VAI_RT backend source files
   file(GLOB_RECURSE vitisai_rt_SOURCES "src/pyxir/runtime/backends/vai_rt/*.cpp")
@@ -35,9 +46,14 @@ endif()
 
 add_library(${TARGET} SHARED ${SOURCES})
 
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(${TARGET} PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 # add_dependencies(${TARGET} ${pyxir_EXT_DEPENDENCIES})
 target_link_libraries(${TARGET} PUBLIC ${pyxir_EXT_LIBRARIES} PRIVATE pybind11::embed ${CMAKE_DL_LIBS})
-set_target_properties(${TARGET} PROPERTIES VERSION ${PROJECT_VERSION})
+# set_target_properties(${TARGET} PROPERTIES VERSION ${PROJECT_VERSION})
 
 install(TARGETS ${TARGET} LIBRARY DESTINATION ".")
 install(

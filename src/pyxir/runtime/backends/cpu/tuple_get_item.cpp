@@ -39,7 +39,7 @@ TupleGetItemFunc::TupleGetItemFunc(XLayerHolder &xl)
     axes_ = xl_->get_attr("axes").get_ints();
 
     // Import Python global Transpose function for now
-    auto transpose = py::module::import("pyxir.runtime.globals.transpose");
+    // auto transpose = py::module::import("pyxir.runtime.globals.transpose");
 
     if (!pyxir::OpaqueFuncRegistry::Exists("px.globals.Transpose"))
       throw std::runtime_error("Cannot import global Transpose function because"
@@ -70,7 +70,7 @@ void TupleGetItemFunc::operator()(
       }
       std::vector<XBufferHolder> transpose_in {in_tensors[index_]};
       // Execute transpose
-      transpose_of_(transpose_in, out_tensors);
+      transpose_of_(transpose_in, out_tensors, axes_);
     } else {
       out_tensors.push_back(in_tensors[index_]);
     }
@@ -81,7 +81,7 @@ void TupleGetItemFunc::operator()(
 
     if (transpose_) {
       std::vector<XBufferHolder> transpose_in {in_tensors[index_]};
-      transpose_of_(transpose_in, out_tensors);
+      transpose_of_(transpose_in, out_tensors, axes_);
     } else {
       memcpy(out_tensors[0]->data, in_tensors[index_]->data,
              out_tensors[0]->size * out_tensors[0]->itemsize);

@@ -21,4 +21,4 @@ Module for quantizing XGraphs
 from .base_quantizer import XGraphBaseQuantizer
 from .default_quantizer import XGraphDefaultQuantizer
 from .add_scaling_quantizer import XGraphAddScalingQuantizer
-from .mse_quantization import XGraphMSEThresholdQuantizer
+# from .mse_quantization import XGraphMSEThresholdQuantizer
