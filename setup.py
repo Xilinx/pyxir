@@ -30,6 +30,8 @@ from shutil import copyfile, copymode
 from distutils.version import LooseVersion
 from distutils.command.install_headers import install_headers
 from distutils.command.build_py import build_py
+from setuptools.command.install_lib import install_lib
+from distutils.command.install_data import install_data
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
@@ -179,8 +181,9 @@ class CMakeBuild(build_ext):
             build_args += ['--', '-j{}'.format(multiprocessing.cpu_count())]
 
         env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'\
-            .format(env.get('CXXFLAGS', ''), self.distribution.get_version())
+        # env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'\
+        #     .format(env.get('CXXFLAGS', ''), self.distribution.get_version())
+        env['CXXFLAGS'] = '{}'.format(env.get('CXXFLAGS', ''))
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args,
@@ -195,6 +198,10 @@ class CMakeBuild(build_ext):
         lib_dest_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'python')
         self.copy_file(lib_bin, lib_dest_dir)
+        # lib_bin = os.path.join(self.build_lib, 'libpyxir.so.' + str(__version__))
+        # lib_dest_dir = os.path.join(os.path.dirname(
+        #     os.path.abspath(__file__)), 'python')
+        # self.copy_file(lib_bin, lib_dest_dir)
 
         # Create symlink
         # lib_symlink = lib_dest_dir + "/libpyxir.so"

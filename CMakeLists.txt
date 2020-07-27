@@ -21,7 +21,7 @@ file(GLOB_RECURSE HEADERS "include/*.hpp")
 
 if (USE_VAI_RT)
   set(vitisai_ROOT_DIR $ENV{CONDA_PREFIX})
-  set(vitisai_INCLUDE_DIRS ${vitisai_ROOT_DIR}/lib/python3.6/site-packages/vai/dpuv1/rt/vitis/include)
+  set(vitisai_INCLUDE_DIRS ${vitisai_ROOT_DIR}/lib/python3.6/site-packages/vai/dpuv1/rt/vitis/include/dpu)
   set(vitisai_LIBRARIES ${vitisai_ROOT_DIR}/lib)
   set(VITISAI_SHARED_LIB libxfdnn.so)  
   include_directories(${vitisai_INCLUDE_DIRS})
@@ -45,6 +45,11 @@ else()
 endif()
 
 add_library(${TARGET} SHARED ${SOURCES})
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+  target_link_libraries(${TARGET} PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 # add_dependencies(${TARGET} ${pyxir_EXT_DEPENDENCIES})
 target_link_libraries(${TARGET} PUBLIC ${pyxir_EXT_LIBRARIES} PRIVATE pybind11::embed ${CMAKE_DL_LIBS})

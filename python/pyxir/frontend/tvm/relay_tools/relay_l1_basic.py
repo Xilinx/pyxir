@@ -349,6 +349,9 @@ def concatenate(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     logger.debug("Concatenate")
 
     data_layers = []
+    relay_idx = []
+    if isinstance(expr.args[0], tvm.relay.expr.Tuple):
+        relay_idx.append(hash(expr.args[0]))
     for data_expr in expr.args[0]:
         data_expr_class = data_expr.__class__.__name__
         logger.debug("-- {}".format(data_expr_class))
@@ -371,8 +374,9 @@ def concatenate(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     # Create XLayer
     op_name = 'concat-' + str(hash(expr))
 
+    relay_idx.append(hash(expr))
     X = xlf.get_xop_factory_func('Concat')(op_name, data_layers, axis,
-                                           relay_id=[hash(expr)])
+                                           relay_id=relay_idx)
     logger.debug("-- newshape: {}".format(list(X.shapes)))
 
     for data_layer in data_layers:

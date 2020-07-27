@@ -14,21 +14,26 @@
  *  limitations under the License.
  */
 
-// Register Transpose operation as an Opaque Function
+#pragma once
 
-#include <functional>
-
-#include "pyxir/opaque_func_registry.hpp"
+#include "pyxir/pyxir_api.hpp"
+#include "pyxir/graph/xlayer.hpp"
+#include "pyxir/common/xbuffer.hpp"
+#include "pyxir/runtime/kernel_func.hpp"
 
 namespace pyxir {
 namespace runtime {
-             
-// REGISTER_OPAQUE_FUNC("cpu.Transpose")
-//   ->set_func([](pyxir::OpaqueArgs &args) 
-//     {
-//       std::cout << "Test" << std::endl;
-//     }, std::vector<pxTypeCode>{});
+namespace cpu {
 
+class TupleFunc : public KernelFunc {
 
+  public:
+    TupleFunc(XLayerHolder &xl);
+
+    void operator()(std::vector<XBufferHolder> &in_tensors,
+                    std::vector<XBufferHolder> &out_tensors);
+};
+
+} // namespace cpu
 } // namespace runtime
 } // namespace pyxir
