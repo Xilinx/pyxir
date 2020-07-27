@@ -191,16 +191,16 @@ class CMakeBuild(build_ext):
         print(self.build_lib)
         # Copy libpyxir.so to python/ next to python/pyxir for rapid
         #   prototyping
-        lib_bin = os.path.join(self.build_lib, 'libpyxir.so.' + str(__version__))
+        lib_bin = os.path.join(self.build_lib, 'libpyxir.so')
         lib_dest_dir = os.path.join(os.path.dirname(
             os.path.abspath(__file__)), 'python')
         self.copy_file(lib_bin, lib_dest_dir)
 
         # Create symlink
-        lib_symlink = lib_dest_dir + "/libpyxir.so"
-        if os.path.exists(lib_symlink):
-            os.remove(lib_symlink)
-        os.symlink(lib_dest_dir + '/libpyxir.so.' + str(__version__), lib_symlink)
+        # lib_symlink = lib_dest_dir + "/libpyxir.so"
+        # if os.path.exists(lib_symlink):
+        #     os.remove(lib_symlink)
+        # os.symlink(lib_dest_dir + '/libpyxir.so.' + str(__version__), lib_symlink)
 
         # Copy *_test file to tests directory
         # test_bin = os.path.join(self.build_temp, 'tests/pyxir_test')

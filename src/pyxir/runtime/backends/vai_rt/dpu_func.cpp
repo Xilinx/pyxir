@@ -71,13 +71,13 @@ DpuFunc::DpuFunc(XLayerHolder &xl) : KernelFunc(xl)
 
   std::vector<std::string> dpu_runner_in_tensor_names;
   std::transform(dpu_runner_in_tensors_.begin(), dpu_runner_in_tensors_.end(),
-   std::back_inserter(dpu_runner_in_tensor_names),
-   [](vitis::ai::Tensor* t) -> const std::string & { return t->get_name(); });
+    std::back_inserter(dpu_runner_in_tensor_names),
+    [](vitis::ai::Tensor* t) -> const std::string { return t->get_name(); });
 
   std::vector<std::string> dpu_runner_out_tensor_names;
   std::transform(dpu_runner_out_tensors_.begin(), dpu_runner_out_tensors_.end(),
    std::back_inserter(dpu_runner_out_tensor_names),
-   [](vitis::ai::Tensor* t) -> const std::string & { return t->get_name(); });
+   [](vitis::ai::Tensor* t) -> const std::string { return t->get_name(); });
 
   std::vector<std::string> rt_in_names;
   std::transform(in_tensor_names_.begin(), in_tensor_names_.end(),
@@ -140,15 +140,9 @@ void DpuFunc::operator()(
   pxDebug("Inside VaiComputeFunc::()");
   if (out_tensors.empty()) {
     for (const auto &shape : xl_->shapes) {
-      int64_t size = 1;
-      for (const int64_t &e : shape)
-        size *= e;
-      if (size < 0)
-        size *= -1;
-      void* input_data = malloc(4 * size); 
-      out_tensors.push_back(
-        std::shared_ptr<XBuffer>(
-          new XBuffer(input_data, 4, "f", shape.size(), shape, false, true)));
+      std::vector<ssize_t> buffer_shape = shape;
+      buffer_shape[0] = in_tensors[0]->shape[0];
+      out_tensors.push_back(create_buffer(buffer_shape));
     }
   }
     

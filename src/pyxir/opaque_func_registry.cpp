@@ -57,7 +57,7 @@ class OpaqueFuncRegistry::Manager
     {
       if (!exists(name))
         throw std::invalid_argument("OpaqueFunc with name: " + name 
-                                    + " doesn't exist.");
+                                     + " doesn't exist.");
       return of_map[name];
     }
 

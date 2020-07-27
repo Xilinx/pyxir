@@ -32,6 +32,8 @@ void declare_opaque_func(py::module &m) {
   //     m, "OpaqueValueVector", py::module_local(false));
 
   py::class_<OpaqueValue, std::shared_ptr<OpaqueValue>>(m, "OpaqueValue")
+    .def(py::init<const std::vector<int64_t> &>(),
+         py::arg("ints"))
     .def(py::init<const std::string &>(),
          py::arg("s"))
     .def(py::init<const std::vector<std::string> &>(),
@@ -46,6 +48,7 @@ void declare_opaque_func(py::module &m) {
          py::arg("of"))
     .def("get_type_code_str", &OpaqueValue::get_type_code_str)
     .def("get_type_code_int", &OpaqueValue::get_type_code_int)
+    .def_property("ints", &OpaqueValue::get_ints, &OpaqueValue::set_ints)
     .def_property("s", &OpaqueValue::get_string, &OpaqueValue::set_string)
     .def_property("bytes", [](OpaqueValue &ov) {
                                return py::bytes(ov.get_string()); },

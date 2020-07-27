@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5.1)
-project(pyxir VERSION 0.1.0)
+project(pyxir)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -48,7 +48,7 @@ add_library(${TARGET} SHARED ${SOURCES})
 
 # add_dependencies(${TARGET} ${pyxir_EXT_DEPENDENCIES})
 target_link_libraries(${TARGET} PUBLIC ${pyxir_EXT_LIBRARIES} PRIVATE pybind11::embed ${CMAKE_DL_LIBS})
-set_target_properties(${TARGET} PROPERTIES VERSION ${PROJECT_VERSION})
+# set_target_properties(${TARGET} PROPERTIES VERSION ${PROJECT_VERSION})
 
 install(TARGETS ${TARGET} LIBRARY DESTINATION ".")
 install(

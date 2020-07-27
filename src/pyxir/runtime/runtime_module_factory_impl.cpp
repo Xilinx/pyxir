@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 
@@ -44,8 +45,11 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
   // If the on-the-fly quantization option is enabled, we create a compute function
   //  that performs quantization calibration on the first N inputs (and computes
   //  actual results on CPU) and afterwards switches to hardware acceleration
+  // NOTE: If PX_BUILD_DIR environment variable is set, we skip on-the-fly
+  //  quantization and create the ComputeFunc immediately
+  const char *env_px_build = std::getenv("PX_BUILD_DIR");
   if (run_options && run_options->on_the_fly_quantization
-      && run_options->nb_quant_inputs > 0)
+      && run_options->nb_quant_inputs > 0 && env_px_build == NULL)
   {
     if (!OpaqueFuncRegistry::Exists("pyxir.quantize"))
       throw std::runtime_error("Cannot runtime with on-the-fly quantization"
