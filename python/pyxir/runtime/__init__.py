@@ -18,6 +18,7 @@ import warnings
 
 from .rt_manager import RtManager
 from .runtime_factory import RuntimeFactory
+from .globals import transpose
 
 rt_manager = RtManager()
 runtime_factory = RuntimeFactory()

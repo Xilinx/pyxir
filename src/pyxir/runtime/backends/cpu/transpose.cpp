@@ -47,20 +47,9 @@ void TransposeFunc::operator()(
 {
   if (out_tensors.size() == 0) {
     for (const auto &shape : xl_->shapes) {
-      int64_t size = 1;
-      std::vector<ssize_t> buffer_shape;
-      for (const int64_t &e : shape) {
-        size *= e;
-	buffer_shape.push_back(e);
-      }
-      // Set correct batch size
+      std::vector<ssize_t> buffer_shape = shape;
       buffer_shape[0] = in_tensors[0]->shape[0];
-      if (size < 0)
-        size *= -1;
-      void* input_data = malloc(4 * size); 
-      out_tensors.push_back(
-        std::shared_ptr<XBuffer>(
-          new XBuffer(input_data, 4, "f", buffer_shape.size(), buffer_shape, false, true)));
+      out_tensors.push_back(create_buffer(buffer_shape));
     }
   }
   transpose_of_(in_tensors, out_tensors, axes_);

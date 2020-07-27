@@ -46,10 +46,10 @@ endif()
 
 add_library(${TARGET} SHARED ${SOURCES})
 
-find_package(OpenMP)
-if(OpenMP_CXX_FOUND)
-  target_link_libraries(${TARGET} PUBLIC OpenMP::OpenMP_CXX)
-endif()
+# find_package(OpenMP)
+# if(OpenMP_CXX_FOUND)
+#   target_link_libraries(${TARGET} PUBLIC OpenMP::OpenMP_CXX)
+# endif()
 
 # add_dependencies(${TARGET} ${pyxir_EXT_DEPENDENCIES})
 target_link_libraries(${TARGET} PUBLIC ${pyxir_EXT_LIBRARIES} PRIVATE pybind11::embed ${CMAKE_DL_LIBS})

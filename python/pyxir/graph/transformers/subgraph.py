@@ -186,7 +186,9 @@ def xgraph_build_func(xgraph,
                         attrs={'index': i}
                     )
                     net.append(X_tgi.name)
+                    # Keep track of TGI layer for both last merged layer and output name
                     net_map[tgi_name] = X_tgi
+                    net_map[output_name] = X_tgi
 
                     subgraph_X.tops.append(tgi_name)
 

@@ -58,16 +58,11 @@ void TupleGetItemFunc::operator()(
     if (transpose_) {
       // Create new output XBuffer
       for (const auto &shape : xl_->shapes) {
-        int64_t size = 1;
-        for (const int64_t &e : shape)
-          size *= e;
-        if (size < 0)
-          size *= -1;
-        void* input_data = malloc(4 * size); 
-        out_tensors.push_back(
-          std::shared_ptr<XBuffer>(
-            new XBuffer(input_data, 4, "f", shape.size(), shape, false, true)));
+        std::vector<ssize_t> buffer_shape = shape;
+        buffer_shape[0] = in_tensors[0]->shape[0];
+        out_tensors.push_back(create_buffer(buffer_shape));
       }
+      
       std::vector<XBufferHolder> transpose_in {in_tensors[index_]};
       // Execute transpose
       transpose_of_(transpose_in, out_tensors, axes_);
