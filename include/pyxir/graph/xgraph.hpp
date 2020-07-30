@@ -44,6 +44,9 @@ class XGraph {
       tails = xg.tails;
       xlayers = xg.xlayers;
       meta_attrs = xg.meta_attrs;
+      xidx_ = xg.xidx_;
+      xidx_re_ = xg.xidx_re_;
+      idx_ = xg.idx_;
     }
 
     // GETTERS & SETTERS //
@@ -85,6 +88,26 @@ class XGraph {
           "Can't retrieve xlayer with name: " + xl_name
           + " as it doesn't exist.");
       return xlayers[xl_name];
+    }
+
+    int get_layer_id(const std::string &xl_name_)
+    {
+      std::string xl_name = pyxir::stringify(xl_name_);
+
+      if (!contains(xl_name))
+        throw std::invalid_argument(
+          "Can't retrieve xlayer with name: " + xl_name
+          + " as it doesn't exist.");
+      return xidx_[xl_name];
+    }
+
+    std::string get_layer_by_id(int xl_id)
+    {
+      if (xidx_re_.find(xl_id) == xidx_re_.end())
+        throw std::invalid_argument(
+          "Can't retrieve xlayer with id: " + std::to_string(xl_id)
+          + " as the id doesn't exist.");
+      return xidx_re_[xl_id];
     }
 
     inline int get_nb_inputs() { return heads.size(); }
@@ -146,6 +169,9 @@ class XGraph {
     std::vector<std::string> heads;
     std::vector<std::string> tails;
     std::unordered_map<std::string, std::shared_ptr<XLayer>> xlayers;
+    std::unordered_map<std::string, int> xidx_;
+    std::unordered_map<int, std::string> xidx_re_;
+    int idx_ = 0;
 };
 
 } // graph

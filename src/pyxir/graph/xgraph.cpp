@@ -115,6 +115,11 @@ void XGraph::add(XLayer &xl)
   xlayers.insert({ xl.name, std::make_shared<XLayer>(xl) });
 
   update(xl.name);
+
+  // Keep track of unique idx (equal to the position at which the layer was added)
+  xidx_[xl.name] = idx_;
+  xidx_re_[idx_] = xl.name;
+  ++idx_;
 }
 
 void XGraph::remove(const std::string &xl_name) 
@@ -146,6 +151,10 @@ void XGraph::remove(const std::string &xl_name)
 
   if (is_output(xl_name))
     remove_tail(xl_name);
+
+  // Remove idx
+  xidx_re_.erase(xidx_[xl_name]);
+  xidx_.erase(xl_name);
 }
 
 } // graph
