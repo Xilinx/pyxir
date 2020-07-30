@@ -24,6 +24,8 @@ import h5py
 import logging
 import numpy as np
 
+import libpyxir as lpx
+
 from .json_io import XGraphJSONEncoder
 from ..xgraph_factory import XGraphFactory
 from ..layer import xlayer
@@ -58,8 +60,12 @@ class XGraphIO(object):
         # Save graph info
         d = {
             'nodes': [],
-            'name': xgraph.get_name()
+            'name': xgraph.get_name(),
+            'meta_attrs': {}
         }
+
+        for k, v in xgraph.meta_attrs.to_dict().items():
+            d['meta_attrs'][k] = v
 
         for X in xgraph.get_layers():
 
@@ -264,5 +270,6 @@ class XGraphIO(object):
 
         xgraph = XGraphIO.xgraph_factory.build_from_xlayer(net=xlayers)
         xgraph.set_name(stored_name)
+        xgraph.meta_attrs = net['meta_attrs']
 
         return xgraph
