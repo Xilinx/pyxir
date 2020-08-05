@@ -60,7 +60,7 @@ VaiComputeFunc::VaiComputeFunc(
   {
     XLayerHolder X = xg->get(xl_name);
 
-    if (X->xtype[0] == "DPUV1" || X->xtype[0] == "DPUV2") {
+    if (X->xtype[0] == "DPU" || X->xtype[0] == "DPUV1" || X->xtype[0] == "DPUV2") {
       std::unique_ptr<KernelFunc> dpu_func(new DpuFunc(X)); 
       kernel_funcs_.push_back(std::move(dpu_func));
     } else if (X->xtype[0] == "Input") {

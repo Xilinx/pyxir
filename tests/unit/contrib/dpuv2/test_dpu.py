@@ -46,6 +46,8 @@ class TestDPUContrib(unittest.TestCase):
         # Unregister dpu for other tests
         TestDPUContrib.target_registry.unregister_target('dpuv2-zcu104')
         TestDPUContrib.target_registry.unregister_target('dpuv2-zcu102')
+        TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu102')
+        TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
         # TestDPUContrib.target_registry.unregister_target('dpuv2-ultra96')
 
     def test_supported_ops(self):
@@ -57,7 +59,7 @@ class TestDPUContrib(unittest.TestCase):
         # assert 'Concat' in ultra96_ops
         # assert 'Convolution' in ultra96_ops
         # assert 'Conv2DTranspose' in ultra96_ops
-        # assert 'DPUV2' in ultra96_ops
+        # assert 'DPU' in ultra96_ops
         # assert 'Eltwise' in ultra96_ops
         # assert 'Pad' in ultra96_ops
         # assert 'Pooling' in ultra96_ops
@@ -75,7 +77,7 @@ class TestDPUContrib(unittest.TestCase):
         assert 'Concat' in zcu102_ops
         assert 'Convolution' in zcu102_ops
         assert 'Conv2DTranspose' in zcu102_ops
-        assert 'DPUV2' in zcu102_ops
+        assert 'DPU' in zcu102_ops
         assert 'Eltwise' in zcu102_ops
         assert 'Pad' in zcu102_ops
         assert 'Pooling' in zcu102_ops
@@ -93,7 +95,7 @@ class TestDPUContrib(unittest.TestCase):
         assert 'Concat' in zcu104_ops
         assert 'Convolution' in zcu104_ops
         assert 'Conv2DTranspose' in zcu104_ops
-        assert 'DPUV2' in zcu104_ops
+        assert 'DPU' in zcu104_ops
         assert 'Eltwise' in zcu104_ops
         assert 'Pad' in zcu104_ops
         assert 'Pooling' in zcu104_ops
@@ -191,7 +193,7 @@ class TestDPUContrib(unittest.TestCase):
         assert layers[1].bottoms == ['in1']
         assert layers[1].tops == ['xp0']
 
-        assert layers[2].type[0] == 'DPUV2'
+        assert layers[2].type[0] == 'DPU'
         assert(layers[2].bottoms == ['conv1_bottom_NCHW>NHWC'])
         assert(layers[2].tops == ['pool1'])
         assert layers[2].shapes == [[1, 2, 2, 2]]

@@ -12,14 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for registering DPU v2 targets """
+""" Module for DPUCADX8G (former DPUv1) target registration """
 
-from . import ultra96
-from . import ultra96_op_support
-
-from . import zcu102
-from . import zcu102_op_support
-
-from . import zcu104
-from . import zcu104_op_support
-
+from . import dpu_target
+from . import dpu_op_support

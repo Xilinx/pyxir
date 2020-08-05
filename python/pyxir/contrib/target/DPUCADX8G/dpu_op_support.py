@@ -25,11 +25,11 @@ import logging
 logger = logging.getLogger('pyxir')
 
 
-@pyxir.register_op_support_check('dpuv1', 'BatchNorm')
+@pyxir.register_op_support_check('DPUCADX8G', 'BatchNorm')
 def batchnorm_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BatchNorm operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
@@ -37,11 +37,11 @@ def batchnorm_op_support(X, bXs, tXs):
     return channels >= 1 and channels <= 4096
 
 
-@pyxir.register_op_support_check('dpuv1', 'BiasAdd')
+@pyxir.register_op_support_check('DPUCADX8G', 'BiasAdd')
 def biasadd_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BiasAdd operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
@@ -49,21 +49,21 @@ def biasadd_op_support(X, bXs, tXs):
     return channels >= 1 and channels <= 4096
 
 
-@pyxir.register_op_support_check('dpuv1', 'Cast')
+@pyxir.register_op_support_check('DPUCADX8G', 'Cast')
 def cast_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Cast operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     dtype = X.attrs['dtype']
 
     return dtype == 'float32'
 
-@pyxir.register_op_support_check('dpuv1', 'Concat')
+@pyxir.register_op_support_check('DPUCADX8G', 'Concat')
 def concat_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Concat operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
@@ -71,11 +71,11 @@ def concat_op_support(X, bXs, tXs):
     return channels >= 1 and channels <= 4096
 
 
-@pyxir.register_op_support_check('dpuv1', 'Convolution')
+@pyxir.register_op_support_check('DPUCADX8G', 'Convolution')
 def conv2d_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2D operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     data_layout = X.attrs['data_layout']
 
@@ -105,11 +105,11 @@ def conv2d_op_support(X, bXs, tXs):
         dilation_w in [1, 2, 4]
 
 
-@pyxir.register_op_support_check('dpuv1', 'Conv2DTranspose')
+@pyxir.register_op_support_check('DPUCADX8G', 'Conv2DTranspose')
 def conv2d_transpose_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2DTranspose operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     data_layout = X.attrs['data_layout']
 
@@ -141,33 +141,33 @@ def conv2d_transpose_op_support(X, bXs, tXs):
         dilation_w in [1, 2, 4]
 
 
-@pyxir.register_op_support_check('dpuv1', 'DPU')
-def dpu_op_support(X, bXs, tXs):
+@pyxir.register_op_support_check('DPUCADX8G', 'DPU')
+def dpuv2_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided DPU operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     # TODO out_ch
 
     return True
 
 
-@pyxir.register_op_support_check('dpuv1', 'Eltwise')
+@pyxir.register_op_support_check('DPUCADX8G', 'Eltwise')
 def eltwise_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Eltwise operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     # TODO in_ch
 
     return True
 
 
-@pyxir.register_op_support_check('dpuv1', 'Pad')
+@pyxir.register_op_support_check('DPUCADX8G', 'Pad')
 def pooling_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     padding = X.attrs['padding']
 
@@ -179,11 +179,11 @@ def pooling_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('dpuv1', 'Pooling')
+@pyxir.register_op_support_check('DPUCADX8G', 'Pooling')
 def pooling_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     data_layout = X.attrs['data_layout']
 
@@ -208,11 +208,11 @@ def pooling_op_support(X, bXs, tXs):
         channels >= 1 and channels <= 4096
 
 
-@pyxir.register_op_support_check('dpuv1', 'Mean')
+@pyxir.register_op_support_check('DPUCADX8G', 'Mean')
 def mean_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Mean operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     axes = X.attrs['axes']
     keepdims = X.attrs['keepdims']
@@ -220,11 +220,11 @@ def mean_op_support(X, bXs, tXs):
     return len(axes) == 2 and keepdims
 
 
-@pyxir.register_op_support_check('dpuv1', 'pReLU')
+@pyxir.register_op_support_check('DPUCADX8G', 'pReLU')
 def prelu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided pRelu operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     # TODO: supported ??
 
@@ -234,11 +234,11 @@ def prelu_op_support(X, bXs, tXs):
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
 
-@pyxir.register_op_support_check('dpuv1', 'LeakyReLU')
+@pyxir.register_op_support_check('DPUCADX8G', 'LeakyReLU')
 def leaky_relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided pRelu operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     # TODO: supported ??
 
@@ -248,33 +248,33 @@ def leaky_relu_op_support(X, bXs, tXs):
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
 
-@pyxir.register_op_support_check('dpuv1', 'ReLU')
+@pyxir.register_op_support_check('DPUCADX8G', 'ReLU')
 def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     # TODO always?
 
     return True
 
 
-# @pyxir.register_op_support_check('dpuv1', 'ReLU6')
+# @pyxir.register_op_support_check('DPUCADX8G', 'ReLU6')
 # def relu6_op_support(X, bXs, tXs):
 #     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
 #     """ Check whether we can execute the provided ReLU operator
-#         on the dpuv1 target """
+#         on the DPUCADX8G target """
 
 #     # TODO always?
 
 #     return True
 
 
-@pyxir.register_op_support_check('dpuv1', 'Scale')
+@pyxir.register_op_support_check('DPUCADX8G', 'Scale')
 def scale_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Scale operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
@@ -282,11 +282,11 @@ def scale_op_support(X, bXs, tXs):
     return channels > 1 and channels <= 4096
 
 
-@pyxir.register_op_support_check('dpuv1', 'Upsampling2D')
+@pyxir.register_op_support_check('DPUCADX8G', 'Upsampling2D')
 def upsampling2d_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Upsampling2D operator
-        on the dpuv1 target """
+        on the DPUCADX8G target """
 
     method = X.attrs['method']
 

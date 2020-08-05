@@ -12,18 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module wrapping DNNDK dnnc compiler
-
-
-"""
+""" Module wrapping DPUCZDX8G VAI compiler """
 
 import os
 import json
 import shutil
 import warnings
 import subprocess
-
 import logging
 
 from pyxir.shared.compiler_output import CompilerOutput
@@ -38,25 +33,26 @@ logger = logging.getLogger('pyxir')
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-class DNNCCompiler(XGraphBaseCompiler):
+class VAICompiler(XGraphBaseCompiler):
 
-    """
-    TODO
-    """
+    """ Vitis-AI compiler wrapper for DPUCZDX8G """
+
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
 
     def __init__(self,
                  xgraph,
-                 dcf,
+                 arch,
+                 meta,
                  cpu_arch='arm64',
                  work_dir=os.path.join(os.getcwd(), 'work'),
+                 build_dir=os.getcwd(),
                  mode='debug'):
 
-        super(DNNCCompiler, self).__init__(xgraph)
+        super(VAICompiler, self).__init__(xgraph)
 
-        if not os.path.isfile(dcf):
-            raise ValueError("Dcf file: {} does not exist".format(dcf))
+        if not os.path.isfile(arch):
+            raise ValueError("Arch file: {} does not exist".format(arch))
 
         if cpu_arch != 'arm64':
             raise ValueError("Unsupported CPU architecture: {}. Supported"
@@ -69,23 +65,28 @@ class DNNCCompiler(XGraphBaseCompiler):
         self.netcfgs = {q_key: q_output.get_q_file(q_key)
                         for q_key in q_output.keys()}
         assert(len(self.netcfgs) == 1)
-        self.dcf = dcf
+        self.arch = arch
+        self.meta = meta
         self.cpu_arch = cpu_arch
         self.work_dir = work_dir
+        if not os.path.exists(self.work_dir):
+            os.makedirs(self.work_dir)
+        self.build_dir = build_dir if build_dir is not None else work_dir
+        if not os.path.exists(self.build_dir):
+            os.makedirs(self.build_dir)
         self.mode = mode
-        self.c_output = CompilerOutput(name=xgraph.name)
+        self.c_output = CompilerOutput(name=xgraph.get_name())
 
-    def compile(self):
-        # type: () -> None
-        """
-        """
+    def compile(self) -> None:
+        """ Start DPUv2 compilation """
 
         net_name = list(self.netcfgs.keys())[0]
         netcfg = list(self.netcfgs.values())[0]
 
-        xgraph = DNNCCompiler.xgraph_partitioner\
-            .get_subgraphs(self.xgraph)[0].data
-        assert(xgraph.name == net_name)
+        subxg_layers = VAICompiler.xgraph_partitioner\
+            .get_subgraphs(self.xgraph)[0].subgraph_data
+        xgraph = VAICompiler.xgraph_factory.build_from_xlayer(subxg_layers)
+        # assert xgraph.get_name() == net_name
 
         input_names = xgraph.get_input_names()
         input_shapes = [xgraph.get(in_name).shapes[:]
@@ -95,38 +96,33 @@ class DNNCCompiler(XGraphBaseCompiler):
                          for out_name in output_names]
 
         if len(input_names) > 1:
-            raise NotImplementedError("DNNCCompiler only handles models with"
+            raise NotImplementedError("VAICompiler only handles models with"
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
-        # if len(output_names) > 1:
-        #    raise NotImplementedError("DNNCCompiler only handles models with
-        #       one output at the"\
-        #        " moment but found: {}".format(len(output_names)))
 
         command = """
-        dnnc --parser=tensorflow \
-            --frozen_pb={} \
-            --output_dir={} \
-            --dcf={} \
-            --cpu_arch={} \
-            --mode={} \
-            --net_name={} \
-            --save_kernel \
-            --dump all
-        """.format(netcfg, self.work_dir, self.dcf, self.cpu_arch,
-                   self.mode, net_name)
+        vai_c_tensorflow \
+            --frozen_pb {} \
+            --arch {} \
+            --output_dir {} \
+            --net_name {} \
+            --options "{}"
+        """.format(netcfg, self.arch, self.work_dir, net_name, str(dict()))
 
-        logger.debug("Command: {}".format(command))
+        logger.info("Command: {}".format(command))
 
-        process = subprocess.Popen(command.split(),
+        process = subprocess.Popen(command,
+                                   shell=True,
                                    cwd=FILE_PATH,
                                    stdout=subprocess.PIPE)
+
         output, error = process.communicate()
+        logger.debug("{} {}".format(output, error))
 
         if output is not None:
             output = output.decode('utf-8')
-            
-            logger.debug(output)
+
+            logger.info("Output: {}".format(output))
 
             do = DNNCOutput(str(repr(output)))
 
@@ -139,22 +135,26 @@ class DNNCCompiler(XGraphBaseCompiler):
                               for os in output_shapes]
 
             in_map = {
-                in_name: dpu_input_nodes[in_shape_str]
+                in_name: in_name + ':0'  # Tensorflow -> add :0
+                # in_name: dpu_input_nodes[in_shape_str]
                 for in_name, in_shape_str in
                 zip(input_names, in_shapes_log)
             }
             out_map = {
-                out_name: dpu_output_nodes[out_shape_str]
+                out_name: dpu_output_nodes[out_shape_str] + ':0'
                 for out_name, out_shape_str in
                 zip(output_names, out_shapes_log)
             }
+
+            logger.debug("in_map: {}".format(in_map))
+            logger.debug("out_map: {}".format(out_map))
 
         if error is not None:
             error = error.decode('utf-8')
             raise ValueError(error)
 
-        logger.debug("Output: {}".format(output))
-        logger.debug("Error: {}".format(error))
+        logger.info("VAI_C Output: {}".format(output))
+        logger.info("VAI_C Error: {}".format(error))
 
         logger.debug("CROSS COMPILATION")
         command = """
@@ -178,11 +178,17 @@ class DNNCCompiler(XGraphBaseCompiler):
         logger.debug("Error: {}".format(error))
 
         lib_file = "{}/libdpumodel{}.so".format(self.work_dir, net_name)
-        to_lib_file = "{}/libdpumodel{}.so".format(os.getcwd(), net_name)
-
+        to_lib_file = "{}/libdpumodel{}.so".format(self.build_dir, net_name)
         shutil.move(lib_file, to_lib_file)
 
-        # { net_name: to_lib_file }
+        # meta_file = "{}/meta.json".format(self.work_dir)
+        self.meta["vitis_dpu_kernel"] = net_name
+        to_meta_file = "{}/meta.json".format(self.build_dir)
+        # shutil.move(meta_file, to_meta_file)
+
+        with open(to_meta_file, 'w') as f:
+            json.dump(self.meta, f)
+
         self.c_output.add(net_name, [to_lib_file], in_map, out_map)
 
         self.xgraph.set_compiler_output(self.c_output)

@@ -62,7 +62,7 @@ class VaiComputeFunc {
     std::vector<int> out_tensor_order_;
 
     std::unordered_set<std::string> supported_ops_ =
-      {"Input", "Output", "DPUV1", "DPUV2", "Tuple", "TupleGetItem", "Transpose"};
+      {"Input", "Output", "DPUV1", "DPUV2", "DPU", "Tuple", "TupleGetItem", "Transpose"};
 
     std::vector<std::unique_ptr<KernelFunc>> kernel_funcs_;
     std::vector<XLayerHolder> Xs_;

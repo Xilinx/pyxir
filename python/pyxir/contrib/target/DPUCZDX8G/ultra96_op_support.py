@@ -13,12 +13,8 @@
 # limitations under the License.
 
 """
-Module for declaring and specifying supported operations for
-DPU V2 ultra96 target.
-
-NOTE: https://www.xilinx.com/support/documentation/ip_documentation/dpu/v3_0/pg338-dpu.pdf # noqa
-
-
+Module for declaring and specifying supported operations for the
+DPUCZDX8G ultra96 target.
 """
 
 import math
@@ -29,7 +25,7 @@ import pyxir
 logger = logging.getLogger('pyxir')
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'BatchNorm')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'BatchNorm')
 def batchnorm_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BatchNorm operator
@@ -41,7 +37,7 @@ def batchnorm_op_support(X, bXs, tXs):
     return channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'BiasAdd')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'BiasAdd')
 def biasadd_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BiasAdd operator
@@ -53,18 +49,18 @@ def biasadd_op_support(X, bXs, tXs):
     return channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Cast')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Cast')
 def cast_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Cast operator
-        on the dpuv2-ultra96 target """
+        on the DPUCZDX8G-ultra96 target """
 
     dtype = X.attrs['dtype']
 
     return dtype == 'float32'
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Concat')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Concat')
 def concat_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Concat operator
@@ -76,7 +72,7 @@ def concat_op_support(X, bXs, tXs):
     return channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Convolution')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Convolution')
 def conv2d_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2D operator
@@ -110,7 +106,7 @@ def conv2d_op_support(X, bXs, tXs):
         (dilation_w == 1 or stride_w == 1)
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Conv2DTranspose')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Conv2DTranspose')
 def conv2d_transpose_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2DTranspose operator
@@ -144,7 +140,7 @@ def conv2d_transpose_op_support(X, bXs, tXs):
         (dilation_w == 1 or stride_w == 1)
 
 
-# @pyxir.register_op_support_check('dpuv2-ultra96', 'Dense')
+# @pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Dense')
 # def dense_op_support(X, bXs, tXs):
 #     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
 #     """ Check whether we can execute the provided Dense operator
@@ -155,18 +151,16 @@ def conv2d_transpose_op_support(X, bXs, tXs):
 #     return True
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'DPU')
-def dpu_op_support(X, bXs, tXs):
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'DPU')
+def DPUCZDX8G_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided DPU operator
         on the ultra96 target """
 
-    # TODO out_ch
-
     return True
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Eltwise')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Eltwise')
 def eltwise_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Eltwise operator
@@ -177,7 +171,7 @@ def eltwise_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Pad')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Pad')
 def pad_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
@@ -210,7 +204,7 @@ def pad_op_support(X, bXs, tXs):
     return False
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Pooling')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Pooling')
 def pooling_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
@@ -238,7 +232,7 @@ def pooling_op_support(X, bXs, tXs):
         channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Mean')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Mean')
 def mean_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Mean operator
@@ -250,7 +244,7 @@ def mean_op_support(X, bXs, tXs):
     return len(axes) == 2 and keepdims
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'LeakyReLU')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'LeakyReLU')
 def leaky_relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided LeakyRelu operator
@@ -264,7 +258,7 @@ def leaky_relu_op_support(X, bXs, tXs):
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'pReLU')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'pReLU')
 def prelu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided pRelu operator
@@ -278,7 +272,7 @@ def prelu_op_support(X, bXs, tXs):
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'ReLU')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'ReLU')
 def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
@@ -289,7 +283,7 @@ def relu_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'ReLU6')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'ReLU6')
 def relu6_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
@@ -300,7 +294,7 @@ def relu6_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('dpuv2-ultra96', 'Scale')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Scale')
 def scale_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Scale operator

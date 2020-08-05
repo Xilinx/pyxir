@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Module for testing the dpuv2 supported operations
+Module for testing the dpuv1 supported operations
 """
 
 import os
@@ -34,10 +34,11 @@ class TestDpuv1OpSupport(unittest.TestCase):
         def test():
             raise NotImplementedError("")
 
-        TestUltra96OpSupport.target_registry.register_target(
+        TestDpuv1OpSupport.target_registry.register_target(
             'dpuv1', {}, test, test, test, test)
 
     @classmethod
     def tearDownClass(cls):
         # Unregister dpu for other tests
-        TestUltra96OpSupport.target_registry.unregister_target('dpuv1')
+        TestDpuv1OpSupport.target_registry.unregister_target('dpuv1')
+        TestDpuv1OpSupport.target_registry.unregister_target('DPUCADX8G')
