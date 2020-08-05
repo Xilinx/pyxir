@@ -445,7 +445,7 @@ def transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
         logger.debug("-- constant")
         # TODO: TEST
-        data = np.transpose(data_layer.data, tuple(axes))
+        data = np.transpose(data_layer.data[0], tuple(axes))
         dtype = data_layer.attrs['dtype']
 
         op_name = 'constant-' + str(hash(expr))

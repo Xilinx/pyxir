@@ -126,3 +126,49 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         assert layers[2].attrs['axis'] == 1
         assert layers[2].attrs['mode'] == 'clip'
         assert layers[2].shapes == [-1, 224, 224]
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_transpose_constant(self):
+        d = np.zeros((1, 3, 2, 2))
+        data = relay.var(
+            "data",
+            relay.TensorType((1, 3, 2, 2), "float32")
+        )
+
+        net = relay.transpose(data, axes=(0, 2, 3, 1))
+
+        net = relay.Function(relay.analysis.free_vars(net), net)
+
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {'data': d})
+
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes == [1, 2, 2, 3]
+        np.testing.assert_array_equal(layers[0].data[0], np.transpose(d, (0, 2, 3, 1)))
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_transpose(self):
+        data = relay.var(
+            "data",
+            relay.TensorType((-1, 3, 2, 2), "float32")
+        )
+
+        net = relay.transpose(data, axes=(0, 2, 3, 1))
+
+        net = relay.Function(relay.analysis.free_vars(net), net)
+
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert layers[0].shapes == [-1, 3, 2, 2]
+        assert layers[1].type[0] == 'Transpose'
+        assert layers[1].shapes == [-1, 2, 2, 3]
