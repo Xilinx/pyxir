@@ -72,6 +72,7 @@ else:
 package_data = glob.glob("include/pyxir/**/*.hpp", recursive=True)
 headers = package_data
 static_data = glob.glob("python/pyxir/**/*.json", recursive=True)
+static_data.extend(glob.glob("python/pyxir/**/*.dcf", recursive=True))
 
 
 # From PyBind11: https://github.com/pybind/pybind11/blob/master/setup.py

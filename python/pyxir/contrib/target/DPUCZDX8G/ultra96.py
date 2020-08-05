@@ -15,6 +15,7 @@
 """ Module for registering DPUCZDX8G Ultra96 target """
 
 import os
+import json
 import pyxir
 import logging
 
@@ -25,6 +26,8 @@ from .common import xgraph_dpu_optimizer, xgraph_dpu_quantizer
 from .vai_c import VAICompiler
 
 logger = logging.getLogger('pyxir')
+
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def xgraph_dpu_ultra96_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
@@ -54,17 +57,17 @@ def xgraph_dpu_ultra96_compiler(xgraph, **kwargs):
         "dpu_task_pool": 16
     }
 
-    arch = "/opt/vitis_ai/compiler/arch/dpuv2/Ultra96/Ultra96.json"
+    arch = os.path.join(FILE_DIR, "./Ultra96.json")
 
     # Vitis-AI 1.1
-    old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/Ultra96/Ultra96.json"
+    # old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/Ultra96/Ultra96.json"
     # Vitis-AI 1.2 - ...
-    new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/Ultra96/arch.json"
+    # new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/Ultra96/arch.json"
 
-    if os.path.exists(new_arch):
-        arch = new_arch
-    else:
-        arch = old_arch
+    # if os.path.exists(new_arch):
+    #     arch = new_arch
+    # else:
+    #     arch = old_arch
 
     compiler = VAICompiler(xgraph, arch=arch, meta=meta, **kwargs)
     c_xgraph = compiler.compile()
@@ -78,3 +81,15 @@ pyxir.register_target('DPUCZDX8G-ultra96',
                       xgraph_dpu_quantizer,
                       xgraph_dpu_ultra96_compiler,
                       xgraph_dpu_ultra96_build_func)
+
+
+# Write arch json 
+arch = {   
+    "target"   : "DPUCZDX8G",
+    "dcf"      : os.path.join(FILE_DIR, "./Ultra96.dcf"),
+    "cpu_arch" : "arm64"
+}
+
+with open(os.path.join(FILE_DIR, "./Ultra96.json"), 'w') as f:
+    json.dump(arch, f, indent=4, sort_keys=True)
+
