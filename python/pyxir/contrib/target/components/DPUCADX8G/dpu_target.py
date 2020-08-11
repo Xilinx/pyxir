@@ -21,8 +21,8 @@ import os
 import logging
 import warnings
 import numpy as np
-import pyxir
 
+import pyxir
 from pyxir.runtime import base
 from pyxir.runtime.rt_layer import BaseLayer
 from pyxir.graph.transformers import subgraph
@@ -100,13 +100,6 @@ def xgraph_dpu_compiler(xgraph, **kwargs):
     return c_xgraph
 
 
-pyxir.register_target('DPUCADX8G',
-                      xgraph_dpu_optimizer,
-                      xgraph_dpu_quantizer,
-                      xgraph_dpu_compiler,
-                      xgraph_dpu_build_func)
-
-
 # Register DPU numpy layer
 
 
@@ -164,6 +157,3 @@ class DPULayer(BaseLayer):
         """ Cleanup DPU resources """
         # self.runner.__del__()
         pass
-
-
-pyxir.register_op('cpu-np', 'DPU', base.get_layer(DPULayer))

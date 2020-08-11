@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for registering DPUCZDX8G zcu102 target """
+""" Module for registering DPUCZDX8G zcu104 target """
 
 import os
 import pyxir
@@ -26,7 +26,7 @@ from .vai_c import VAICompiler
 logger = logging.getLogger('pyxir')
 
 
-def xgraph_dpu_zcu102_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
+def xgraph_dpu_zcu104_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     # TODO here or in optimizer, both?
     # DPU layers are in NHWC format because of the tensorflow
@@ -35,14 +35,14 @@ def xgraph_dpu_zcu102_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     return subgraph.xgraph_build_func(
         xgraph=xgraph,
-        target='DPUCZDX8G-zcu102',
+        target='DPUCZDX8G-zcu104',
         xtype='DPU',
         layout='NHWC',
         work_dir=work_dir
     )
 
 
-def xgraph_dpu_zcu102_compiler(xgraph, **kwargs):
+def xgraph_dpu_zcu104_compiler(xgraph, **kwargs):
 
     meta = {
         "lib": "/usr/local/lib/libn2cube.so",
@@ -54,9 +54,9 @@ def xgraph_dpu_zcu102_compiler(xgraph, **kwargs):
     }
 
     # Vitis-AI 1.1
-    old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/ZCU102/ZCU102.json"
+    old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/ZCU104/ZCU104.json"
     # Vitis-AI 1.2 - ...
-    new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/ZCU102/arch.json"
+    new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/ZCU104/arch.json"
 
     if os.path.exists(new_arch):
         arch = new_arch
@@ -67,10 +67,3 @@ def xgraph_dpu_zcu102_compiler(xgraph, **kwargs):
     c_xgraph = compiler.compile()
 
     return c_xgraph
-
-
-pyxir.register_target('DPUCZDX8G-zcu102',
-                      xgraph_dpu_optimizer,
-                      xgraph_dpu_quantizer,
-                      xgraph_dpu_zcu102_compiler,
-                      xgraph_dpu_zcu102_build_func)

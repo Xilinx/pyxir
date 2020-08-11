@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for DPUCZDX8G (former DPUv2) target registration """
+""" Module for DPUCZDX8G (former DPUv2) components """
 
-from . import ultra96
-from . import ultra96_op_support
 
-from . import zcu102
-from . import zcu102_op_support
-
-from . import zcu104
-from . import zcu104_op_support
