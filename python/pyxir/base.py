@@ -87,6 +87,8 @@ def transform_layout(xgraph: XGraph, layout: str):
 def partition(xgraph: XGraph, targets: List[str], last_layer: str=None):
     """ Partition the model for the given targets """
 
+    target_registry.check_targets(targets)
+
     p_xgraph = xgraph_partitioner.partition(
         xgraph, targets, last_layer
     )

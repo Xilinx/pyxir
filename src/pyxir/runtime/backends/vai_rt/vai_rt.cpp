@@ -28,11 +28,13 @@ namespace runtime {
 REGISTER_RUNTIME_FACTORY_IMPL(pyxir::runtime::pxVaiRuntimeModule)
   .set_impl(
     new pyxir::runtime::DefaultRuntimeModuleFactoryImpl(
-        pyxir::runtime::pxVaiRuntimeModule)
+        pyxir::runtime::pxVaiRuntimeModule,
+        pyxir::runtime::vaiTargets)
   )
   .set_compute_impl(
     new vai_rt::VaiComputeFuncFactoryImpl(pxVaiRuntimeModule)
-  );
+  )
+  .set_supported_targets(pyxir::runtime::vaiTargets);
 
 } // namespace runtime
 } // namespace pyxir

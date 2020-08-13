@@ -113,15 +113,12 @@ ComputeFuncFactory::GetComputeFunc(
   const std::string &runtime,
   RunOptionsHolder const &run_options)
 {
-  if (Manager::GetInstance().exists(runtime))
-  {
+  if (Manager::GetInstance().exists(runtime)) {
     return Manager::GetInstance().get(runtime)->get_impl()
       ->get_compute_func(
         xg, target, in_tensor_names, out_tensor_names, run_options
       );
-  }  
-	else
-  {
+  } else {
     return ComputeFuncFactoryImpl(runtime).get_compute_func(
       xg, target, in_tensor_names, out_tensor_names, run_options
     );

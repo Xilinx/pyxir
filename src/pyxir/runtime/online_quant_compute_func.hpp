@@ -33,7 +33,8 @@ class OnlineQuantComputeFunc {
                            const std::vector<std::string> &in_tensor_names,
                            const std::vector<std::string> &out_tensor_names,
                            const std::string &runtime,
-                           int nb_quant_inputs);
+                           int nb_quant_inputs,
+                           bool compile_for_diff_runtime = false);
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
@@ -46,6 +47,10 @@ class OnlineQuantComputeFunc {
     std::vector<std::string> out_tensor_names_;
     int nb_quant_inputs_; 
     int count_ = 0;
+    // If we are compiling for a different runtime we won't switch to the provided runtime
+    //  after quantization and compilation. E.g. this might be set to true when we compile
+    //  for an edge device on an server host machine.
+    bool compile_for_diff_runtime_;
 
     ComputeFuncHolder cf_ = nullptr;
     OpaqueFuncHolder quant_of_;

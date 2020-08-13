@@ -199,11 +199,12 @@ void DpuFunc::operator()(
   dpu_runner_->wait(job_id.first,-1);
   auto stop2 = std::chrono::high_resolution_clock::now();
 
-
-  std::cout << "exec_async Time: " << std::chrono::duration_cast<std::chrono::microseconds>(stop1-start).count() << std::endl;
-  std::cout << "wait Time: " << std::chrono::duration_cast<std::chrono::microseconds>(stop2-stop1).count() << std::endl;
-  std::cout << "total Time: " << std::chrono::duration_cast<std::chrono::microseconds>(stop2-start).count() << std::endl;
-
+  std::chrono::microseconds duration_async = std::chrono::duration_cast<std::chrono::microseconds>(stop1-start);
+  std::chrono::microseconds duration_wait = std::chrono::duration_cast<std::chrono::microseconds>(stop2-stop1);
+  std::chrono::microseconds duration = std::chrono::duration_cast<std::chrono::microseconds>(stop2-start);
+  pxDebug(("Exec_async Time: " + std::to_string(duration_async.count())).c_str());
+  pxDebug(("Wait Time: " + std::to_string(duration_wait.count())).c_str());
+  pxDebug(("DPU Time: " + std::to_string(duration.count())).c_str());
 }
 
 } // vai_rt

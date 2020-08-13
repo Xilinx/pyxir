@@ -30,12 +30,6 @@
 #include "../cpu/tuple.hpp"
 
 
-void vaiDebugMsg(const char * msg, const char *funcname,
-                 const char *fname, int lineno) {
-  std::cout << "PYXIR(VITISAI(" << funcname << "): " << msg << " (" 
-    << fname << ":" << lineno << ")" << std::endl;
-}
-
 namespace pyxir {
 namespace runtime {
 namespace vai_rt {
@@ -47,6 +41,7 @@ VaiComputeFunc::VaiComputeFunc(
   const std::vector<std::string> &out_tensor_names)
   : xg_(xg), target_(target)
 {
+  pxDebug("Initialize VaiComputeFunc");
 
   for (const std::string &itn : in_tensor_names)
     in_tensor_names_.push_back(pyxir::stringify(itn));
@@ -91,7 +86,7 @@ void VaiComputeFunc::operator()(
   std::vector<XBufferHolder> &in_tensors,
   std::vector<XBufferHolder> &out_tensors)
 {
-  vaiDebug("Inside VaiComputeFunc::()");
+  pxDebug("Inside VaiComputeFunc::()");
   auto start_vai = std::chrono::high_resolution_clock::now();
 
   std::unordered_map<std::string, std::vector<XBufferHolder>> int_res;
@@ -112,14 +107,16 @@ void VaiComputeFunc::operator()(
   std::vector<XBufferHolder> dpu_out;
 
   auto stop_init = std::chrono::high_resolution_clock::now();
-  std::cout << "Init time: " << std::chrono::duration_cast<std::chrono::microseconds>(stop_init-start_vai).count() << std::endl;
+  std::chrono::microseconds duration_init = std::chrono::duration_cast<std::chrono::microseconds>(stop_init-start_vai);
+  pxDebug(("Init time: " + std::to_string(duration_init.count())).c_str());
 
   for (int i = 0; i < Xs_.size(); ++i) {
     auto start_k_begin = std::chrono::high_resolution_clock::now();
     dpu_in.clear();
     dpu_out.clear();
     auto stop_clear = std::chrono::high_resolution_clock::now();
-    std::cout << "Clear time: " << Xs_[i]->name << ": " << std::chrono::duration_cast<std::chrono::microseconds>(stop_clear-start_k_begin).count() << std::endl;
+    std::chrono::microseconds duration_clear = std::chrono::duration_cast<std::chrono::microseconds>(stop_clear-start_k_begin);
+    pxDebug(("Clear time: " + std::to_string(duration_clear.count())).c_str());
 
     XLayerHolder &X = Xs_[i];
 
@@ -138,9 +135,11 @@ void VaiComputeFunc::operator()(
     kernel_funcs_[i]->operator()(dpu_in, dpu_out);
     auto stop_k = std::chrono::high_resolution_clock::now();
 
-    std::cout << "Kernel time: " << X->name << ": " << std::chrono::duration_cast<std::chrono::microseconds>(stop_k-start_k).count() << std::endl;
-    std::cout << "Time: " << X->name << ": " << std::chrono::duration_cast<std::chrono::microseconds>(stop_k-start_k_begin).count() << std::endl;
-    
+    std::chrono::microseconds duration_kernel = std::chrono::duration_cast<std::chrono::microseconds>(stop_k-start_k);
+    pxDebug(("Kernel time: " + std::to_string(duration_kernel.count())).c_str());
+    std::chrono::microseconds duration = std::chrono::duration_cast<std::chrono::microseconds>(stop_k-start_k_begin);
+    pxDebug(("Time: " + std::to_string(duration.count())).c_str());
+
     int_res[otn] = dpu_out;
   }
 

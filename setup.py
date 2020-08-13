@@ -58,12 +58,17 @@ if '--use_vai_rt' in sys.argv:
 else:
    	use_vai_rt = False
 
-
+# DPUCZDX8G/DPUv2 build
+if '--use_vai_rt_dpuczdx8g' in sys.argv:
+    use_vai_rt_dpuczdx8g = True
+    sys.argv.remove('--use_vai_rt_dpuczdx8g')
+else:
+    use_vai_rt_dpuczdx8g = False
 if '--use_vai_rt_dpuv2' in sys.argv:
-    use_vai_rt_dpuv2 = True
+    use_vai_rt_dpuczdx8g = True
     sys.argv.remove('--use_vai_rt_dpuv2')
 else:
-    use_vai_rt_dpuv2 = False
+    use_vai_rt_dpuczdx8g = False
 
 ###############
 # STATIC DATA #
@@ -161,8 +166,8 @@ class CMakeBuild(build_ext):
 
         if use_vai_rt:
             cmake_args.append('-DUSE_VAI_RT=ON')
-        if use_vai_rt_dpuv2:
-            cmake_args.append('-DUSE_VAI_RT_DPUV2=ON')
+        if use_vai_rt_dpuczdx8g:
+            cmake_args.append('-DUSE_VAI_RT_DPUCZDX8G=ON')
         if self.debug:
             cmake_args.append('-DDEBUG=ON')
             # cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON')

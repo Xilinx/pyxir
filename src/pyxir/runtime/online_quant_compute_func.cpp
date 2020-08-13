@@ -28,10 +28,11 @@ OnlineQuantComputeFunc::OnlineQuantComputeFunc(
   const std::vector<std::string> &in_tensor_names,
   const std::vector<std::string> &out_tensor_names,
   const std::string &runtime,
-  int nb_quant_inputs)
+  int nb_quant_inputs,
+  bool compile_for_diff_runtime)
   : xg_(xg), target_(target), in_tensor_names_(in_tensor_names),
     out_tensor_names_(out_tensor_names), runtime_(runtime),
-    nb_quant_inputs_(nb_quant_inputs)
+    nb_quant_inputs_(nb_quant_inputs), compile_for_diff_runtime_(compile_for_diff_runtime)
 {
   OpaqueFunc build_online_quant_rt_func =
     OpaqueFuncRegistry::Get("pyxir.build_online_quant_rt");
@@ -67,10 +68,16 @@ void OnlineQuantComputeFunc::operator()(
     OpaqueArgs args = OpaqueArgs();
     quant_of_->call(args);
     
-    // Set final ComputeFunc
-    cf_ = ComputeFuncFactory::GetComputeFunc(
-      xg_, target_, in_tensor_names_, out_tensor_names_, runtime_
-    );
+    // If we are compiling for the runtime that we are given we will switch to the final
+    //  (accelerated) compute func
+    if (!compile_for_diff_runtime_) {
+      cf_ = ComputeFuncFactory::GetComputeFunc(
+        xg_, target_, in_tensor_names_, out_tensor_names_, runtime_
+      );
+    } else {
+      pxWarning("Not switching to specified runtime: `" + runtime_ + "` after on-the-fly" +
+                   " quantization as the model is compiled for a different target device.");
+    }
   }
 }
 

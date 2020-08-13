@@ -37,8 +37,22 @@ class RuntimeModuleFactoryImpl {
     typedef std::function<void(std::vector<XBufferHolder> &,
                                std::vector<XBufferHolder> &)> FuncType_;
 
-    RuntimeModuleFactoryImpl(const std::string &runtime) : rt_name_(runtime) {}
+    RuntimeModuleFactoryImpl(const std::string &runtime,
+                             const std::vector<std::string> &targets = std::vector<std::string>())
+      : rt_name_(runtime) 
+    {
+      std::copy(targets.begin(), targets.end(),
+                std::inserter(supported_targets_, supported_targets_.end()));
+    }
+
     virtual ~RuntimeModuleFactoryImpl() {}
+
+    PX_API std::unordered_set<std::string> &get_supported_targets() { return supported_targets_; }
+
+    PX_API bool is_target_supported(const std::string &target)
+    { 
+      return supported_targets_.find(target) != supported_targets_.end();
+    }
 
     /**
      * @brief Factory method to create a runtime module for the provided XGraph
@@ -63,7 +77,7 @@ class RuntimeModuleFactoryImpl {
 
   protected:
     std::string rt_name_;
-    
+    std::unordered_set<std::string> supported_targets_;
 };
 
 
@@ -76,8 +90,9 @@ class DefaultRuntimeModuleFactoryImpl : public RuntimeModuleFactoryImpl {
 
     using RuntimeModuleFactoryImpl::FuncType_;
 
-    DefaultRuntimeModuleFactoryImpl(const std::string &runtime)
-      : RuntimeModuleFactoryImpl(runtime) {}
+    DefaultRuntimeModuleFactoryImpl(const std::string &runtime,
+                                    const std::vector<std::string> &targets = std::vector<std::string>())
+      : RuntimeModuleFactoryImpl(runtime, targets) {}
 
     /**
      * @brief Factory method to create a runtime module for the provided XGraph

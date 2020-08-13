@@ -27,14 +27,14 @@ void declare_xbuffer(py::module &m) {
 
 	py::class_<XBuffer, std::shared_ptr<XBuffer>>(
 		  m, "XBuffer", py::buffer_protocol())
-		.def("__init__", [](XBuffer &xb, py::buffer b) {
+		.def(py::init([](py::buffer b) {
 
 			/* Request a buffer descriptor from Python */
 			py::buffer_info info = b.request();
 
-			new (&xb) XBuffer(info.ptr, info.itemsize, info.format, info.ndim,
-											info.shape, info.strides);
-		})
+			return new XBuffer(info.ptr, info.itemsize, info.format,
+                               info.ndim, info.shape, info.strides);
+		}))
 		.def_buffer([](XBuffer &xb) -> py::buffer_info {
 			return py::buffer_info(
 					xb.data,        /* Pointer to data */

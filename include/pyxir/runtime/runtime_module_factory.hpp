@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "../pyxir_api.hpp"
 #include "constants.hpp"
@@ -65,6 +66,20 @@ class RuntimeModuleFactory {
       return *this;
     }
 
+    PX_API RuntimeModuleFactory &set_supported_targets(const std::vector<std::string> &targets)
+    {
+      std::copy(targets.begin(), targets.end(),
+                std::inserter(supported_targets_, supported_targets_.end()));
+      return *this;
+    }
+
+    PX_API std::unordered_set<std::string> &get_supported_targets() { return supported_targets_; }
+
+    PX_API bool is_target_supported(const std::string &target)
+    { 
+      return supported_targets_.find(target) != supported_targets_.end();
+    }
+
     /**
      * @brief Register a runtime module factor implementation for the given
      *  runtime
@@ -106,6 +121,7 @@ class RuntimeModuleFactory {
   private:
     std::string runtime_;
     RuntimeModuleFactoryImplHolder impl_;
+    std::unordered_set<std::string> supported_targets_;
 };
 
 typedef std::unique_ptr<RuntimeModuleFactory> RuntimeModuleFactoryHolder;
