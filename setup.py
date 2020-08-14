@@ -52,11 +52,17 @@ if '--debug' in sys.argv:
 else:
    	debug = False
 
+# DPUCADX8G/DPUv1 build
 if '--use_vai_rt' in sys.argv:
-    use_vai_rt = True
+    use_vai_rt_dpucadx8g = True
     sys.argv.remove('--use_vai_rt')
 else:
-   	use_vai_rt = False
+   	use_vai_rt_dpucadx8g = False
+if '--use_vai_rt_dpucadx8g' in sys.argv:
+    use_vai_rt_dpucadx8g = True
+    sys.argv.remove('--use_vai_rt_dpucadx8g')
+else:
+    use_vai_rt_dpucadx8g = False
 
 # DPUCZDX8G/DPUv2 build
 if '--use_vai_rt_dpuczdx8g' in sys.argv:
@@ -164,7 +170,7 @@ class CMakeBuild(build_ext):
                       '-DPYTHON_EXECUTABLE=' + sys.executable,
                       '-DPYXIR_UNIT_TEST_ENABLE=TRUE']
 
-        if use_vai_rt:
+        if use_vai_rt_dpucadx8g:
             cmake_args.append('-DUSE_VAI_RT=ON')
         if use_vai_rt_dpuczdx8g:
             cmake_args.append('-DUSE_VAI_RT_DPUCZDX8G=ON')
