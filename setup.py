@@ -271,8 +271,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=['numpy', 'tensorflow>=1.12.0,<2', 'pydot==1.4.1',
+    install_requires=['numpy', 'pydot==1.4.1',
                       'h5py==2.8.0'],
+    extra_require={'full': ['tensorflow>=1.12.0,<2']},
     # cmdclass={'build_ext': BuildExt},
     cmdclass={
         'install_headers': InstallHeaders,

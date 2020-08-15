@@ -49,7 +49,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
     try:
         #     from tensorflow.contrib import decent_q
         import tensorflow as tf
-        if hasattr(tf.contrib, 'decent_q'):
+        if hasattr(tf, 'contrib') and hasattr(tf.contrib, 'decent_q'):
             from tensorflow.contrib import decent_q
         else:
             warnings.warn("Could not import decent_q module. Please check"

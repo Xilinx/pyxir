@@ -276,10 +276,10 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         use_bias = (not isinstance(biases, np.ndarray)) or biases.any()
         if self.kernel_groups == 1:
             conv_res = tf.nn.conv2d(
-                input=padded_inpt,
-                filter=kernel_trans,
-                strides=strides,
-                padding=padding_type,
+                padded_inpt,
+                kernel_trans,
+                strides,
+                padding_type,
                 data_format='NHWC',
                 dilations=dilations,
                 name=self.name  # if not use_bias else self.name + '_Conv'
@@ -773,10 +773,10 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
             padding_type = 'VALID'
 
         res = tf_pool_func(
-            value=padded_inpt,
-            ksize=ksize,
-            strides=strides,
-            padding=padding_type,
+            padded_inpt,
+            ksize,
+            strides,
+            padding_type,
             data_format='NHWC',
             name=self.name
         )
