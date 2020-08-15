@@ -14,27 +14,24 @@
  *  limitations under the License.
  */
 
-#pragma once
+/** 
+ * Default VAI runtime makes sure that models can be cross compiled for different
+ * target devices
+ */
 
-#include <string>
-#include <vector>
+#include "pyxir/runtime/runtime.hpp"
 
 namespace pyxir {
 namespace runtime {
 
-const std::string pxCpuTfRuntimeModule = "cpu-tf";
-const std::string pxCpuNpRuntimeModule = "cpu-np";
-const std::string pxCpuRuntimeModule = "cpu";
-const std::string pxVaiRuntimeModule = "vai";
+// Registration of runtime module factory implementations
 
-#ifdef USE_VAI_RT
-const std::vector<std::string> vaiTargets {"DPUCADX8G", "dpuv1"};
-#elif USE_VAI_RT_DPUCZDX8G
-const std::vector<std::string> vaiTargets {"DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102", "DPUCZDX8G-ultra96",
-                                           "dpuv2-zcu104", "dpuv2-zcu102", "dpuv2-ultra96"};
-#else
-const std::vector<std::string> vaiTargets {};
-#endif
+REGISTER_RUNTIME_FACTORY_IMPL(pyxir::runtime::pxVaiRuntimeModule)
+  .set_impl(
+    new pyxir::runtime::DefaultRuntimeModuleFactoryImpl(
+        pyxir::runtime::pxVaiRuntimeModule,
+        pyxir::runtime::vaiTargets)
+  );
 
 } // namespace runtime
 } // namespace pyxir

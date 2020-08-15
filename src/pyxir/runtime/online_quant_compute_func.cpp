@@ -29,10 +29,10 @@ OnlineQuantComputeFunc::OnlineQuantComputeFunc(
   const std::vector<std::string> &out_tensor_names,
   const std::string &runtime,
   int nb_quant_inputs,
-  bool compile_for_diff_runtime)
+  bool compile_only)
   : xg_(xg), target_(target), in_tensor_names_(in_tensor_names),
     out_tensor_names_(out_tensor_names), runtime_(runtime),
-    nb_quant_inputs_(nb_quant_inputs), compile_for_diff_runtime_(compile_for_diff_runtime)
+    nb_quant_inputs_(nb_quant_inputs), compile_only_(compile_only)
 {
   OpaqueFunc build_online_quant_rt_func =
     OpaqueFuncRegistry::Get("pyxir.build_online_quant_rt");
@@ -67,16 +67,27 @@ void OnlineQuantComputeFunc::operator()(
     // Call quantization function
     OpaqueArgs args = OpaqueArgs();
     quant_of_->call(args);
-    
-    // If we are compiling for the runtime that we are given we will switch to the final
-    //  (accelerated) compute func
-    if (!compile_for_diff_runtime_) {
+
+    if (compile_only_) {
+      if (!OpaqueFuncRegistry::Exists("pyxir.compile"))
+        throw std::runtime_error("Cannot compile the Vitis-AI compute func because the "
+                                " `pyxir.compile` opaque function is not "
+                                " registered. Check if Pyxir python module"
+                                " is imported correctly.");
+
+      XGraphHolder scheduled_xg =
+        std::make_shared<pyxir::graph::XGraph>("scheduled_xgraph"); 
+
+      OpaqueFunc compile_func = OpaqueFuncRegistry::Get("pyxir.compile");
+      
+      compile_func(xg_, target_, in_tensor_names_, out_tensor_names_, scheduled_xg);
+
+      pxWarning("Not switching to specified runtime: `" + runtime_ + "` after on-the-fly" +
+                " quantization as the model is compiled for a different target device.");
+    } else {
       cf_ = ComputeFuncFactory::GetComputeFunc(
         xg_, target_, in_tensor_names_, out_tensor_names_, runtime_
       );
-    } else {
-      pxWarning("Not switching to specified runtime: `" + runtime_ + "` after on-the-fly" +
-                   " quantization as the model is compiled for a different target device.");
     }
   }
 }

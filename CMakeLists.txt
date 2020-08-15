@@ -34,6 +34,11 @@ if (USE_VAI_RT)
   list(APPEND pyxir_EXT_LIBRARIES vitisai_rt)
   # list(APPEND pyxir_EXT_DEPENDENCIES vitisai_rt)
   add_definitions(-DUSE_VAI_RT=1)
+
+  # Remove VAI_DEFAULT backend source files
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_default/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+
 elseif (USE_VAI_RT_DPUCZDX8G)
   set(vitisai_INCLUDE_DIRS /usr/include/vai)
   set(vitisai_LIBRARIES /usr/lib)
@@ -43,6 +48,11 @@ elseif (USE_VAI_RT_DPUCZDX8G)
   set_property(TARGET vitisai_rt PROPERTY IMPORTED_LOCATION ${vitisai_LIBRARIES}/${VITISAI_SHARED_LIB})
   list(APPEND pyxir_EXT_LIBRARIES vitisai_rt)
   add_definitions(-DUSE_VAI_RT_DPUCZDX8G=1)
+
+  # Remove VAI_DEFAULT backend source files
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_default/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+
 else()
   # Remove VAI_RT backend source files
   file(GLOB_RECURSE vitisai_rt_SOURCES "src/pyxir/runtime/backends/vai_rt/*.cpp")

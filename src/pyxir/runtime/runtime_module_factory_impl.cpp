@@ -58,15 +58,15 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
                                " registered. Check if Pyxir python module"
                                " is imported correctly.");
     int nb_quant_inputs = run_options->nb_quant_inputs;
-    bool compile_for_diff_runtime = !is_target_supported(target);
+    bool compile_only = !is_target_supported(target);
 
     ComputeFuncInfo cfi;
     cfi.alloc_func = [this, &xg, target, &in_tensor_names, &out_tensor_names, 
-                      nb_quant_inputs, compile_for_diff_runtime](FuncState *state) 
+                      nb_quant_inputs, compile_only](FuncState *state) 
     {
       auto *online_quant_cf = new OnlineQuantComputeFunc(
         xg, target, in_tensor_names, out_tensor_names, rt_name_, nb_quant_inputs,
-        compile_for_diff_runtime
+        compile_only
       );
       *state = online_quant_cf;
       return 0;

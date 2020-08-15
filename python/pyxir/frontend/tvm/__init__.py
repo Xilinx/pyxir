@@ -27,22 +27,12 @@ FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 if sys.version_info >= (3, 0):
     import importlib
     tvm_spec = importlib.util.find_spec("tvm")
-    topi_spec = importlib.util.find_spec("topi")
-    # nnvm_spec = importlib.util.find_spec("nnvm")
 else:
     import imp
     try:
         tvm_spec = imp.find_module("tvm")
     except:
         tvm_spec = None
-    try:
-        topi_spec = imp.find_module("topi")
-    except:
-        topi_spec = None
-    # try:
-    #     nnvm_spec = imp.find_module("nnvm")
-    # except:
-    #     nnvm_spec = None
 
 if tvm_spec is None:
     tvm_dir = os.path.join(FILE_DIR, "../../../../lib/tvm/python")
@@ -50,18 +40,6 @@ if tvm_spec is None:
         raise ValueError("Could not find tvm package, please install before"
                          " using tvm functionality")
     sys.path.append(tvm_dir)
-if topi_spec is None:
-    topi_dir = os.path.join(FILE_DIR, "../../../../lib/tvm/topi/python")
-    if not os.path.exists(topi_dir):
-        raise ValueError("Could not find (tvm) topi package, please install"
-                         " before using (tvm) topi functionality")
-    sys.path.append(topi_dir)
-# if nnvm_spec is None:
-#     nnvm_dir = os.path.join(FILE_DIR, "../../../../lib/tvm/nnvm/python")
-#     if not os.path.exists(nnvm_dir):
-#         raise ValueError("Could not find (tvm) nnvm package, please install"
-#                          " before using (tvm) nnvm functionality")
-#     sys.path.append(nnvm_dir)
 
 from .io import load_model_from_file
 from .relay import from_relay
