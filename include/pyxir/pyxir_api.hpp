@@ -33,20 +33,18 @@ inline void pxDebugMsg(const char * msg, const char *funcname,
     << fname << ":" << lineno << ")" << std::endl;
 }
 
-inline void pxWarningMsg(const char * msg, const char *funcname,
-                         const char *fname, int lineno)
+inline void pxWarningMsg(const char * msg, const char *fname, int lineno)
 {
   std::cout << "PYXIR[WARNING]: " << msg << " (" 
     << fname << ":" << lineno << ")" << std::endl;
 }
 
-inline void pxWarningMsg(const std::string &msg, const char *funcname,
-                         const char *fname, int lineno)
+inline void pxWarningMsg(const std::string &msg, const char *fname, int lineno)
 {
-  pxWarningMsg(msg.c_str(), funcname, fname, lineno);
+  pxWarningMsg(msg.c_str(), fname, lineno);
 }
 
-#define pxWarning(x) pxWarningMsg(x, __FUNCTION__, __FILE__, __LINE__);
+#define pxWarning(x) pxWarningMsg(x, __FILE__, __LINE__);
 
 #ifdef DEBUG
 #define pxDebug(x) pxDebugMsg(x, __FUNCTION__, __FILE__, __LINE__);
