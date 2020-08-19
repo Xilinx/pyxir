@@ -56,9 +56,7 @@ else:
 if '--use_vai_rt' in sys.argv:
     use_vai_rt_dpucadx8g = True
     sys.argv.remove('--use_vai_rt')
-else:
-   	use_vai_rt_dpucadx8g = False
-if '--use_vai_rt_dpucadx8g' in sys.argv:
+elif '--use_vai_rt_dpucadx8g' in sys.argv:
     use_vai_rt_dpucadx8g = True
     sys.argv.remove('--use_vai_rt_dpucadx8g')
 else:
