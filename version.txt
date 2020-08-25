@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+//////////////// VERSION 0.1.1 ////////////////
+NEW FEATURES:
+    - Support for edge DPUCZDX8G/DPUv2 in C++ Vitis-AI runtime
+    - Support for NHWC networks in Vitis-AI runtime
+    - Enable cross-compilation for all accelerator targets
+    - Add DPUCZDX8G Ultra96 target
+BUG FIXES:
+    - Keep track of XGraph meta attributes during serialization
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.1.0 ////////////////
 NEW FEATURES:
     - Support for DPUv1 and DPUv2 Vitis-AI accelerator targets
