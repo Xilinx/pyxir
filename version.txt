@@ -13,6 +13,14 @@
 # limitations under the License.
 
 
+//////////////// VERSION 0.1.2 ////////////////
+NEW FEATURES:
+    - /
+BUG FIXES:
+    - Small fix for Relay batch norm to XGraph translation when no scale or beta found
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.1.1 ////////////////
 NEW FEATURES:
     - Support for edge DPUCZDX8G/DPUv2 in C++ Vitis-AI runtime
