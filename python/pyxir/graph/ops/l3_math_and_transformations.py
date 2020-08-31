@@ -251,7 +251,7 @@ def reshape(op_name, input_layer, newshape, **kwargs):
     if 'Constant' in input_layer.type:
         X = input_layer._replace(
             shapes=TensorShape(newshape),
-            data=input_layer.data.reshape(newshape)
+            data=input_layer.data[0].reshape(newshape)
         )
 
         return X

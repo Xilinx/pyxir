@@ -195,8 +195,11 @@ def conv2d(op_name,
 
     bottoms = [input_layer.name]
 
+    weights = np.array(weights_layer.data)
+    weights = weights.reshape(-1).reshape(weights_layer.shapes)
+    
     logger.debug("-- Conv2D Kernel layout: {}".format(kernel_layout))
-    logger.debug("-- Conv2D W shape: {}".format(weights_layer.data[0].shape))
+    logger.debug("-- Conv2D W shape: {}".format(weights.shape))
 
     if len(kernel_layout) != 4 or \
             sorted(kernel_layout) != ['H', 'I', 'O', 'W']:
@@ -205,7 +208,7 @@ def conv2d(op_name,
                                   " of `OIHW`"
                                   .format(kernel_layout, op_name))
     transpose_axes = tuple([kernel_layout.index(e) for e in 'OIHW'])
-    W = np.transpose(weights_layer.data[0], transpose_axes)
+    W = np.transpose(weights, transpose_axes)
 
     if len(padding_hw) == 4:
         pad_ht, pad_hb, pad_wl, pad_wr = padding_hw
