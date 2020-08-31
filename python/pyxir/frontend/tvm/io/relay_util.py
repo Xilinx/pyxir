@@ -183,6 +183,7 @@ def from_pytorch(model_path, shapes, outputs=None, opt_model_path=None,
     input_data = torch.randn(input_shape)
     scripted_model = torch.jit.trace(model, input_data).eval()
 
+    shapes = [(k,v) for k,v in shapes.items()]
     mod, params = relay.frontend.from_pytorch(scripted_model,
                                               shapes)
 

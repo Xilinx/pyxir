@@ -643,6 +643,8 @@ def multiply(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         # TODO: TEST
         # Don't add previous layers to schedule
         data = np.multiply(lhs_layer.data, rhs_layer.data)
+        data = data.reshape(data.shape[1:]) if data.shape[0] == 1 else data
+
 
         op_name = 'constant-' + str(hash(expr))
 
