@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the xgraph IO functionality
-
-
-"""
+""" Module for testing the xgraph IO functionality """
 
 import os
 import unittest

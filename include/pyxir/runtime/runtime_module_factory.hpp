@@ -114,13 +114,25 @@ class RuntimeModuleFactory {
                     const std::string &runtime,
                     RunOptionsHolder const &run_options = nullptr);
 
+    /**
+     * @brief Check whether the provided runtime exists
+     */
     PX_API static bool Exists(const std::string &runtime);
+
+    /**
+     * @brief Check whether the provided runtime supports the provided target
+     */
+    PX_API static bool SupportsTarget(const std::string &runtime,
+                                      const std::string &target);
 
     class Manager;
   
   private:
+    /** @brief The runtime identifier */
     std::string runtime_;
+    /** @brief The runtime factory implementation for the stored runtime */
     RuntimeModuleFactoryImplHolder impl_;
+    /** @brief The supported targets for the stored runtime */
     std::unordered_set<std::string> supported_targets_;
 };
 

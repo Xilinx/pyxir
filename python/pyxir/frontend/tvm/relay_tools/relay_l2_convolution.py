@@ -369,6 +369,8 @@ def nn_conv2d_transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         else None
     data_layout = str(expr.attrs.data_layout)
     kernel_layout = str(expr.attrs.kernel_layout)
+    # NOTE TVM uses different kernel layout description than we do and we have to switch O and I
+    kernel_layout = ''.join(({'O': 'I', 'I': 'O', 'H': 'H', 'W': 'W'}[c] for c in kernel_layout))
     # out_layout = str(expr.attrs.out_layout)
     # out_dtype = str(expr.attrs.out_dtype)
 

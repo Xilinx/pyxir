@@ -21,6 +21,7 @@
 #include <functional>
 
 #include "../common/xbuffer.hpp"
+#include "../common/px_stream.hpp"
 
 
 namespace pyxir {
@@ -32,11 +33,15 @@ typedef std::function<void(FuncState,
                            std::vector<XBufferHolder> &,
                            std::vector<XBufferHolder> &)> ComputeFuncFType;
 typedef std::function<void(FuncState)> ReleaseFuncFType;
+typedef std::function<void(FuncState, PxOStringStream &)> SerializationFuncFType;
+typedef std::function<void(FuncState*, PxIStringStream &)> DeserializationFuncFType;
 
 struct ComputeFuncInfo {
   AllocFuncFType alloc_func;
   ComputeFuncFType compute_func;
   ReleaseFuncFType release_func;
+  SerializationFuncFType serial_func;
+  DeserializationFuncFType deserial_func;
 };
 
 } // namespace runtime

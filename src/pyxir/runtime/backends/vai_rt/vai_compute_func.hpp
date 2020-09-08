@@ -42,7 +42,8 @@ class VaiComputeFunc {
     VaiComputeFunc(XGraphHolder &xg,
                    const std::string &target,
                    const std::vector<std::string> &in_tensor_names,
-                   const std::vector<std::string> &out_tensor_names);
+                   const std::vector<std::string> &out_tensor_names,
+                   const std::string &build_dir);
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
@@ -53,21 +54,30 @@ class VaiComputeFunc {
     }
 
   private:
+    /** @brief The XGraph */
     XGraphHolder xg_;
+    /** @brief The target */
     std::string target_;
+    /** @brief The input tensor names in the order that the output buffers will be provided */
     std::vector<std::string> in_tensor_names_;
+    /** @brief The input tensor names in the order that the input buffers will be provided */
     std::vector<std::string> out_tensor_names_;
-
+    /** @brief The build directory containing the DPU build files */
+    std::string build_dir_;
+    /** @brief The connection between outside and internal input tensor order */
     std::vector<int> in_tensor_order_;
+    /** @brief The connection between outside and internal output tensor order */
     std::vector<int> out_tensor_order_;
-
+    /** @brief The supported operations by this VAI compute function */
     std::unordered_set<std::string> supported_ops_ =
       {"Input", "Output", "DPUV1", "DPUV2", "DPU", "Tuple", "TupleGetItem", "Transpose"};
-
+    /** @brief In order container for the internal kernel functions */
     std::vector<std::unique_ptr<KernelFunc>> kernel_funcs_;
+    /** @brief In order container for the XLayers */
     std::vector<XLayerHolder> Xs_;
-
+    /** @brief The DPU function wrapping Vitis-AI runtime APIs*/
     DpuFunc dpu_func_;
+    /** @brief The DPU layer */
     XLayerHolder dpu_X_;
 };
 

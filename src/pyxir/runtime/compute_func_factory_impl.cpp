@@ -29,7 +29,7 @@ ComputeFuncHolder ComputeFuncFactoryImpl::get_compute_func(
   const std::string &target,
   const std::vector<std::string> &in_tensor_names,
   const std::vector<std::string> &out_tensor_names,
-  std::unique_ptr<RunOptions> const &run_options)
+  RunOptionsHolder const &run_options)
 {
   if (!OpaqueFuncRegistry::Exists("pyxir.build_rt"))
     throw std::runtime_error("Cannot build the runtime because the "

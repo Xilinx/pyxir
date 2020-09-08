@@ -82,7 +82,7 @@ class TfGenerator(object):
 
     @classmethod
     def generate(cls, xgraph, base_name, subgraphs_only=False, layout='NCHW',
-                 batch_size=-1):
+                 batch_size=-1, out_dir=os.getcwd()):
         # type: (XGraph, str, boolean, str, int) -> Dict[str, str]
         """
         Generate one or multiple tensorflow pb file from an xgraph and
@@ -129,7 +129,7 @@ class TfGenerator(object):
                     output_names
                 )
 
-            file_path = os.path.join(os.getcwd(), file_name + '.pb')
+            file_path = os.path.join(out_dir, file_name + '.pb')
 
             with tf.gfile.GFile(file_path, "wb") as f:
                 f.write(graph_def.SerializeToString())

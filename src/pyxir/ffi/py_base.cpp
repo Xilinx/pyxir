@@ -21,6 +21,7 @@
 #include <pybind11/embed.h>
 
 #include "pyxir/pyxir.hpp"
+#include "pyxir/ffi/py_container.hpp"
 #include "pyxir/ffi/py_xlayer.hpp"
 #include "pyxir/ffi/py_xbuffer.hpp"
 #include "pyxir/ffi/py_xattr.hpp"
@@ -89,6 +90,7 @@ PYBIND11_MODULE(libpyxir, m) {
     pyxir::declare_opaque_func(m);
 
     pyxir::declare_xbuffer(m);
+    pyxir::declare_containers(m);
     pyxir::graph::declare_xattr(m);
     pyxir::graph::declare_xlayer(m);
     pyxir::graph::declare_xgraph(m);

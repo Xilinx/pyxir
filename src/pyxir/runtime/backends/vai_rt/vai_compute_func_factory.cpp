@@ -39,9 +39,9 @@ ComputeFuncHolder VaiComputeFuncFactoryImpl::get_compute_func(
  
   // If PX_BUILD_DIR environment variable is set, we load the scheduled xgraph from
   // 	file
-  const char *env_build_dir = std::getenv("PX_BUILD_DIR");
-  if (env_build_dir != NULL) {
-    std::string build_dir = env_build_dir;
+  // const char *env_build_dir = std::getenv("PX_BUILD_DIR");
+  if (run_options->is_prebuilt) {
+    std::string build_dir = run_options->build_dir;
     if (!OpaqueFuncRegistry::Exists("pyxir.io.load_scheduled_xgraph_from_meta"))
       throw std::runtime_error("Cannot build the Vitis-AI compute func because the "
                                " `pyxir.io.load_scheduled_xgraph_from_meta`"
@@ -61,16 +61,19 @@ ComputeFuncHolder VaiComputeFuncFactoryImpl::get_compute_func(
 
     OpaqueFunc compile_func = OpaqueFuncRegistry::Get("pyxir.compile");
     
-    compile_func(xg, target, in_tensor_names, out_tensor_names, scheduled_xg);
+    std::string build_dir = run_options->build_dir;
+    std::string work_dir = run_options->work_dir;
+    compile_func(xg, target, in_tensor_names, out_tensor_names, build_dir,
+                 work_dir, scheduled_xg);
   }
 
   // Create stateful compute function
   ComputeFuncInfo cfi;
   cfi.alloc_func = [this, &scheduled_xg, target, &in_tensor_names,
-                    &out_tensor_names](FuncState *state) 
+                    &out_tensor_names, &run_options](FuncState *state) 
   {
     auto *vai_cf = new VaiComputeFunc(
-      scheduled_xg, target, in_tensor_names, out_tensor_names
+      scheduled_xg, target, in_tensor_names, out_tensor_names, run_options->build_dir
     );
     *state = vai_cf;
     return 0;

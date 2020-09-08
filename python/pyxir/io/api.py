@@ -12,19 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for Pyxir IO APIs
+""" Module for Pyxir IO APIs """
 
-
-"""
-
+import io
 import os
 import json
+import zipfile
 
 from pyxir.graph.xgraph import XGraph
 from pyxir.graph.io.xgraph_io import XGraphIO
-from pyxir.opaque_func_registry import register_opaque_func
+from pyxir.opaque_func_registry import register_opaque_func, OpaqueFuncRegistry
 from pyxir.type import TypeCode
+from pyxir.shared.container import StrContainer, BytesContainer
+from .util import zip_dir
 
 
 def visualize(xgraph, pngfile='xgraph.png'):
@@ -51,6 +51,11 @@ def save(xgraph, filename):
     XGraphIO.save(xgraph, filename)
 
 
+@register_opaque_func('pyxir.io.save', [TypeCode.XGraph, TypeCode.Str])
+def save_opaque_func(xg, filename):
+    save(xg, filename)
+
+
 def load(net_file, params_file):
     # type: (str, str) -> XGraph
     """
@@ -72,7 +77,6 @@ def load(net_file, params_file):
 @register_opaque_func('pyxir.io.load', [TypeCode.Str, TypeCode.Str, TypeCode.XGraph])
 def load_opaque_func(net_file, params_file, xg_callback):
     xg_callback.copy_from(load(net_file, params_file))
-
 
 
 @register_opaque_func('pyxir.io.load_scheduled_xgraph_from_meta',
@@ -103,10 +107,76 @@ def load_scheduled_xgraph_opaque_func(build_dir: str,
     px_params_file = meta_d['px_params']
 
     if not os.path.isabs(px_net_file):
-      px_net_file = os.path.join(build_dir, px_net_file)
+        px_net_file = os.path.join(build_dir, px_net_file)
 
     if not os.path.isabs(px_params_file):
-      px_params_file = os.path.join(build_dir, px_params_file)
+        px_params_file = os.path.join(build_dir, px_params_file)
 
     scheduled_xgraph = load(px_net_file, px_params_file)
     cb_scheduled_xgraph.copy_from(scheduled_xgraph)
+
+
+@register_opaque_func('pyxir.io.to_string',
+                      [TypeCode.XGraph, TypeCode.BytesContainer,
+                       TypeCode.BytesContainer])
+def write_to_string(xg, xgraph_json_str_callback, xgraph_params_str_callback):
+    graph_str, data_str = XGraphIO.to_string(xg)
+    xgraph_json_str_callback.set_bytes(graph_str)
+    xgraph_params_str_callback.set_bytes(data_str)
+
+
+def get_xgraph_str(xg: XGraph):
+    # graph_str, data_str = XGraphIO.to_string(xg)
+    # return " " + str(len(graph_str)) + " "  + graph_str + " " + str(len(data_str) + 1) + " " + data_str
+    of = OpaqueFuncRegistry.Get("pyxir.io.get_serialized_xgraph")
+    s = BytesContainer(b"")
+    of(xg, s)
+    # import pdb; pdb.set_trace()
+    return s.get_bytes()
+
+
+def read_xgraph_str(xg_str: bytes):
+    of = OpaqueFuncRegistry.Get("pyxir.io.deserialize_xgraph")
+    xg = XGraph()
+    s = BytesContainer(xg_str)
+    # import pdb; pdb.set_trace()
+    of(xg, s)
+    return xg
+
+
+@register_opaque_func('pyxir.io.from_string',
+                      [TypeCode.XGraph, TypeCode.Byte, TypeCode.Byte])
+def read_from_string(xg, xgraph_json_str, xgraph_params_str):
+    # graph_str, data_str = xgraph_str.split(";")
+    xg_load = XGraphIO.from_string(xgraph_json_str, xgraph_params_str)
+    xg.copy_from(xg_load)
+
+
+@register_opaque_func('pyxir.io.serialize_dir',
+                      [TypeCode.Str, TypeCode.BytesContainer])
+def serialize_dir(dir_path, serial_str_cb):
+    if not os.path.isdir(dir_path):
+        serial_str_cb.set_bytes(b"")
+    else:
+        bio = io.BytesIO()
+        with zipfile.ZipFile(bio, 'w', zipfile.ZIP_DEFLATED) as zip_f:
+            zip_dir(dir_path, zip_f)
+
+        s = bio.getvalue() # .hex()
+        serial_str_cb.set_bytes(s)
+        # import pdb; pdb.set_trace()
+
+
+@register_opaque_func('pyxir.io.deserialize_dir',
+                      [TypeCode.Str, TypeCode.Byte])
+def deserialize_dir(dir_path, serial_str):
+    # import pdb; pdb.set_trace()
+    if serial_str != b"":
+        bio = io.BytesIO(serial_str) # .encode('latin1') bytes.fromhex(serial_str))
+        with zipfile.ZipFile(bio, 'r') as zip_f:
+            zip_f.extractall(dir_path)
+        
+        # If empty directory got zipped, recreate empty directory
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        # import pdb; pdb.set_trace()

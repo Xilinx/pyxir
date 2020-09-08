@@ -38,8 +38,9 @@ VaiComputeFunc::VaiComputeFunc(
   XGraphHolder &xg,
   const std::string &target,
   const std::vector<std::string> &in_tensor_names,
-  const std::vector<std::string> &out_tensor_names)
-  : xg_(xg), target_(target)
+  const std::vector<std::string> &out_tensor_names,
+  const std::string &build_dir)
+  : xg_(xg), target_(target), build_dir_(build_dir)
 {
   pxDebug("Initialize VaiComputeFunc");
 
@@ -56,7 +57,7 @@ VaiComputeFunc::VaiComputeFunc(
     XLayerHolder X = xg->get(xl_name);
 
     if (X->xtype[0] == "DPU" || X->xtype[0] == "DPUV1" || X->xtype[0] == "DPUV2") {
-      std::unique_ptr<KernelFunc> dpu_func(new DpuFunc(X)); 
+      std::unique_ptr<KernelFunc> dpu_func(new DpuFunc(X, build_dir_)); 
       kernel_funcs_.push_back(std::move(dpu_func));
     } else if (X->xtype[0] == "Input") {
       // Skip input as it's an identity operation

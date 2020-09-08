@@ -38,6 +38,10 @@ void declare_opaque_func(py::module &m) {
          py::arg("s"))
     .def(py::init<const std::vector<std::string> &>(),
          py::arg("strings"))
+    .def(py::init<StrContainerHolder &>(),
+         py::arg("str_c"))
+    .def(py::init<BytesContainerHolder &>(),
+         py::arg("bytes_c"))
     .def(py::init<std::shared_ptr<graph::XGraph> &>(),
          py::arg("xg"))
     .def(py::init<std::shared_ptr<XBuffer> &>(),
@@ -54,6 +58,8 @@ void declare_opaque_func(py::module &m) {
                                return py::bytes(ov.get_string()); },
                            &OpaqueValue::set_string)
     .def_property("strings", &OpaqueValue::get_strings, &OpaqueValue::set_strings)
+    .def_property("str_c", &OpaqueValue::get_str_container, &OpaqueValue::set_str_container)
+    .def_property("bytes_c", &OpaqueValue::get_bytes_container, &OpaqueValue::set_bytes_container)
     .def_property("xg", &OpaqueValue::get_xgraph, &OpaqueValue::set_xgraph)
     .def_property("xb", &OpaqueValue::get_xbuffer, &OpaqueValue::set_xbuffer)
     .def_property("xbuffers", &OpaqueValue::get_xbuffers, &OpaqueValue::set_xbuffers)

@@ -38,7 +38,7 @@ from .opaque_func import OpaqueFunc
 from pyxir.shared.xbuffer import XBuffer
 from pyxir.graph.xgraph import XGraph
 from pyxir.graph.io.xgraph_io import XGraphIO
-from pyxir.io.api import visualize, save, load
+from pyxir.io.api import visualize, save, load, get_xgraph_str
 from pyxir.runtime import runtime_factory
 from pyxir.runtime.base_runtime import BaseRuntime
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
@@ -163,11 +163,14 @@ def compile(xgraph: XGraph, target: str, **kwargs) -> XGraph:
 
 @register_opaque_func('pyxir.compile', [TypeCode.XGraph, TypeCode.Str,
                                         TypeCode.vStr, TypeCode.vStr,
+                                        TypeCode.Str, TypeCode.Str,
                                         TypeCode.XGraph])
 def compile_opaque_func(xgraph: XGraph,
                         target: str,
                         in_tensor_names: List[str],
                         out_tensor_names: List[str],
+                        build_dir: str,
+                        work_dir: str,
                         cb_scheduled_xgraph: XGraph) -> None:
     """
     Expose the compile function as an opaque function
@@ -187,6 +190,10 @@ def compile_opaque_func(xgraph: XGraph,
     out_tensor_names: List[str]
         the names of the output tensors (in the order that they will be
         retrieved at runtime)
+    build_dir: str
+        the directory to be used for the final build files
+    work_dir: str
+        the directory to be used for temporary work files
     cb_scheduled_xgraph: XGraph
         return the scheduled XGraph
     """
@@ -194,8 +201,10 @@ def compile_opaque_func(xgraph: XGraph,
     out_tensor_names = [stringify(otn) for otn in out_tensor_names]
 
     # if work_dir is None:
-    work_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_work"))
-    build_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_build"))
+    if not work_dir:
+        work_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_work"))
+    if not build_dir:
+        build_dir = os.path.abspath(os.path.join(os.getcwd(), target + "_build"))
 
     opt_xgraph = optimize(xgraph, target)
     c_xgraph = compile(opt_xgraph, target, work_dir=work_dir,
@@ -250,7 +259,6 @@ def _quantize(xgraph: XGraph, target: str, inputs_func: Callable,
     q_xgraph = target_registry.get_target_quantizer(target)(
         xgraph, inputs_func, **kwargs
     )
-
     return q_xgraph
 
 
@@ -325,8 +333,10 @@ def build(xgraph: XGraph,
 
     fancy_logger.banner("BUILD `{}` RUNTIME GRAPH".format(target))
 
-    if work_dir is None:
+    if not work_dir:
         work_dir = os.path.join(os.getcwd(), target + "_work")
+    if not build_dir:
+        build_dir = os.path.join(os.getcwd(), target + "_build")
 
     c_xgraph = compile(xgraph, target, work_dir=work_dir, build_dir=build_dir)
 
@@ -413,13 +423,15 @@ def build_rt_opaque_func(xgraph: XGraph,
 
 @register_opaque_func('pyxir.build_online_quant_rt',
                       [TypeCode.XGraph, TypeCode.Str, TypeCode.Str,
-                       TypeCode.vStr, TypeCode.vStr,
+                       TypeCode.vStr, TypeCode.vStr, TypeCode.Str, TypeCode.Str,
                        TypeCode.OpaqueFunc, TypeCode.OpaqueFunc])
 def build_online_quant_rt_opaque_func(xgraph: XGraph,
                                       target: str,
                                       runtime: str,
                                       in_tensor_names: List[str],
                                       out_tensor_names: List[str],
+                                      build_dir: str,
+                                      work_dir: str,
                                       quantization_callback: OpaqueFunc,
                                       rt_cpu_callback: OpaqueFunc) -> None:
     """
@@ -442,6 +454,10 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
     out_tensor_names: List[str]
         the names of the output tensor names (in the order that they will be
         retrieved at runtime)
+    build_dir: str
+        the directory to be used for the final build files
+    work_dir: str
+        the directory to be used for temporary work files
     quantization_callback: OpaqueFunc
         the callback to be used for starting calibration based
         quantization using the collected input data
@@ -465,7 +481,7 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
 
     def quant_func():
         opt_xgraph = optimize(xgraph, target)
-        q_xgraph = _quantize(opt_xgraph, target, inputs_func)
+        q_xgraph = _quantize(opt_xgraph, target, inputs_func, work_dir=work_dir)
         # TODO
         xgraph.meta_attrs = q_xgraph.meta_attrs.to_dict()
         # xgraph.copy_from(q_xgraph)
@@ -477,7 +493,9 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
         xgraph=xgraph,
         target="cpu",
         runtime="cpu-tf",
-        last_layers=None
+        last_layers=None,
+        build_dir=build_dir,
+        work_dir=work_dir
     )
 
     def rt_func(in_tensors, out_tensors):

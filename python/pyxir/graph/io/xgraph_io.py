@@ -18,6 +18,7 @@ Module for doing IO on XGraph objects
 
 """
 
+import io
 import os
 import json
 import h5py
@@ -29,6 +30,7 @@ import libpyxir as lpx
 from .json_io import XGraphJSONEncoder
 from ..xgraph_factory import XGraphFactory
 from ..layer import xlayer
+from ..xgraph import XGraph
 
 logger = logging.getLogger('pyxir')
 
@@ -43,26 +45,15 @@ class XGraphIO(object):
     xgraph_factory = XGraphFactory()
 
     @classmethod
-    def save(cls, xgraph, filename):
-        # type: (XGraph, str) -> None
-        """
-        Save this xgraph to disk. The network graph information is written to
-        json and the network paraemeters are written to an h5 file
-        Arguments
-        ---------
-        filename: str
-            the name of the files storing the graph inormation and network
-            parameters the graph information is stored in `filename`.json
-            the network paraemeters are stored in `filename`.h5
-        """
-        h5f = h5py.File(filename + '.h5', 'w')
+    def __to_json_h5(cls, xgraph: XGraph, d: dict, h5f):
+        """ Write XGraph the JSON dictionary and h5f IO """
 
         # Save graph info
-        d = {
+        d.update({
             'nodes': [],
             'name': xgraph.get_name(),
             'meta_attrs': {}
-        }
+        })
 
         for k, v in xgraph.meta_attrs.to_dict().items():
             d['meta_attrs'][k] = v
@@ -75,7 +66,8 @@ class XGraphIO(object):
 
             # logger.debug("Name: {}, type: {}".format(X.name, X.type))
             if X.type and \
-                    ('Convolution' in X.type or 'Dense' in X.type):
+                    ('Convolution' in X.type or 'Dense' in X.type
+                     or 'Conv2DTranspose' in X.type):
                 h5f.create_dataset(X.name + '_weights', data=X.data.weights)
                 h5f.create_dataset(X.name + '_biases', data=X.data.biases)
                 # X = X._replace(data='Retrieve data from h5py file')
@@ -117,49 +109,59 @@ class XGraphIO(object):
             }
             d['nodes'].append(node_json)
 
+    @classmethod
+    def to_string(cls, xgraph: XGraph):
+        """ Return the XGraph in string format """
+        bio = io.BytesIO()
+        h5f = h5py.File(bio, 'w')
+
+        d = {}
+        cls.__to_json_h5(xgraph, d, h5f)
+        h5f.close()
+
+        graph_str = json.dumps(d).encode('utf-8')
+        # graph_str = bytes(json.dumps(d), 'utf-8').hex()
+        # data_str = bio.getvalue().decode('latin1')
+        data_str = bio.getvalue() # .decode('latin1') # .encode('utf-8')
+
+        # import pdb; pdb.set_trace()
+
+        return graph_str, data_str
+
+    @classmethod
+    def save(cls, xgraph, filename):
+        # type: (XGraph, str) -> None
+        """
+        Save this xgraph to disk. The network graph information is written to
+        json and the network paraemeters are written to an h5 file
+        Arguments
+        ---------
+        filename: str
+            the name of the files storing the graph inormation and network
+            parameters the graph information is stored in `filename`.json
+            the network paraemeters are stored in `filename`.h5
+        """
+        h5f = h5py.File(filename + '.h5', 'w')
+
+        d = {}
+        cls.__to_json_h5(xgraph, d, h5f)
+
         with open(filename + '.json', 'w') as f:
             json.dump(d, f, cls=XGraphJSONEncoder, indent=4, sort_keys=True)
 
         h5f.close()
 
     @classmethod
-    def load(cls, net_file, params_file):
-        # type: (str, str) -> None
-        """
-        Load the graph network information and weighst from the json network
-        file respectively h5 parameters file
-        Arguments
-        ---------
-        net_file: str
-            the path to the file containing the network graph information
-        params_file: str
-            the path to the file containing the network weights
-        TODO
-        """
-
-        if not net_file.endswith('.json'):
-            raise ValueError("Invalid network file type: {}, should be json"
-                             .format(net_file.split('.')[-1]))
-        if not params_file.endswith('.h5'):
-            raise ValueError("Invalid parameters file type: {}, should be h5"
-                             .format(params_file.split('.')[-1]))
-        if not os.path.exists(net_file):
-            raise ValueError("Provided network file does not exist: {}"
-                             .format(net_file))
-        if not os.path.exists(params_file):
-            raise ValueError("Provided parameters file does not exist: {}"
-                             .format(params_file))
-
-        with open(net_file) as nf:
-            net = json.load(nf)
-        h5f = h5py.File(params_file, 'r')
+    def __from_json_h5(cls, net: dict, h5f):
+        """ Read XGraph from JSON dictionary and h5f IO """
 
         xlayers = []
         for node in net['nodes']:
 
             X = xlayer.XLayer(**node['LayerParameter'])
             if X.type and \
-                    ('Convolution' in X.type or 'Dense' in X.type):
+                    ('Convolution' in X.type or 'Dense' in X.type 
+                     or 'Conv2DTranspose' in X.type):
                 weights_key, biases_key = X.name + '_weights',\
                     X.name + '_biases'
                 if weights_key not in h5f:
@@ -264,12 +266,69 @@ class XGraphIO(object):
 
             xlayers.append(X)
 
-        h5f.close()
-
         stored_name = net['name']
 
         xgraph = XGraphIO.xgraph_factory.build_from_xlayer(net=xlayers)
         xgraph.set_name(stored_name)
         xgraph.meta_attrs = net['meta_attrs']
+
+        return xgraph
+
+    @classmethod
+    def load(cls, net_file, params_file):
+        # type: (str, str) -> None
+        """
+        Load the graph network information and weighst from the json network
+        file respectively h5 parameters file
+        Arguments
+        ---------
+        net_file: str
+            the path to the file containing the network graph information
+        params_file: str
+            the path to the file containing the network weights
+        TODO
+        """
+
+        if not net_file.endswith('.json'):
+            raise ValueError("Invalid network file type: {}, should be json"
+                             .format(net_file.split('.')[-1]))
+        if not params_file.endswith('.h5'):
+            raise ValueError("Invalid parameters file type: {}, should be h5"
+                             .format(params_file.split('.')[-1]))
+        if not os.path.exists(net_file):
+            raise ValueError("Provided network file does not exist: {}"
+                             .format(net_file))
+        if not os.path.exists(params_file):
+            raise ValueError("Provided parameters file does not exist: {}"
+                             .format(params_file))
+
+        with open(net_file) as nf:
+            net = json.load(nf)
+        h5f = h5py.File(params_file, 'r')
+
+        xgraph = cls.__from_json_h5(net, h5f)
+
+        h5f.close()
+
+        return xgraph
+
+    @classmethod
+    def from_string(cls, graph_str, data_str):
+        """ Read  serialized XGraph from graph and data string """
+        # import pdb; pdb.set_trace()
+        # ds = data_str.encode('latin1')
+        # ds = bytes.fromhex(data_str)
+        # ds = bytes(data_str, 'utf-8').decode('utf-8').encode('latin1')
+        ds = data_str # .decode('utf-8').encode('latin1')
+        bio = io.BytesIO(ds) # bytes.fromhex(data_str))
+        h5f = h5py.File(bio, 'r')
+        # import pdb; pdb.set_trace()
+        json_str = graph_str
+        # json_str = bytes.fromhex(graph_str).decode('utf-8')
+        # json_str = graph_str.encode('latin1')
+        net = json.loads(json_str)
+        xgraph = cls.__from_json_h5(net, h5f)
+
+        h5f.close()
 
         return xgraph

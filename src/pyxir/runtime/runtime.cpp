@@ -26,14 +26,18 @@ namespace runtime {
 REGISTER_RUNTIME_FACTORY_IMPL(pyxir::runtime::pxCpuTfRuntimeModule)
   .set_impl(
     new pyxir::runtime::DefaultRuntimeModuleFactoryImpl(
-        pyxir::runtime::pxCpuTfRuntimeModule)
-  );
+        pyxir::runtime::pxCpuTfRuntimeModule,
+        pyxir::runtime::cpuTargets)
+  )
+  .set_supported_targets(pyxir::runtime::cpuTargets);
 
 REGISTER_RUNTIME_FACTORY_IMPL(pyxir::runtime::pxCpuNpRuntimeModule)
   .set_impl(
     new pyxir::runtime::DefaultRuntimeModuleFactoryImpl(
-        pyxir::runtime::pxCpuNpRuntimeModule)
-  );
+        pyxir::runtime::pxCpuNpRuntimeModule,
+        pyxir::runtime::cpuTargets)
+  )
+  .set_supported_targets(pyxir::runtime::cpuTargets);
 
 } // namespace runtime
 } // namespace pyxir

@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Setup PyXIR package
-"""
+""" Setup PyXIR package """
 
 import os
 import sys
@@ -66,9 +64,7 @@ else:
 if '--use_vai_rt_dpuczdx8g' in sys.argv:
     use_vai_rt_dpuczdx8g = True
     sys.argv.remove('--use_vai_rt_dpuczdx8g')
-else:
-    use_vai_rt_dpuczdx8g = False
-if '--use_vai_rt_dpuv2' in sys.argv:
+elif '--use_vai_rt_dpuv2' in sys.argv:
     use_vai_rt_dpuczdx8g = True
     sys.argv.remove('--use_vai_rt_dpuv2')
 else:
@@ -165,8 +161,7 @@ class CMakeBuild(build_ext):
             extdir += os.path.sep
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable,
-                      '-DPYXIR_UNIT_TEST_ENABLE=TRUE']
+                      '-DPYTHON_EXECUTABLE=' + sys.executable]
 
         if use_vai_rt_dpucadx8g:
             cmake_args.append('-DUSE_VAI_RT=ON')
@@ -270,7 +265,7 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=['numpy', 'pydot==1.4.1',
-                      'h5py==2.8.0'],
+                      'h5py==2.10.0'],
     extra_require={'full': ['tensorflow>=1.12.0,<2']},
     # cmdclass={'build_ext': BuildExt},
     cmdclass={

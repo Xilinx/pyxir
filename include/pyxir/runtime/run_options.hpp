@@ -18,11 +18,14 @@
 
 #include <cstdlib>
 #include <memory>
+#include <bitset>
+
+#include "../common/serializable.hpp"
 
 namespace pyxir {
 namespace runtime {
 
-struct RunOptions {
+struct RunOptions : public ISerializable {
   
   RunOptions() {
     const char *env_quant_size = std::getenv("PX_QUANT_SIZE");
@@ -30,16 +33,38 @@ struct RunOptions {
       nb_quant_inputs = std::atoi(env_quant_size);
   }
 
-  // Quantization related run options
-  // The default number of inputs for quantization calibration is 128
-  // This can be changed by setting the 'PX_QUANT_SIZE' environment variable
+  /** @brief Whether to use on-the-fly quantization */
   bool on_the_fly_quantization = false;
+  /** @brief The number of inputs to be used for quantization (= calibration dataset) */
   int nb_quant_inputs = 128;
+  /** @brief The location of the final build directory */
+  std::string build_dir = "/tmp/vitis_ai_build";
+  /** @brief The location of the directory for temporary work files */
+  std::string work_dir = "/tmp/vitis_ai_work";
+  /** @brief Whether the build has been completed, allows use of pre-built build directory */
+  bool is_prebuilt = false;
 
+  virtual void serialize_px(PxOStringStream &pstream)
+  {
+    pstream.write(on_the_fly_quantization);
+    pstream.write(nb_quant_inputs);
+    pstream.write(build_dir);
+    pstream.write(work_dir);
+    pstream.write(is_prebuilt);
+  }
+
+  virtual void deserialize_px(PxIStringStream &pstream)
+  {
+    pstream.read(on_the_fly_quantization);
+    pstream.read(nb_quant_inputs);
+    pstream.read(build_dir);
+    pstream.read(work_dir);
+    pstream.read(is_prebuilt);
+  }
 };
 
 } // namespace runtime
 
-typedef std::unique_ptr<runtime::RunOptions> RunOptionsHolder;
+typedef std::shared_ptr<runtime::RunOptions> RunOptionsHolder;
 
 } // namespace pyxir

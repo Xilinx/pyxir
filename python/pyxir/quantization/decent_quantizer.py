@@ -135,7 +135,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
                                'graph',
                                subgraphs_only=True,
                                layout='NHWC',
-                               batch_size=batch_size)
+                               batch_size=batch_size,
+                               out_dir=self.work_dir)
 
         warnings.warn("This quantization only works with one partition and"
                       " only in the beginning of the graph!!")

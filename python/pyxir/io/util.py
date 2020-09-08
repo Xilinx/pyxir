@@ -12,23 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for Type related functionality """
+""" Utility module for Pyxir IO APIs """
 
-from enum import Enum
+import os
 
-
-class TypeCode(Enum):
-    Int = 0
-    vInt = 1
-    Float = 2
-    vFloat = 3
-    Str = 4
-    vStr = 5
-    StrContainer = 6
-    BytesContainer = 7
-    XGraph = 8
-    XBuffer = 9
-    vXBuffer = 10
-    OpaqueFunc = 11
-    Undefined = 12
-    Byte = 101  # Stored in string in C++
+def zip_dir(path, zip_f):
+    for root, _, files in os.walk(path):
+        for f in files:
+            zip_f.write(os.path.join(root, f), f)

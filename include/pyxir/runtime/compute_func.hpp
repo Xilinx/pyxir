@@ -22,16 +22,19 @@
 
 #include "compute_func_info.hpp"
 #include "../opaque_func.hpp"
+#include "../common/serializable.hpp"
 
 
 namespace pyxir {
 namespace runtime {
 
-class IComputeFunc {
+class IComputeFunc : public ISerializable {
   
   public:
     IComputeFunc() {}
     virtual ~IComputeFunc() {}
+
+    virtual std::string get_type() = 0;
 
     virtual void operator()(std::vector<XBufferHolder> &in_tensors,
                             std::vector<XBufferHolder> &out_tensors) = 0;
@@ -41,13 +44,28 @@ class IComputeFunc {
 class OpaqueComputeFunc : public IComputeFunc {
   
   public:
+    OpaqueComputeFunc() {}
     OpaqueComputeFunc(OpaqueFuncHolder &of) { of_ = of; }
+
+    virtual std::string get_type() { return "opaque_compute_func"; }
 
     virtual void operator()(std::vector<XBufferHolder> &in_tensors,
                             std::vector<XBufferHolder> &out_tensors)
     {
       // Computation is embedded inside OpaqueFunc
       (*of_)(in_tensors, out_tensors);
+    }
+
+    virtual void serialize_px(PxOStringStream &pstream)
+    {
+      (void) pstream;
+      throw std::runtime_error("Serialization not implemented for OpaqueComputeFunc");
+    }
+
+    virtual void deserialize_px(PxIStringStream &pstream)
+    {
+      (void) pstream;
+      throw std::runtime_error("Deserialization not implemented for OpaqueComputeFunc");
     }
 
   private:
@@ -63,15 +81,28 @@ class OpaqueComputeFunc : public IComputeFunc {
 class StatefulComputeFunc : public IComputeFunc {
   
   public:
+    StatefulComputeFunc() {}
     StatefulComputeFunc(ComputeFuncInfo &cfi) : cfi_(cfi)
     {
       cfi_.alloc_func(&func_state_);
     }
 
+    virtual std::string get_type() { return "stateful_compute_func"; }
+
     virtual void operator()(std::vector<XBufferHolder> &in_tensors,
                             std::vector<XBufferHolder> &out_tensors)
     {
       cfi_.compute_func(func_state_, in_tensors, out_tensors);
+    }
+
+    virtual void serialize_px(PxOStringStream &pstream)
+    {
+      cfi_.serial_func(func_state_, pstream);
+    }
+
+    virtual void deserialize_px(PxIStringStream &pstream)
+    {
+      cfi_.deserial_func(&func_state_, pstream);
     }
 
     ~StatefulComputeFunc()

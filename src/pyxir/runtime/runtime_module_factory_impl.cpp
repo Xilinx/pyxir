@@ -22,7 +22,7 @@
 #include "pyxir/opaque_func_registry.hpp"
 #include "pyxir/runtime/compute_func_factory.hpp"
 #include "pyxir/runtime/runtime_module_factory_impl.hpp"
-#include "online_quant_compute_func.hpp"
+#include "pyxir/runtime/online_quant_compute_func.hpp"
 
 
 namespace pyxir {
@@ -34,7 +34,7 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
   const std::string &target,
   const std::vector<std::string> &in_tensor_names,
   const std::vector<std::string> &out_tensor_names,
-  std::unique_ptr<RunOptions> const &run_options)
+  RunOptionsHolder const &run_options)
 {
   if (!OpaqueFuncRegistry::Exists("pyxir.build_rt"))
     throw std::runtime_error("Cannot build the runtime because the "
@@ -57,38 +57,13 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
                                " `pyxir.quantize` opaque function is not "
                                " registered. Check if Pyxir python module"
                                " is imported correctly.");
-    int nb_quant_inputs = run_options->nb_quant_inputs;
-    bool compile_only = !is_target_supported(target);
+    // bool compile_only = !is_target_supported(target);
 
-    ComputeFuncInfo cfi;
-    cfi.alloc_func = [this, &xg, target, &in_tensor_names, &out_tensor_names, 
-                      nb_quant_inputs, compile_only](FuncState *state) 
-    {
-      auto *online_quant_cf = new OnlineQuantComputeFunc(
-        xg, target, in_tensor_names, out_tensor_names, rt_name_, nb_quant_inputs,
-        compile_only
-      );
-      *state = online_quant_cf;
-      return 0;
-    };
-
-    cfi.release_func = [](FuncState state)
-    {
-      if (state)
-        delete reinterpret_cast<OnlineQuantComputeFunc*>(state);
-    };
-
-    cfi.compute_func = [](FuncState state, 
-                          std::vector<pyxir::XBufferHolder> &in_tensors,
-                          std::vector<pyxir::XBufferHolder> &out_tensors)
-    {
-      OnlineQuantComputeFunc* oqcf =
-        reinterpret_cast<OnlineQuantComputeFunc*>(state);
-      (*oqcf)(in_tensors, out_tensors);
-    };
-
-    ComputeFuncHolder cf(new StatefulComputeFunc(cfi));
-    RtModHolder rt_mod(new RuntimeModule(cf));
+    // ComputeFuncHolder cf(new StatefulComputeFunc(cfi));
+    ComputeFuncHolder cf(new OnlineQuantComputeFunc(
+      xg, target, in_tensor_names, out_tensor_names, rt_name_, run_options
+    ));
+    RtModHolder rt_mod(new RuntimeModule(cf, in_tensor_names, out_tensor_names));
 
     return rt_mod;
   }
@@ -100,9 +75,9 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
                                 + " given target: `" + target + "`");
 
   ComputeFuncHolder cf = ComputeFuncFactory::GetComputeFunc(
-    xg, target, in_tensor_names, out_tensor_names, rt_name_
+    xg, target, in_tensor_names, out_tensor_names, rt_name_, run_options
   );
-  RtModHolder rt_mod(new RuntimeModule(cf));
+  RtModHolder rt_mod(new RuntimeModule(cf, in_tensor_names, out_tensor_names));
 
   return rt_mod;
 }

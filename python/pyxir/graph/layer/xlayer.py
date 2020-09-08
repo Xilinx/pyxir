@@ -213,7 +213,8 @@ class XLayer(object):
         _data = [np.array(d, copy=False) for d in self._xlayer.data]
         if len(self.type) > 0 and self.type[0] in \
                 ['Convolution', 'Conv2DTranspose', 'Dense']:
-            assert len(_data) == 2
+            assert len(_data) == 2, "{} layer should have data"\
+                " attribute of size 2 but got: {}".format(self.type[0], len(_data))
             return ConvData(*_data)
         elif 'Scale' in self.type:
             return ScaleData(*_data)

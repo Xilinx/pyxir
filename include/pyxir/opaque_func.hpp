@@ -26,6 +26,7 @@
 #include "type.hpp"
 #include "common/xbuffer.hpp"
 #include "graph/xgraph.hpp"
+#include "ffi/str_container.hpp"
 
 namespace pyxir {
 
@@ -43,6 +44,8 @@ struct OpaqueValue {
     std::vector<int64_t> *ints;
     std::string *s;
     std::vector<std::string> *strings;
+    StrContainerHolder str_c;
+    BytesContainerHolder bytes_c;
     std::shared_ptr<graph::XGraph> xg;
     std::shared_ptr<XBuffer> xb;
     std::vector<std::shared_ptr<XBuffer>> *xbuffers;
@@ -75,6 +78,16 @@ struct OpaqueValue {
     set_strings(strings_); 
   }
 
+  OpaqueValue(StrContainerHolder &str_c_)
+  {
+    set_str_container(str_c_);
+  }
+
+  OpaqueValue(BytesContainerHolder &bytes_c_)
+  {
+    set_bytes_container(bytes_c_);
+  }
+
   OpaqueValue(std::shared_ptr<graph::XGraph> &xg_)
   {
     set_xgraph(xg_);
@@ -105,6 +118,8 @@ struct OpaqueValue {
       case pxVInt: set_ints(*ov_.ints); break;
       case pxStrHandle: set_string(*ov_.s); break;
       case pxVStrHandle: set_strings(*ov_.strings); break;
+      case pxStrContainerHandle: set_str_container(ov_.str_c); break;
+      case pxBytesContainerHandle: set_bytes_container(ov_.bytes_c); break;
       case pxXGraphHandle: set_xgraph(ov_.xg); break;
       case pxXBufferHandle: set_xbuffer(ov_.xb); break;
       case pxVXBufferHandle: set_xbuffers(*ov_.xbuffers); break;
@@ -127,6 +142,16 @@ struct OpaqueValue {
       case pxVInt: ints = ov_.ints; ov_.set_undefined(); break;
       case pxStrHandle: s = ov_.s; ov_.set_undefined(); break;
       case pxVStrHandle: strings = ov_.strings; ov_.set_undefined(); break;
+      case pxStrContainerHandle: {
+        new (&str_c) StrContainerHolder{ov_.str_c};
+        ov_.set_undefined();
+        break;
+      }
+      case pxBytesContainerHandle: {
+        new (&bytes_c) BytesContainerHolder{ov_.bytes_c};
+        ov_.set_undefined();
+        break;
+      }
       case pxXGraphHandle: {
         new (&xg) std::shared_ptr<graph::XGraph>{ov_.xg};
         ov_.set_undefined();
@@ -156,7 +181,6 @@ struct OpaqueValue {
    */
   OpaqueValue& operator =(OpaqueValue &&ov_)
   {
-    // std::cout << "Move assignment" << std::endl;
     if (&ov_ == this)
       return *this;
 
@@ -170,9 +194,6 @@ struct OpaqueValue {
    */
   OpaqueValue& operator =(const OpaqueValue &ov_)
   {
-    // Possibly we change type so we have to clean up
-    // clean_up();
-    // std::cout << "Copy assignment" << std::endl;
     if (&ov_ == this)
       return *this;
 
@@ -255,6 +276,44 @@ struct OpaqueValue {
     strings = new std::vector<std::string>(strings_);
   }
 
+  // STR CONTAINER
+  StrContainerHolder get_str_container() {
+    if (type_code != pxStrContainerHandle)
+      throw std::runtime_error("Trying to retrieve OpaqueValue of type: "
+                               + get_type_code_str() + " as type: " 
+                               + px_type_code_to_string(pxStrContainerHandle));
+    return str_c;
+  }
+
+  void set_str_container(const StrContainerHolder &str_c_)
+  {
+    if (type_code != pxUndefined)
+      clean_up();
+
+    type_code = pxStrContainerHandle;
+
+    new (&str_c) StrContainerHolder{str_c_};
+  }
+
+  // BYTES CONTAINER
+  BytesContainerHolder get_bytes_container() {
+    if (type_code != pxBytesContainerHandle)
+      throw std::runtime_error("Trying to retrieve OpaqueValue of type: "
+                               + get_type_code_str() + " as type: " 
+                               + px_type_code_to_string(pxBytesContainerHandle));
+    return bytes_c;
+  }
+
+  void set_bytes_container(const BytesContainerHolder &bytes_c_)
+  {
+    if (type_code != pxUndefined)
+      clean_up();
+
+    type_code = pxBytesContainerHandle;
+
+    new (&bytes_c) BytesContainerHolder{bytes_c_};
+  }
+
   // XGRAPH
   std::shared_ptr<graph::XGraph> get_xgraph() {
     if (type_code != pxXGraphHandle)
@@ -265,19 +324,13 @@ struct OpaqueValue {
   }
 
   void set_xgraph(const std::shared_ptr<graph::XGraph> &xg_)
-  { 
-    // std::cout << "set OV XGraph: " << xg_->get_name() << std::endl;
+  {
     if (type_code != pxUndefined)
       clean_up();
 
-    // std::cout << "set OV XGraph before type_code " << std::endl;
-
     type_code = pxXGraphHandle;
-    // std::cout << "set OV XGraph after type_code " << std::endl;
-    // xg = xg_;
-    new (&xg) std::shared_ptr<graph::XGraph>{xg_};
 
-    // std::cout << "set OV XGraph: " << xg->get_name() << std::endl;
+    new (&xg) std::shared_ptr<graph::XGraph>{xg_};
   }
 
   // XBUFFER
@@ -347,6 +400,8 @@ struct OpaqueValue {
       case pxVInt: delete ints; break;
       case pxStrHandle: delete s; break;
       case pxVStrHandle: delete strings; break;
+      case pxStrContainerHandle: str_c.~shared_ptr(); break;
+      case pxBytesContainerHandle: bytes_c.~shared_ptr(); break;
       case pxXGraphHandle: xg.~shared_ptr(); break;
       case pxXBufferHandle: xb.~shared_ptr(); break;
       case pxVXBufferHandle: delete xbuffers; break;

@@ -26,7 +26,7 @@ namespace pyxir {
 namespace runtime {
 namespace vai_rt {
 
-DpuFunc::DpuFunc(XLayerHolder &xl) : KernelFunc(xl)
+DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl)
 {
   std::vector<std::string> dpu_in_tensor_names = xl->bottoms;
   std::vector<std::string> dpu_internal_in_tensor_names
@@ -49,9 +49,11 @@ DpuFunc::DpuFunc(XLayerHolder &xl) : KernelFunc(xl)
   // If PX_BUILD_DIR environment variable is set, we use that directory
   //   to setup the DpuRunner
   std::string model_path;
-  const char *env_build_dir = std::getenv("PX_BUILD_DIR");
-  if (env_build_dir != NULL) {
-    model_path = env_build_dir;
+  // const char *env_build_dir = std::getenv("PX_BUILD_DIR");
+  // if (env_build_dir != NULL) {
+  //   model_path = env_build_dir;
+  if (!build_dir.empty()) {
+    model_path = build_dir;
   } else {
     model_path = xl->get_attr("work_dir").get_string();
   }

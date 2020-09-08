@@ -13,10 +13,10 @@
 # limitations under the License.
 
 """
-Module for OpaqueFunc definition and functionality 
+Module for OpaqueFunc definition and functionality
 
-OpaqueFunc is inspired by TVM's PackedFunc and allows writing and calling functions
-in all languages where this structure is defined (e.g. C++, Python)
+OpaqueFunc is inspired by TVM's PackedFunc and allows writing and calling
+functions in all languages where this structure is defined (e.g. C++, Python)
 """
 
 import numpy as np
@@ -26,6 +26,7 @@ from typing import Callable, Any, List
 from pyxir.type import TypeCode
 from pyxir.graph.xgraph import XGraph
 from pyxir.shared.xbuffer import XBuffer
+from pyxir.shared.container import StrContainer, BytesContainer
 from pyxir.shared.vector import StrVector, IntVector
 
 
@@ -47,6 +48,12 @@ class OpaqueFunc(object):
         TypeCode.vStr: (
             lambda arg_: StrVector(arg_.strings),
             lambda arg_: lpx.OpaqueValue(lpx.StrVector(arg_))),
+        TypeCode.StrContainer: (
+            lambda arg_: StrContainer.from_lib(arg_.str_c),
+            lambda arg_: lpx.OpaqueValue(arg_._str_c)),
+        TypeCode.BytesContainer: (
+            lambda arg_: BytesContainer.from_lib(arg_.bytes_c),
+            lambda arg_: lpx.OpaqueValue(arg_._bytes_c)),
         TypeCode.XGraph: (
             lambda arg_: XGraph._from_xgraph(arg_.xg),
             lambda arg_: lpx.OpaqueValue(arg_._xgraph)),

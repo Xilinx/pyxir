@@ -28,6 +28,9 @@ class Vector(object):
         self.extend(other)
         return self
 
+    def append(self, value: str):
+        self.__vector.append(value)
+
     def __contains__(self, value):
         return value in self.__vector
 

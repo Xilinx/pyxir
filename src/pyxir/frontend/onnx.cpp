@@ -75,5 +75,5 @@ PX_API std::shared_ptr<graph::XGraph> import_onnx_model(
   return xg;
 }
 
-} // pyxir
 } // onnx
+} // pyxir

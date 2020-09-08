@@ -75,7 +75,6 @@ def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
 
     # quantizer = XGraphMSEThresholdQuantizer(xgraph, inputs_func, **kwargs)
     # q_xgraph = quantizer.quantize()
-
     quantizer = DECENTQuantizer(xgraph, inputs_func, **kwargs)
     q_xgraph = quantizer.quantize()
 

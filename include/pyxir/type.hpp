@@ -26,6 +26,8 @@ typedef enum {
   pxVFloat,
   pxStrHandle,
   pxVStrHandle,
+  pxStrContainerHandle,
+  pxBytesContainerHandle,
   pxXGraphHandle,
   pxXBufferHandle,
   pxVXBufferHandle,
@@ -45,6 +47,8 @@ inline const std::string px_type_code_to_string(pxTypeCode ptc)
     case pxVFloat: return "vFloat";
     case pxStrHandle: return "Str";
     case pxVStrHandle: return "vStr";
+    case pxStrContainerHandle: return "StrC";
+    case pxBytesContainerHandle: return "BytesC";
     case pxXGraphHandle: return "XGraph";
     case pxXBufferHandle: return "XBuffer";
     case pxVXBufferHandle: return "vXBuffer";

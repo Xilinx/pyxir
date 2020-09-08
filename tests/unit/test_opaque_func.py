@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the OpaqueFunc data structure
-
-
-"""
+""" Module for testing the OpaqueFunc data structure """
 
 import unittest
 import numpy as np
@@ -25,6 +21,7 @@ from pyxir.type import TypeCode
 from pyxir.opaque_func import OpaqueFunc
 from pyxir.graph.xgraph import XGraph
 from pyxir.shared.xbuffer import XBuffer
+from pyxir.shared.container import StrContainer
 from pyxir.graph.layer.xlayer import XLayer
 
 
@@ -45,6 +42,17 @@ class TestOpaqueFunc(unittest.TestCase):
 
         of = OpaqueFunc(py_func, [TypeCode.vStr])
         of(["test1", "test2"])
+
+    def test_str_cont_arg(self):
+
+        def py_func(str_cont):
+            assert str_cont == "test"
+            str_cont.set_str("2")
+
+        of = OpaqueFunc(py_func, [TypeCode.StrContainer])
+        s = StrContainer("test")
+        of(s)
+        assert s == "2"
 
     def test_xgraph_arg_name(self):
 

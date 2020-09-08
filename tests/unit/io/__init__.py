@@ -12,23 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for Type related functionality """
-
-from enum import Enum
-
-
-class TypeCode(Enum):
-    Int = 0
-    vInt = 1
-    Float = 2
-    vFloat = 3
-    Str = 4
-    vStr = 5
-    StrContainer = 6
-    BytesContainer = 7
-    XGraph = 8
-    XBuffer = 9
-    vXBuffer = 10
-    OpaqueFunc = 11
-    Undefined = 12
-    Byte = 101  # Stored in string in C++
+""" Module for testing the IO functionality """

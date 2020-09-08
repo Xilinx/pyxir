@@ -98,11 +98,6 @@ RuntimeModuleFactory::RegisterImpl(const std::string &runtime)
   return *Manager::GetInstance().get(runtime);
 }
 
-bool RuntimeModuleFactory::Exists(const std::string &runtime)
-{
-  return Manager::GetInstance().exists(runtime);
-}
-
 RtModHolder 
 RuntimeModuleFactory::GetRuntimeModule(
   std::shared_ptr<graph::XGraph> &xg,
@@ -116,6 +111,16 @@ RuntimeModuleFactory::GetRuntimeModule(
     ->get_runtime_module(
       xg, target, in_tensor_names, out_tensor_names, run_options
     );
+}
+
+bool RuntimeModuleFactory::Exists(const std::string &runtime)
+{
+  return Manager::GetInstance().exists(runtime);
+}
+
+bool RuntimeModuleFactory::SupportsTarget(const std::string &runtime, const std::string &target)
+{
+  return Manager::GetInstance().get(runtime)->is_target_supported(target);
 }
 
 } // namespace runtime

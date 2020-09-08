@@ -89,7 +89,7 @@ class DPUCompiler(XGraphBaseCompiler):
             'bridges': ['bytype', 'Concat'],
             "usedeephi": True,
             'placeholdershape': input_shapes
-            }
+        }
 
     def compile(self):
         # type: () -> None

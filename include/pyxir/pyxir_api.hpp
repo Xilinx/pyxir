@@ -26,6 +26,9 @@
 #define PX_UNUSED __attribute__((visibility("default")))
 #endif
 
+#define STR_CONCAT_(__x, __y) __x##__y
+#define STR_CONCAT(__x, __y) STR_CONCAT_(__x, __y)
+
 inline void pxDebugMsg(const char * msg, const char *funcname,
                        const char *fname, int lineno)
 {
