@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "pyxir/pyxir_api.hpp"
+#include "../pyxir_api.hpp"
 
 namespace pyxir {
 namespace contrib {
