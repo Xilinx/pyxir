@@ -19,8 +19,8 @@
 #include <memory>
 #include <sstream>
 
-#include "pyxir/pyxir_api.hpp"
-#include "pyxir/graph/xgraph.hpp"
+#include "../pyxir_api.hpp"
+#include "../graph/xgraph.hpp"
 
 namespace pyxir {
 namespace onnx {
