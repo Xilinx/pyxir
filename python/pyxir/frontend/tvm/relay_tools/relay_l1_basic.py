@@ -237,7 +237,7 @@ def nn_batch_norm(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         gamma_name = 'gamma' + str(op_idx['gamma'])
         op_idx['gamma'] += 1
 
-        new_gamma = np.ones(gamma_layer.data.shape)
+        new_gamma = np.ones(gamma_layer.data[0].shape)
         gamma_layer = \
             xlf.get_xop_factory_func('Constant', internal=True)(gamma_name,
                                                                 new_gamma)
@@ -248,7 +248,7 @@ def nn_batch_norm(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         beta_name = 'beta' + str(op_idx['beta'])
         op_idx['beta'] += 1
 
-        new_beta = np.zeros(beta_layer.data.shape)
+        new_beta = np.zeros(beta_layer.data[0].shape)
         beta_layer = \
             xlf.get_xop_factory_func('Constant', internal=True)(beta_name,
                                                                 new_beta)

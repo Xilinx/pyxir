@@ -37,7 +37,7 @@ from setuptools.command.build_ext import build_ext
 
 from pathlib import Path
 
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -254,7 +254,7 @@ setuptools.setup(
     description="Xilinx IR ...",
     long_description="Xilinx IR ...",
     long_description_content_type="text/markdown",
-    url="https://gitenterprise.xilinx.com/jornt/pyxir",
+    url="https://github.com/Xilinx/pyxir",
     packages=setuptools.find_packages("python"),
     package_dir={"": "python"},
     include_package_data=True,
