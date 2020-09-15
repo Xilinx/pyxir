@@ -142,6 +142,7 @@ def conv(node, params, xmap):
     stride_h, stride_w = strides
 
     channels = wX.shapes[0]
+    assert wX.shapes[1] == in_c // groups
 
     assert auto_pad == 'NOTSET' or pads is None
     if (auto_pad == 'NOTSET' and pads is None) or auto_pad == 'VALID':
