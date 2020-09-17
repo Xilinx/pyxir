@@ -18,8 +18,8 @@
 
 #include <string>
 
-#include "pyxir/graph/xlayer.hpp"
-// #include "pyxir/opaque_func_registry.hpp"
+#include "../graph/xlayer.hpp"
+// #include "../opaque_func_registry.hpp"
 
 namespace pyxir {
 namespace runtime {
