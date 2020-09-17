@@ -206,6 +206,14 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
                 tf.transpose(kernel, (2, 3, 0, 1))
             logger.debug("Kernel transposed shape: {}"
                          .format(kernel_trans.shape))
+        elif kernel_layout == 'OHWI' and self.kernel_groups > 1:
+            # OHWI -> HWOI
+            # NOTE: discrepancy between TVM and Tensorflow??
+            kernel_trans = np.transpose(kernel, (1, 2, 0, 3)) if\
+                isinstance(kernel, np.ndarray) else \
+                tf.transpose(kernel, (1, 2, 0, 3))
+            logger.debug("Kernel transposed shape: {}"
+                         .format(kernel_trans.shape))
         elif kernel_layout == 'OIHW':
             # OIHW -> HWIO
             # if isinstance(kernel, np.ndarray):
@@ -218,6 +226,20 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
             kernel_trans = np.transpose(kernel, (2, 3, 1, 0)) if\
                 isinstance(kernel, np.ndarray) else \
                 tf.transpose(kernel, (2, 3, 1, 0))
+            logger.debug("Kernel transposed shape: {}"
+                         .format(kernel_trans.shape))
+        elif kernel_layout == 'OHWI':
+            # OHWI -> HWIO
+            # if isinstance(kernel, np.ndarray):
+            #     kernel_trans = np.transpose(kernel, (1, 2, 3, 0))
+            # elif isinstance(kernel, tf.constant):
+            #     kernel_trans = np.transpose()
+            # else:
+            #     kernel_trans = tf.transpose(kernel, (1, 2, 3, 0))
+
+            kernel_trans = np.transpose(kernel, (1, 2, 3, 0)) if\
+                isinstance(kernel, np.ndarray) else \
+                tf.transpose(kernel, (1, 2, 3, 0))
             logger.debug("Kernel transposed shape: {}"
                          .format(kernel_trans.shape))
         else:
@@ -466,6 +488,13 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
             kernel_trans = np.transpose(kernel, (2, 3, 0, 1)) if\
                 isinstance(kernel, np.ndarray) else \
                 tf.transpose(kernel, (2, 3, 0, 1))
+            logger.debug("Kernel transposed shape: {}"
+                         .format(kernel_trans.shape))
+        elif kernel_layout == 'OHWI':
+            # OHWI -> HWOI
+            kernel_trans = np.transpose(kernel, (1, 2, 0, 3)) if\
+                isinstance(kernel, np.ndarray) else \
+                tf.transpose(kernel, (1, 2, 0, 3))
             logger.debug("Kernel transposed shape: {}"
                          .format(kernel_trans.shape))
         else:
