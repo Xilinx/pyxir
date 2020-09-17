@@ -179,7 +179,7 @@ def conv2d(op_name,
     data_layout: str
         The layout of the conv2d layer input (`NCHW` or `NHWC`)
     kernel_layout: str
-        The layout of the conv2d layer kernel (`OIHW` or `HWIO`)
+        The layout of the conv2d layer kernel (`OIHW`, `HWIO` or `OHWI`)
     input_layer: XLayer
         The input layer to this conv2d layer
     weights_layer: XLayer
@@ -341,7 +341,7 @@ def conv2d_transpose(op_name,
     data_layout: str
         The layout of the conv2d layer input (`NCHW` or `NHWC`)
     kernel_layout: str
-        The layout of the conv2d layer kernel (`OIHW` or `HWIO`)
+        The layout of the conv2d layer kernel (`OIHW`, `HWIO` or `OHWI`)
     input_layer: XLayer
         The input layer to this conv2d layer
     weights_layer: XLayer
@@ -360,10 +360,12 @@ def conv2d_transpose(op_name,
         W = np.transpose(weights_layer.data[0], (3, 2, 0, 1))
     elif kernel_layout == 'IOHW':
         W = np.transpose(weights_layer.data[0], (1, 0, 2, 3))
+    elif kernel_layout == 'OHWI':
+        W = np.transpose(weights_layer.data[0], (0, 3, 1, 2))
     else:
         raise NotImplementedError("Unsupported kernel layout: {} for"
                                   " convolution: {}, should be one of `OIHW`"
-                                  ", `HWIO` or `IOHW`."
+                                  ", `HWIO`, `IOHW` or `OHWI`."
                                   .format(kernel_layout, op_name))
 
     assert len(padding_hw) in [2, 4]
