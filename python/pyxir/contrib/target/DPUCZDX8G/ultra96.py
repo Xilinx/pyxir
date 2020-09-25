@@ -57,7 +57,19 @@ def xgraph_dpu_ultra96_compiler(xgraph, **kwargs):
         "dpu_task_pool": 16
     }
 
-    arch = os.path.join(FILE_DIR, "./Ultra96.json")
+    arch_path = "/tmp/Ultra96.json"
+    if not os.path.exists(arch_path):
+        # Write arch json 
+        arch = {   
+            "target"   : "DPUCZDX8G",
+            "dcf"      : os.path.join(FILE_DIR, "./Ultra96.dcf"),
+            "cpu_arch" : "arm64"
+        }
+
+        with open(arch_path, 'w') as f:
+            json.dump(arch, f, indent=4, sort_keys=True)
+
+    # arch = os.path.join(FILE_DIR, "./Ultra96.json")
 
     # Vitis-AI 1.1
     # old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/Ultra96/Ultra96.json"
@@ -69,7 +81,7 @@ def xgraph_dpu_ultra96_compiler(xgraph, **kwargs):
     # else:
     #     arch = old_arch
 
-    compiler = VAICompiler(xgraph, arch=arch, meta=meta, **kwargs)
+    compiler = VAICompiler(xgraph, arch=arch_path, meta=meta, **kwargs)
     c_xgraph = compiler.compile()
 
     return c_xgraph
@@ -81,15 +93,3 @@ pyxir.register_target('DPUCZDX8G-ultra96',
                       xgraph_dpu_quantizer,
                       xgraph_dpu_ultra96_compiler,
                       xgraph_dpu_ultra96_build_func)
-
-
-# Write arch json 
-arch = {   
-    "target"   : "DPUCZDX8G",
-    "dcf"      : os.path.join(FILE_DIR, "./Ultra96.dcf"),
-    "cpu_arch" : "arm64"
-}
-
-with open(os.path.join(FILE_DIR, "./Ultra96.json"), 'w') as f:
-    json.dump(arch, f, indent=4, sort_keys=True)
-

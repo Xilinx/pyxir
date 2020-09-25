@@ -532,8 +532,8 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
             if self.placeholder is True:
                 # For stepwise tensorflow model, TODO: remove stepwise
                 conv_res = tf.nn.conv2d_transpose(
-                    value=trans_inpt,
-                    filter=kernel_trans,
+                    trans_inpt,
+                    kernel_trans,
                     strides=strides,
                     padding=padding_type,
                     output_shape=output_shape,
@@ -565,8 +565,8 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
                     tf.stack((batch_size, out_h, out_w, channels))
 
                 conv_res = tf.nn.conv2d_transpose(
-                    value=trans_inpt,
-                    filter=kernel_trans,
+                    trans_inpt,
+                    kernel_trans,
                     strides=strides,
                     padding=padding_type,
                     output_shape=output_shape_reconst,

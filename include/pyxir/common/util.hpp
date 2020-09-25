@@ -43,7 +43,7 @@ inline std::string stringify(const std::string &s) {
 inline bool is_dir(const std::string &dir_path)
 {
   struct stat info;
-  return stat(dir_path.c_str(), &info) != 0 && (info.st_mode & S_IFDIR);
+  return stat(dir_path.c_str(), &info) == 0 && (info.st_mode & S_IFDIR);
 }
 
 // From https://stackoverflow.com/questions/5467725/how-to-delete-a-directory-and-its-contents-in-posix-c
@@ -67,7 +67,7 @@ inline void rmrf(const std::string &path)
     // char *error = std::strerror(errno);
     // std::string str_error(error, std::find(error, '\0'));
     // throw std::runtime_error("Error :  " + str_error);
-    std::cerr << "Error :  " << strerror(errno) << std::endl;
+    std::cerr << "Error :  " << strerror(errno) << " : " << path.c_str()<< std::endl;
   }
 }
 
