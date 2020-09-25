@@ -194,8 +194,8 @@ def from_relay(model_path, shapes, outputs=None, opt_model_path=None):
     """ Load Relay model from file """
 
     with open(model_path, 'rb') as f:
-        json_str = json.load(f)
-        mod = tvm.ir.load_json(json_str)
+        # json_str = json.load(f)
+        mod = tvm.ir.load_json(f.read())
 
     with open(opt_model_path, "rb") as f:
         params = relay.load_param_dict(bytearray(f.read()))

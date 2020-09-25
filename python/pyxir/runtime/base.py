@@ -578,7 +578,7 @@ def get_conv2d_layer(ConvLayer, ConstantLayer):
 def get_conv2d_transpose_layer(Conv2DTransposeLayer, ConstantLayer):
 
     def __get_conv2d_transpose_layer(X, input_shapes, params, batch_size=-1,
-                                     **kwargs):
+                                     placeholder=False, **kwargs):
         # (XLayer, dict, dict) -> List[rt_layer.RtLayer]
         """
         Create an executable conv2d transpose (deconvolution) layer from the
@@ -669,7 +669,8 @@ def get_conv2d_transpose_layer(Conv2DTransposeLayer, ConstantLayer):
             dilations=dilations,
             use_activation=activation,
             activation_attrs=activation_attrs,
-            batch_size=batch_size
+            batch_size=batch_size,
+            placeholder=placeholder
         ))
 
         # if use_relu:

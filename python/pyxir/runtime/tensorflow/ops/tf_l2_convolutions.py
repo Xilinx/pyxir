@@ -529,7 +529,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
             output_shape = tf.stack([self.batch_size] + output_shape_hwc)
 
         if self.kernel_groups == 1:
-            if placeholder is True:
+            if self.placeholder is True:
                 # For stepwise tensorflow model, TODO: remove stepwise
                 conv_res = tf.nn.conv2d_transpose(
                     value=trans_inpt,

@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for transforming TVM Relay expression to XGraph representation
-
-
-"""
+"""Module for transforming TVM Relay expression to XGraph representation"""
 
 import tvm
 import logging

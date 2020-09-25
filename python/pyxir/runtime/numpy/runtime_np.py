@@ -86,10 +86,11 @@ class RuntimeNP(BaseRuntime):
                  network,
                  params,
                  device='cpu',
-                 batch_size=-1):
+                 batch_size=-1,
+                 placeholder: bool = False):
         # type: (str, List[XLayer], Dict[str,numpy.ndarray], str, int)
         super(RuntimeNP, self).__init__(
-            name, network, params, device, batch_size)
+            name, network, params, device, batch_size, placeholder)
 
     def _xfdnn_op_to_exec_op(self, op_type):
         # type: (str) -> function

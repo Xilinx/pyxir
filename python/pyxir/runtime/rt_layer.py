@@ -788,7 +788,8 @@ class Conv2DTransposeLayer(RtLayer):
                  dilations,
                  use_activation=None,
                  activation_attrs=None,
-                 batch_size=-1
+                 batch_size=-1,
+                 placeholder=False
                  ):
         # TODO: checks
         super(Conv2DTransposeLayer, self).__init__(name,
@@ -855,6 +856,7 @@ class Conv2DTransposeLayer(RtLayer):
         self.activation_attrs = activation_attrs \
             if activation_attrs is not None else {}
         self.batch_size = batch_size
+        self.placeholder = placeholder
 
         # INITIALIZE
         self.init()

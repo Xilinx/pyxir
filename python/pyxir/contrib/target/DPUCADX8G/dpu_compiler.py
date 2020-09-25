@@ -28,6 +28,7 @@ import logging
 
 from pyxir.shared.compiler_output import CompilerOutput
 from pyxir.graph.xgraph_factory import XGraphFactory
+from pyxir.generator.tensorflow import TfGenerator
 from pyxir.compiler.base_compiler import XGraphBaseCompiler
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.graph.transformers.layout_transformation_pass import \
@@ -43,6 +44,7 @@ class DPUCompiler(XGraphBaseCompiler):
     """ TODO """
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
+    tf_generator = TfGenerator()
 
     def __init__(self,
                  xgraph,
@@ -98,15 +100,22 @@ class DPUCompiler(XGraphBaseCompiler):
             XGraphLayoutTransformationPass('NHWC', target=self.target)
         self.xgraph = layout_transform_pass.execute(self.xgraph,
                                                     subgraphs_only=False)
-
-        net_name = list(self.netcfgs.keys())[0]
-        netcfg = list(self.netcfgs.values())[0]  # orig pb file
+        
+        # netcfg = list(self.netcfgs.values())[0]  # orig pb file
         quant_info_file = list(self.quant_info.values())[0]  # quant info file
 
         subxg_layers = DPUCompiler.xgraph_partitioner\
             .get_subgraphs(self.xgraph)[0].subgraph_data
         xgraph = DPUCompiler.xgraph_factory.build_from_xlayer(subxg_layers)
-        # assert xgraph.get_name() == net_name
+        net_name = list(self.netcfgs.keys())[0]
+        fs = DPUCompiler.tf_generator.generate(xgraph,
+                                               'graph',
+                                               subgraphs_only=True,
+                                               layout='NHWC',
+                                               batch_size=1,
+                                               placeholder=True,
+                                               out_dir=self.work_dir)
+        netcfg = list(fs.values())[0]
 
         input_names = xgraph.get_input_names()
         input_shapes = [xgraph.get(in_name).shapes.tolist()[:]

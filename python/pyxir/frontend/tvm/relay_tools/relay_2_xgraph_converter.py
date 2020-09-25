@@ -36,9 +36,7 @@ logger = logging.getLogger('pyxir')
 
 class Relay2XGraphConverter(BaseConverter):
 
-    """
-    Class for converting Relay functions to a XGraph representation
-    """
+    """Class for converting Relay functions to a XGraph representation"""
 
     RELAY_2_XLAYER = Relay2XLayerRegistry()
 
@@ -104,10 +102,7 @@ class Relay2XGraphConverter(BaseConverter):
         for i, output in enumerate(postprocessing):
             if output not in OP_2_XLAYER:
                 continue
-                # raise NotImplementedError(
-                #     "The provided output operation: {} is invalid."
-                #     " The valid output operations are: {}"
-                #     .format(output, list(OP_2_XLAYER.keys())))
+
             op_name = output + str(i)
 
             # Update tops of current last layer

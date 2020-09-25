@@ -450,9 +450,13 @@ def transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
         op_name = 'constant-' + str(hash(expr))
 
+        # Merge relay ids
+        relay_idx = data_layer.attrs['relay_id'][:]
+        relay_idx.append(hash(expr))
+
         X = xlf.get_xop_factory_func('Constant')(op_name,
                                                  data,
-                                                 relay_id=[hash(expr)])
+                                                 relay_id=relay_idx)
     else:
         # Update schedule with input data layer
         if data_expr not in net:
@@ -460,7 +464,11 @@ def transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
             net[data_expr] = data_layer
 
         # Create XLayer
-        # data_layout = kwargs['data_layout']
+        # Relay converts a NHWC conv2d_transpose layer into a
+        #   transpose -> conv2d_transpose (NCHW) -> transpose. For partitioning we
+        #   keep track of those relay ids inside the conv2d_transpose operation
+        if 'Conv2DTranspose' in data_layer.type:
+            data_layer.attrs['relay_id'].append(hash(expr))
 
         # Create name
         op_name = 'transpose-' + str(hash(expr))

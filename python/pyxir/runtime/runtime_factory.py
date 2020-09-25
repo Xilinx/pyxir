@@ -110,7 +110,8 @@ class RuntimeFactory(object):
                           runtime='cpu-tf',
                           target='cpu',
                           last_layers=None,
-                          batch_size=-1):
+                          batch_size=-1,
+                          placeholder=False):
             # type: (str, XGraph, str, str, List[str], int) -> BaseRuntime
             """
             Build an runtime graph based on the given target (e.g. tensorflow)
@@ -126,7 +127,7 @@ class RuntimeFactory(object):
             output_names = xgraph.get_output_names()
 
             return self._runtimes[runtime](
-                xgraph.get_name(), net, params, target, batch_size)
+                xgraph.get_name(), net, params, target, batch_size, placeholder)
 
         def register_exec_graph(self, rt_name, runtime):
             # type: (str, BaseRuntime) -> None

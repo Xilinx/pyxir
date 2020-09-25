@@ -409,11 +409,20 @@ def nn_conv2d_transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         schedule.append(data_expr)
         net[data_expr] = data_layer
 
-    # Create ParametersLayer
+    # Create XLayer
+
+    # Initialize relay idx with relay idx of weights
+    relay_idx = weights_layer.attrs['relay_id'][:]
+
+    # Relay converts a NHWC conv2d_transpose layer into a
+    #   transpose -> conv2d_transpose (NCHW) -> transpose. For partitioning we
+    #   keep track of those relay ids inside the conv2d_transpose operation
+    if 'Transpose' in data_layer.type:
+        relay_idx.append(data_layer.attrs['relay_id'][0])
 
     # TODO: NHWC
-    # Create name
     op_name = 'nn_conv2d_transpose-' + str(hash(expr))
+    relay_idx.append(hash(expr))
 
     # [pad_h, pad_w] or [pad_h_top, pad_h_bottom, pad_w_left, pad_w_right]
     xpadding = padding if len(padding) == 2\
@@ -425,7 +434,7 @@ def nn_conv2d_transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         dilation,
         groups, channels,
         data_layout, kernel_layout,
-        relay_id=[hash(expr)]
+        relay_id=relay_idx
     )
     logger.debug("--outshape: {}".format(list(X.shapes)))
 

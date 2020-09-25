@@ -65,12 +65,14 @@ class BaseRuntime(object):
                  network,
                  params,
                  device='cpu',
-                 batch_size=-1):
+                 batch_size=-1,
+                 placeholder=False):
         # type: (str, List[XLayer], Dict[str,numpy.ndarray], str)
         self.name = name
         self.params = params
         self.device = device
         self.batch_size = batch_size
+        self.placeholder = placeholder
 
         self._init_net(network, self.params)
 
@@ -114,7 +116,8 @@ class BaseRuntime(object):
             # logger.info(op)
 
             xfdnn_layers = self._xfdnn_op_to_exec_op(op.type[0])(
-                op, input_shapes, params, batch_size=self.batch_size)
+                op, input_shapes, params, batch_size=self.batch_size,
+                placeholder=self.placeholder)
 
             logger.debug("Add input shape: {} : {}"
                          .format(op.name, xfdnn_layers[-1].shape))

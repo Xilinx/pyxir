@@ -82,7 +82,7 @@ class TfGenerator(object):
 
     @classmethod
     def generate(cls, xgraph, base_name, subgraphs_only=False, layout='NCHW',
-                 batch_size=-1, out_dir=os.getcwd()):
+                 batch_size=-1, placeholder=False, out_dir=os.getcwd()):
         # type: (XGraph, str, boolean, str, int) -> Dict[str, str]
         """
         Generate one or multiple tensorflow pb file from an xgraph and
@@ -99,7 +99,7 @@ class TfGenerator(object):
             executors.append(
                 (base_name, base_name,
                  TfGenerator.runtime_factory.build_runtime(
-                     xgraph, batch_size=batch_size))
+                     xgraph, batch_size=batch_size, placeholder=placeholder))
             )
         else:
             for Xp in \
@@ -111,7 +111,8 @@ class TfGenerator(object):
                     (base_name + '_' + Xp.name,
                      Xp.name,
                      TfGenerator.runtime_factory
-                        .build_runtime(sub_xgraph, batch_size=batch_size),
+                        .build_runtime(sub_xgraph, batch_size=batch_size,
+                                       placeholder=placeholder),
                      sub_xgraph.get_output_names())
                  )
 

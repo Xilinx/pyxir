@@ -42,14 +42,15 @@ class RuntimeTF(BaseRuntime):
                  network: list,
                  params: dict,
                  device: str = 'cpu',
-                 batch_size: int = -1):
+                 batch_size: int = -1,
+                 placeholder: bool = False):
         tf.compat.v1.reset_default_graph()
 
         self.tf_step_graph = tf.Graph()
         with self.tf_step_graph.as_default() as g:
             with g.name_scope('tf_step_graph'):
                 super(RuntimeTF, self).__init__(
-                    name, network, params, device, batch_size)
+                    name, network, params, device, batch_size, placeholder)
 
         # logger.debug("trainable", trainable)
 
