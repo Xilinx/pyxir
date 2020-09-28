@@ -20,7 +20,7 @@
 
 #include "compute_func.hpp"
 #include "../common/serializable.hpp"
-#include "pyxir/runtime/compute_func_registry.hpp"
+#include "../runtime/compute_func_registry.hpp"
 
 
 namespace pyxir {
