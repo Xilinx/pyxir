@@ -17,7 +17,7 @@
 #include <functional>
 #include <cassert>
 #include <unordered_set>
-#include <pyxir/graph/xgraph.hpp>
+#include "pyxir/graph/xgraph.hpp"
 
 namespace pyxir {
 namespace graph {

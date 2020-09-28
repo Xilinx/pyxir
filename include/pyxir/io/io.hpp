@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "pyxir/pyxir_api.hpp"
-#include "pyxir/graph/xgraph.hpp"
-#include "pyxir/common/px_stream.hpp"
+#include "../pyxir_api.hpp"
+#include "../graph/xgraph.hpp"
+#include "../common/px_stream.hpp"
 
 namespace pyxir {
 
