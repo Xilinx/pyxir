@@ -27,16 +27,13 @@ namespace pyxir {
 namespace runtime {
 
 OnlineQuantComputeFunc::OnlineQuantComputeFunc(
-  XGraphHolder &xg,
-  const std::string &target,
-  const std::vector<std::string> &in_tensor_names,
-  const std::vector<std::string> &out_tensor_names,
-  const std::string &runtime,
-  RunOptionsHolder const &run_options)
-  : xg_(xg), target_(target), in_tensor_names_(in_tensor_names),
-    out_tensor_names_(out_tensor_names), runtime_(runtime),
-    run_options_(run_options)
-{
+    XGraphHolder &xg, const std::string &target,
+    const std::vector<std::string> &in_tensor_names,
+    const std::vector<std::string> &out_tensor_names,
+    const std::string &runtime, RunOptionsHolder &run_options)
+    : xg_(xg), target_(target), in_tensor_names_(in_tensor_names),
+      out_tensor_names_(out_tensor_names), runtime_(runtime),
+      run_options_(run_options) {
   init();
 }
 

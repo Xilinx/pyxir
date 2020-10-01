@@ -18,9 +18,9 @@
 
 #include <memory>
 
-#include "pyxir_api.hpp"
 #include "graph/xgraph.hpp"
 #include "io/io.hpp"
+#include "pyxir_api.hpp"
 #include "runtime/constants.hpp"
 #include "runtime/run_options.hpp"
 #include "runtime/runtime_module_factory.hpp"

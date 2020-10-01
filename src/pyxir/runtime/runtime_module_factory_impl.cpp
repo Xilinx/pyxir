@@ -28,14 +28,11 @@
 namespace pyxir {
 namespace runtime {
 
-
 RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
-  std::shared_ptr<graph::XGraph> &xg,
-  const std::string &target,
-  const std::vector<std::string> &in_tensor_names,
-  const std::vector<std::string> &out_tensor_names,
-  RunOptionsHolder const &run_options)
-{
+    std::shared_ptr<graph::XGraph> &xg, const std::string &target,
+    const std::vector<std::string> &in_tensor_names,
+    const std::vector<std::string> &out_tensor_names,
+    RunOptionsHolder run_options) {
   if (!OpaqueFuncRegistry::Exists("pyxir.build_rt"))
     throw std::runtime_error("Cannot build the runtime because the "
                              " `pyxir.build_rt` opaque function is not "
