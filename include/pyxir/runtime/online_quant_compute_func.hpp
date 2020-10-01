@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "pyxir/opaque_func_registry.hpp"
-#include "pyxir/graph/xgraph.hpp"
-#include "pyxir/common/xbuffer.hpp"
-#include "pyxir/runtime/compute_func.hpp"
-#include "pyxir/io/io.hpp"
-#include "pyxir/runtime/run_options.hpp"
+#include "../opaque_func_registry.hpp"
+#include "../graph/xgraph.hpp"
+#include "../common/xbuffer.hpp"
+#include "../runtime/compute_func.hpp"
+#include "../io/io.hpp"
+#include "../runtime/run_options.hpp"
 
 
 namespace pyxir {
