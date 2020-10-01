@@ -68,12 +68,12 @@ class RuntimeModuleFactoryImpl {
      * @returns A runtime module that can be used for execution of the provided
      *  XGraph
      */
-    virtual RtModHolder 
+    virtual RtModHolder
     get_runtime_module(std::shared_ptr<graph::XGraph> &xg,
                        const std::string &target,
                        const std::vector<std::string> &in_tensor_names,
                        const std::vector<std::string> &out_tensor_names,
-                       RunOptionsHolder const &run_options = nullptr) = 0;
+                       RunOptionsHolder run_options = nullptr) = 0;
 
   protected:
     std::string rt_name_;
@@ -108,13 +108,12 @@ class DefaultRuntimeModuleFactoryImpl : public RuntimeModuleFactoryImpl {
      * @returns A runtime module that can be used for execution of the provided
      *  XGraph
      */
-    RtModHolder 
+    RtModHolder
     get_runtime_module(std::shared_ptr<graph::XGraph> &xg,
                        const std::string &target,
                        const std::vector<std::string> &in_tensor_names,
                        const std::vector<std::string> &out_tensor_names,
-                       RunOptionsHolder const &run_options = nullptr);
-    
+                       RunOptionsHolder run_options = nullptr);
 };
 
 typedef std::unique_ptr<RuntimeModuleFactoryImpl>

@@ -18,10 +18,9 @@
 
 #include <vector>
 
-#include "compute_func.hpp"
 #include "../common/serializable.hpp"
 #include "../runtime/compute_func_registry.hpp"
-
+#include "compute_func.hpp"
 
 namespace pyxir {
 namespace runtime {
