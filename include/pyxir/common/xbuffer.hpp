@@ -95,6 +95,7 @@ struct XBuffer {
 
     ssize_t nxt_stride = (size > 0) ? size * itemsize : itemsize;
     strides.push_back(nxt_stride / shape[0]);
+    nxt_stride /= shape[0];
     for (ssize_t i = 1; i < (ssize_t) ndim; ++i) {
       nxt_stride /= shape[i];
       strides.push_back(nxt_stride);
