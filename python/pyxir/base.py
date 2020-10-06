@@ -617,3 +617,12 @@ def run(rt_mod: BaseRuntime,
     return [res[outpt] for outpt in outputs]\
         if len(outputs) > 0\
         else res['output']
+
+########
+# Test #
+########
+
+@register_opaque_func('pyxir.test.copy_xbuffers', [TypeCode.vXBuffer, TypeCode.vXBuffer])
+def copy_xbuffers(in_buffers, out_buffers):
+    for idx, xb in enumerate(in_buffers):
+        out_buffers[idx].copy_from(xb)

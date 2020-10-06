@@ -21,6 +21,7 @@
 #include <catch2/catch.hpp>
 
 #include "pyxir/common/xbuffer.hpp"
+#include "pyxir/opaque_func_registry.hpp"
 
 
 TEST_CASE("Test XBuffer initialization")
@@ -100,6 +101,35 @@ TEST_CASE("Test XBuffer initialization")
   std::array<float, 16> y5;
   std::copy((float *) xb5_final.data, (float *) xb5_final.data + 16, std::begin(y5));
   REQUIRE(y5 == zeros);
+}
+
+TEST_CASE("Test XBuffer FFI")
+{
+  std::array<float, 36> x = {1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                             1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
+                             1.0, 1.0, 1.0, 1.0};
+  std::array<float, 36> y = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                             0.0, 0.0, 0.0, 0.0};
+  
+  pyxir::XBufferHolder xb_in = std::shared_ptr<pyxir::XBuffer>(
+    new pyxir::XBuffer((void *) &x[0], 4, "f", 4,
+                       std::vector<ssize_t>{2, 2, 3, 3}, false, false));
+  pyxir::XBufferHolder xb_out = std::shared_ptr<pyxir::XBuffer>(
+    new pyxir::XBuffer((void *) &y[0], 4, "f", 4,
+                       std::vector<ssize_t>{2, 2, 3, 3}, false, false));
+
+  std::vector<pyxir::XBufferHolder> in_buffers{xb_in};
+  std::vector<pyxir::XBufferHolder> out_buffers{xb_out};
+
+  REQUIRE(pyxir::OpaqueFuncRegistry::Exists("pyxir.test.copy_xbuffers"));
+  pyxir::OpaqueFunc of = pyxir::OpaqueFuncRegistry::Get("pyxir.test.copy_xbuffers");
+  of(in_buffers, out_buffers);
+  REQUIRE(y == x);
 }
 
 
