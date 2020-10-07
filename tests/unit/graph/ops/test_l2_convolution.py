@@ -191,6 +191,70 @@ class TestL2Convolution(unittest.TestCase):
         assert X.attrs['data_layout'] == 'NHWC'
         assert X.attrs['padding'] == [[0, 0], [1, 1], [1, 1], [0, 0]]
 
+    def test_convolution_layer_tfl(self):
+
+        iX = XLayer(
+            type=['Input'],
+            name='in1',
+            shapes=[1, 3, 3, 2],
+            sizes=[32],
+            bottoms=[],
+            tops=[],
+            targets=[]
+        )
+
+        kX = XLayer(
+            type=['Constant'],
+            name='kernel',
+            shapes=[4, 3, 3, 2],
+            sizes=[54],
+            data=[np.transpose(np.ones((4, 2, 3, 3), dtype=np.float32), (0, 2, 3, 1))],
+            bottoms=[],
+            tops=[],
+            targets=[]
+        )
+
+        X = xlf.get_xop_factory_func('Convolution')(
+            op_name='conv1',
+            kernel_size=[3, 3],
+            strides=[1, 1],
+            padding_hw=[1, 1],
+            dilation=[1, 1],
+            groups=1,
+            channels=4,
+            data_layout='NHWC',
+            kernel_layout='OHWI',
+            input_layer=iX,
+            weights_layer=kX
+        )
+
+        assert X.type[0] == 'Convolution'
+        assert X.shapes == [1, 3, 3, 4]
+        assert X.attrs['padding'] == [[0, 0], [1, 1], [1, 1], [0, 0]]
+        assert X.attrs['data_layout'] == 'NHWC'
+        assert X.attrs['kernel_layout'] == 'OHWI'
+        assert X.attrs['shape'] == [1, 3, 3, 4]
+        assert X.attrs['kernel_size'] == [3, 3]
+        assert X.attrs['strides'] == [1, 1]
+        assert X.attrs['groups'] == 1
+        assert X.attrs['dilation'] == [1, 1]
+        assert X.attrs['channels'] == [2, 4]
+
+        np.testing.assert_array_equal(
+            X.data.weights, np.transpose(np.ones((4, 2, 3, 3), dtype=np.float32), (0, 2, 3, 1)))
+        np.testing.assert_array_equal(
+            X.data.biases, np.zeros((4), dtype=np.float32))
+
+        from pyxir.graph.ops.l2_convolution import \
+            conv2d_layout_transform
+
+        conv2d_layout_transform(X, target_layout='NCHW')
+
+        assert X.type[0] == 'Convolution'
+        assert X.shapes == [1, 4, 3, 3]
+        assert X.attrs['data_layout'] == 'NCHW'
+        assert X.attrs['padding'] == [[0, 0], [0, 0], [1, 1], [1, 1]]
+
     def test_conv2d_transpose_layer(self):
 
         iX = XLayer(
