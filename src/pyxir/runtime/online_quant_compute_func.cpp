@@ -108,6 +108,15 @@ void OnlineQuantComputeFunc::operator()(
 
       pxWarning("Not switching to specified runtime: `" + runtime_ + "` after on-the-fly" +
                 " quantization as the model is compiled for a different target device.");
+
+      // For cross compilation we possibly save the runtime module using a callback function
+      //  Currently necessary for ONNX Runtime flow. TODO: remove this requirement
+      if (run_options_ && !run_options_->export_runtime_module_path.empty()) {
+        if (!rt_mod_save_callback_)
+          throw std::runtime_error("Trying to export cross compiled runtime module but"
+                                   " compute save function was initialized uncorrectly");
+        rt_mod_save_callback_(run_options_->export_runtime_module_path);
+      }
     } else {
       cf_ = ComputeFuncFactory::GetComputeFunc(
         xg_, target_, in_tensor_names_, out_tensor_names_, runtime_, run_options_

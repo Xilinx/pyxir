@@ -43,6 +43,12 @@ struct RunOptions : public ISerializable {
   std::string work_dir = "/tmp/vitis_ai_work";
   /** @brief Whether the build has been completed, allows use of pre-built build directory */
   bool is_prebuilt = false;
+  /** @brief Export runtime module somewhere after build, the specific compute
+        implementation is free to choose when this happens. */
+  std::string export_runtime_module_path = "";
+  /** @brief Load runtime module somewhere after build, the specific compute
+        implementation is free to choose when this happens. */
+  // std::string load_runtime_module_path = ""; 
 
   virtual void serialize_px(PxOStringStream &pstream)
   {
@@ -51,6 +57,7 @@ struct RunOptions : public ISerializable {
     pstream.write(build_dir);
     pstream.write(work_dir);
     pstream.write(is_prebuilt);
+    pstream.write(export_runtime_module_path);
   }
 
   virtual void deserialize_px(PxIStringStream &pstream)
@@ -60,6 +67,7 @@ struct RunOptions : public ISerializable {
     pstream.read(build_dir);
     pstream.read(work_dir);
     pstream.read(is_prebuilt);
+    pstream.read(export_runtime_module_path);
   }
 };
 
