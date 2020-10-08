@@ -193,6 +193,10 @@ def conv2d(op_name,
     assert len(strides) == 2
     assert len(padding_hw) in [2, 4]
 
+    layout_idx = tuple([data_layout.index(e) for e in 'NCHW'])
+    layout_idx_transpose = tuple(["NCHW".index(e) for e in data_layout])
+    B_idx, C_idx, H_idx, W_idx = layout_idx
+
     bottoms = [input_layer.name]
 
     logger.debug("-- Conv2D Kernel layout: {}".format(kernel_layout))
@@ -227,10 +231,10 @@ def conv2d(op_name,
     data = ConvData(W, B)
 
     # input layer is always in NCHW by design
-    insize = [input_layer.shapes[2], input_layer.shapes[3]]
+    insize = [input_layer.shapes[H_idx], input_layer.shapes[W_idx]]
     batches = input_layer.shapes[0]
     logger.debug("-- in shape: {}".format(input_layer.shapes))
-    assert(input_layer.shapes[1] == in_ch*groups)
+    assert(input_layer.shapes[C_idx] == in_ch*groups)
 
     logger.debug("-- padding (t,b,l,r): {}"
                  .format((pad_ht, pad_hb, pad_wl, pad_wr)))
@@ -241,7 +245,7 @@ def conv2d(op_name,
     out_w = \
         int((insize[1] + pad_wl + pad_wr - kernel_size[1]) / strides[1] + 1)
 
-    out_shape = TensorShape([batches, out_ch, out_h, out_w])
+    out_shape = TensorShape([[batches, out_ch, out_h, out_w][i] for i in layout_idx_transpose])
 
     padding_hh = [pad_ht, pad_hb]
     padding_ww = [pad_wl, pad_wr]

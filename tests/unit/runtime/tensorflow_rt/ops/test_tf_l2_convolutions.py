@@ -138,12 +138,12 @@ class TestTfL2Convolutions(unittest.TestCase):
             'input': np.transpose(np.ones((1, 1, 4, 4), dtype=np.float32), (0, 2, 3, 1))
         }
         params = {
-            'test_conv2d_kernel': np.transpose(np.reshape(np.array([[[1, 2], [3, 4]],
-                                                                    [[5, 6], [7, 8]]],
-                                                                   dtype=np.float32),
-                                                          (2, 1, 2, 2)),
-                                               (0, 2, 3, 1)),
-            'test_conv2d_biases': np.array([0, 0], dtype=np.float32)
+            'test_conv2d_tfl_kernel': np.transpose(np.reshape(np.array([[[1, 2], [3, 4]],
+                                                                        [[5, 6], [7, 8]]],
+                                                                       dtype=np.float32),
+                                                              (2, 1, 2, 2)),
+                                                   (0, 2, 3, 1)),
+            'test_conv2d_tfl_biases': np.array([0, 0], dtype=np.float32)
         }
         layers = base.get_conv2d_layer(ConvLayer,
                                        ConstantLayer)(

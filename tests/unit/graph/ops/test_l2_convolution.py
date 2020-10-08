@@ -232,7 +232,7 @@ class TestL2Convolution(unittest.TestCase):
         assert X.shapes == [1, 3, 3, 4]
         assert X.attrs['padding'] == [[0, 0], [1, 1], [1, 1], [0, 0]]
         assert X.attrs['data_layout'] == 'NHWC'
-        assert X.attrs['kernel_layout'] == 'OHWI'
+        assert X.attrs['kernel_layout'] == 'OIHW'
         assert X.attrs['shape'] == [1, 3, 3, 4]
         assert X.attrs['kernel_size'] == [3, 3]
         assert X.attrs['strides'] == [1, 1]
@@ -241,7 +241,7 @@ class TestL2Convolution(unittest.TestCase):
         assert X.attrs['channels'] == [2, 4]
 
         np.testing.assert_array_equal(
-            X.data.weights, np.transpose(np.ones((4, 2, 3, 3), dtype=np.float32), (0, 2, 3, 1)))
+            X.data.weights, np.ones((4, 2, 3, 3), dtype=np.float32))
         np.testing.assert_array_equal(
             X.data.biases, np.zeros((4), dtype=np.float32))
 
