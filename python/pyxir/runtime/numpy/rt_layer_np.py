@@ -402,6 +402,8 @@ class ConvLayer(rt_layer.ConvLayer):
 
         if kernel_layout == 'HWIO':
             kernel = np.transpose(kernel, (3, 2, 0, 1))
+        elif kernel_layout == 'OHWI':
+            kernel = np.transpose(kernel, (0, 3, 1, 2))
 
         # zero padding
         X = np.pad(X, paddings, mode='constant')
