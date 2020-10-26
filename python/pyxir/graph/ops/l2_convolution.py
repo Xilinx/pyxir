@@ -579,7 +579,7 @@ def pad(op_name,
                                   " with {} dims"
                                   .format(len(input_layer.shapes)))
 
-    unpadded_dims = [[0, 0]] * len(input_layer.shapes[:len(padding)])
+    unpadded_dims = [[0, 0]] * len(input_layer.shapes[len(padding):])
     padding = unpadded_dims + [list(pad) for pad in padding]
 
     shape = TensorShape([s + p[0] + p[1]
