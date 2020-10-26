@@ -420,7 +420,7 @@ class PadLayer(rt_layer.BaseLayer, RtLayerTF):
 
         paddings = [list(pad) for pad in self.attrs['padding']]
 
-        return [tf.pad(inpts[0], paddings=paddings, mode="CONSTANT")]
+        return [tf.pad(inpts[0], paddings=paddings, mode="CONSTANT", name=self.name)]
 
     def forward_exec(self, inputs):
         # type: (List[numpy.ndarray]) -> numpy.ndarray

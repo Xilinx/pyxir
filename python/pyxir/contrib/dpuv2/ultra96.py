@@ -20,8 +20,10 @@ import logging
 
 from pyxir.graph.transformers import subgraph
 
-from pyxir.contrib.target.DPUCZDX8G.ultra96 import xgraph_dpu_optimizer,\
-    xgraph_dpu_quantizer, xgraph_dpu_ultra96_compiler
+from ..target.components.DPUCZDX8G.ultra96 import xgraph_dpu_optimizer
+from ..target.components.DPUCZDX8G.ultra96 import xgraph_dpu_quantizer
+from ..target.components.DPUCZDX8G.ultra96 import xgraph_dpu_ultra96_compiler
+
 
 logger = logging.getLogger('pyxir')
 
