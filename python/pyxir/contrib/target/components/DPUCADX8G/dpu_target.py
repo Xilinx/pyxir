@@ -173,5 +173,4 @@ class DPULayer(BaseLayer):
 
     def __del__(self):
         """ Cleanup DPU resources """
-        # self.runner.__del__()
-        pass
+        self.runner.__del__()

@@ -1,3 +1,17 @@
+# Copyright 2020 Xilinx Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 
 import numpy as np
@@ -7,16 +21,16 @@ import torchvision.models as models
 from brevitas.graph.quantizer import quantize, BatchNormHandling
 from brevitas.inject.defaults import *
 from brevitas import config
-from brevitas.onnx import export_dpuv1_onnx
+from brevitas.onnx import export_dpuv2_onnx
 
 import pyxir
 from pyxir.frontend.onnx.base import from_onnx
-from pyxir.contrib.target import DPUCADX8G_external_quantizer
+from pyxir.contrib.target import DPUCZDX8G_external_quantizer
 import pathlib
 
 config.IGNORE_MISSING_KEYS = True
 file_dir = pathlib.Path(__file__).parent.absolute()
-target = 'DPUCADX8G'
+target = 'DPUCZDX8G-ultra96'
 
 
 IN_SIZE = (1, 3, 224, 224)
@@ -45,8 +59,8 @@ model = quantize(
 # . . .
 
 # Export to ONNX
-onnx_filename = 'dpuv1_resnet18.onnx'
-export_dpuv1_onnx(model, input_shape=IN_SIZE, input_t=inp, export_path=onnx_filename)
+onnx_filename = 'dpuv2_resnet18.onnx'
+export_dpuv2_onnx(model, input_shape=IN_SIZE, input_t=inp, export_path=onnx_filename)
 
 # Load ONNX into PyXIR
 onnx_model = onnx.load(onnx_filename)
