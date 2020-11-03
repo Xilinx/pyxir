@@ -221,7 +221,7 @@ def conv2d(op_name,
                          " but got: {}".format(len(padding_hw)))
 
     # W is now in OIHW shape
-    in_ch, out_ch = W.shape[1], W.shape[0]
+    in_ch, out_ch = W.shape[1] * groups, W.shape[0]
     logger.debug("-- in_ch: {}, out_ch: {}".format(in_ch, out_ch))
     logger.debug("-- channels: {}".format(channels))
 
@@ -234,7 +234,7 @@ def conv2d(op_name,
     insize = [input_layer.shapes[H_idx], input_layer.shapes[W_idx]]
     batches = input_layer.shapes[0]
     logger.debug("-- in shape: {}".format(input_layer.shapes))
-    assert(input_layer.shapes[C_idx] == in_ch*groups)
+    assert input_layer.shapes[C_idx] == in_ch
 
     logger.debug("-- padding (t,b,l,r): {}"
                  .format((pad_ht, pad_hb, pad_wl, pad_wr)))
@@ -383,7 +383,7 @@ def conv2d_transpose(op_name,
                          " but got: {}".format(len(padding_hw)))
 
     # W is now in OIHW shape
-    in_ch, out_ch = W.shape[1], W.shape[0]
+    in_ch, out_ch = W.shape[1] * groups, W.shape[0]
     logger.debug("-- in_ch: {}, out_ch: {}".format(in_ch, out_ch))
     logger.debug("-- channels: {}".format(channels))
 
@@ -579,7 +579,7 @@ def pad(op_name,
                                   " with {} dims"
                                   .format(len(input_layer.shapes)))
 
-    unpadded_dims = [[0, 0]] * len(input_layer.shapes[:len(padding)])
+    unpadded_dims = [[0, 0]] * len(input_layer.shapes[len(padding):])
     padding = unpadded_dims + [list(pad) for pad in padding]
 
     shape = TensorShape([s + p[0] + p[1]

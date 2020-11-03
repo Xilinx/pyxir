@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for registering DPUv2 (now DPUCZDX8G) zcu102 target """
+"""Module for registering DPUv2 (now DPUCZDX8G) zcu102 target"""
 
 import os
 import pyxir
@@ -20,8 +20,9 @@ import logging
 
 from pyxir.graph.transformers import subgraph
 
-from pyxir.contrib.target.DPUCZDX8G.zcu102 import xgraph_dpu_optimizer,\
-    xgraph_dpu_quantizer, xgraph_dpu_zcu102_compiler
+from ..target.components.DPUCZDX8G.zcu102 import xgraph_dpu_optimizer
+from ..target.components.DPUCZDX8G.zcu102 import xgraph_dpu_quantizer
+from ..target.components.DPUCZDX8G.zcu102 import xgraph_dpu_zcu102_compiler
 
 logger = logging.getLogger('pyxir')
 

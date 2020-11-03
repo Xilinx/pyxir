@@ -24,11 +24,11 @@ import pyxir
 from pyxir.graph.transformers import subgraph
 from pyxir.runtime import base
 
+from ..target import DPUCADX8G
 from ..target.components.DPUCADX8G.dpu_target import DPULayer
 from ..target.components.DPUCADX8G.dpu_target import xgraph_dpu_optimizer
 from ..target.components.DPUCADX8G.dpu_target import xgraph_dpu_quantizer
 from ..target.components.DPUCADX8G.dpu_compiler import DPUCompiler
-
 
 logger = logging.getLogger('pyxir')
 

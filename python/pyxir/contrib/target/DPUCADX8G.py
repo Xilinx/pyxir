@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""""Register DPUCADX8G target"""
 
 import pyxir
 from pyxir.runtime import base
