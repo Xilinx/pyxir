@@ -73,3 +73,6 @@ pyxir.register_target('dpuv1',
                       xgraph_dpu_quantizer,
                       xgraph_dpuv1_compiler,
                       xgraph_dpuv1_build_func)
+
+
+# pyxir.register_op('cpu-np', 'DPU', base.get_layer(DPULayer))
