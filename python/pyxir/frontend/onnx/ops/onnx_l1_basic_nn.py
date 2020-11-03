@@ -315,6 +315,20 @@ def gemm(node, params, xmap):
         raise NotImplementedError("Beta != 1.0 not supported in ONNX Gemm to"
                                   " XLayer Dense conversion")
 
+    # Quant_info (optional)
+    vai_quant_in = node_attrs['vai_quant_in'] \
+        if 'vai_quant_in' in node_attrs else []
+    vai_quant_out = node_attrs['vai_quant_out'] \
+        if 'vai_quant_out' in node_attrs else []
+    vai_quant_weights = node_attrs['vai_quant_weights'] \
+        if 'vai_quant_weights' in node_attrs else []
+    vai_quant_biases = node_attrs['vai_quant_biases'] \
+        if 'vai_quant_biases' in node_attrs else []
+    vai_quant = node_attrs['vai_quant'] \
+        if 'vai_quant' in node_attrs else []
+    vai_quant_dense = [a for a in vai_quant if str(a) != 'vai_quant_biases']
+    vai_quant_bias_add = [a for a in vai_quant if str(a) == 'vai_quant_biases']
+
     Xs = []
 
     if trans_A:
@@ -345,6 +359,10 @@ def gemm(node, params, xmap):
         units=units,
         input_layer=iX,
         weights_layer=wX,
+        vai_quant=vai_quant_dense,
+        vai_quant_in=vai_quant_in,
+        vai_quant_out=vai_quant_out,
+        vai_quant_weights=vai_quant_weights,
         onnx_id=name
     )
     Xs.append(X)
@@ -356,6 +374,8 @@ def gemm(node, params, xmap):
             axis=1,
             input_layer=X,
             bias_layer=bX,
+            vai_quant=vai_quant_bias_add,
+            vai_quant_biases=vai_quant_biases,
             onnx_id=name
         )
 

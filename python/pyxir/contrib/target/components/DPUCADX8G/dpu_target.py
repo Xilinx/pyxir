@@ -21,16 +21,16 @@ import os
 import logging
 import warnings
 import numpy as np
-import pyxir
 
+import pyxir
 from pyxir.runtime import base
 from pyxir.runtime.rt_layer import BaseLayer
 from pyxir.graph.transformers import subgraph
-from pyxir.graph.optimization.optimizers.q_optimizer import\
-    QOptimizer
+from pyxir.graph.optimization.optimizers import QOptimizer, ExternalQOptimizer
 from pyxir.quantization.default_quantizer import XGraphDefaultQuantizer
 from pyxir.quantization.mse_quantization.mse_threshold_quantizer import\
     XGraphMSEThresholdQuantizer
+from pyxir.quantization.external_quantizer import ExternalQuantizerTxtOutput
 from pyxir.graph.transformers.layout_transformation_pass import \
     XGraphLayoutTransformationPass
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
@@ -68,6 +68,24 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
     return dpu_xgraph
 
 
+def xgraph_dpu_external_quantizer_optimizer(xgraph, target=None, **kwargs):
+
+    layout_transform_pass = \
+        XGraphLayoutTransformationPass('NHWC', target=target)
+    dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
+
+    optimizer = ExternalQOptimizer(dpu_xgraph)
+    optimizer.optimize()
+
+    return dpu_xgraph
+
+
+def xgraph_dpu_external_quantizer(xgraph, inputs_func, **kwargs):
+    quantizer = ExternalQuantizerTxtOutput(xgraph, inputs_func, **kwargs)
+    q_xgraph = quantizer.quantize()
+    return q_xgraph
+
+
 def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
 
     # quantizer = XGraphDefaultQuantizer(xgraph, inputs_func, **kwargs)
@@ -98,13 +116,6 @@ def xgraph_dpu_compiler(xgraph, **kwargs):
     c_xgraph = compiler.compile()
 
     return c_xgraph
-
-
-pyxir.register_target('DPUCADX8G',
-                      xgraph_dpu_optimizer,
-                      xgraph_dpu_quantizer,
-                      xgraph_dpu_compiler,
-                      xgraph_dpu_build_func)
 
 
 # Register DPU numpy layer
@@ -162,8 +173,4 @@ class DPULayer(BaseLayer):
 
     def __del__(self):
         """ Cleanup DPU resources """
-        # self.runner.__del__()
-        pass
-
-
-pyxir.register_op('cpu-np', 'DPU', base.get_layer(DPULayer))
+        self.runner.__del__()

@@ -181,6 +181,101 @@ class TestONNXL2Convolutions(unittest.TestCase):
         assert baX.attrs['axis'] == 1
         assert baX.attrs['onnx_id'] == 'y'
 
+    def test_conv_node(self):
+        x = np.array([[[[1, 2, 3],
+                        [4, 5, 6],
+                        [7, 8, 9]]]]).astype(np.float32)
+        W = np.array([[[[1, 1],
+                        [1, 1]]],
+                      [[[1, -1],
+                        [1, 1]]]]).astype(np.float32)
+        B = np.array([1, -1]).astype(np.float32)
+
+        node = onnx.helper.make_node(
+            'Conv',
+            inputs=['x', 'W', 'B'],
+            outputs=['y'],
+            kernel_shape=[2, 2],
+            pads=[1, 0, 1, 0]
+        )
+
+        wrapped_node = NodeWrapper(node)
+
+        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
+                                               dtype='float32')
+        wX = xlf.get_xop_factory_func('Constant')('W', W, onnx_id='W')
+        bX = xlf.get_xop_factory_func('Constant')('B', B, onnx_id='B')
+
+        xmap = {'x': iX, 'W': wX, 'B': bX}
+        params = {}
+
+        Xs = ol2c.conv(wrapped_node, params, xmap)
+
+        assert len(Xs) == 2
+        X, baX = Xs
+
+        assert X.name == 'y_Conv'
+        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.attrs['padding'] == [(0, 0), (0, 0), (1, 0), (1, 0)]
+        assert X.attrs['strides'] == [1, 1]
+        assert X.attrs['dilation'] == [1, 1]
+        assert X.attrs['kernel_size'] == [2, 2]
+        assert X.attrs['channels'] == [1, 2]
+        assert X.attrs['data_layout'] == 'NCHW'
+        assert X.attrs['kernel_layout'] == 'OIHW'
+        assert X.attrs['groups'] == 1
+        assert X.attrs['onnx_id'] == 'y'
+
+        assert baX.name == 'y'
+        assert baX.shapes == [-1, 2, 3, 3]
+        assert baX.attrs['axis'] == 1
+        assert baX.attrs['onnx_id'] == 'y'
+
+    def test_depth_conv_node(self):
+        x = np.ones((1,16,4,4)).astype(np.float32)
+        W = np.ones((8,4,2,2)).astype(np.float32)
+        B = np.ones((8,)).astype(np.float32)
+
+        node = onnx.helper.make_node(
+            'Conv',
+            inputs=['x', 'W', 'B'],
+            outputs=['y'],
+            kernel_shape=[2, 2],
+            pads=[1, 0, 1, 0],
+            group=4
+        )
+
+        wrapped_node = NodeWrapper(node)
+
+        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
+                                               dtype='float32')
+        wX = xlf.get_xop_factory_func('Constant')('W', W, onnx_id='W')
+        bX = xlf.get_xop_factory_func('Constant')('B', B, onnx_id='B')
+
+        xmap = {'x': iX, 'W': wX, 'B': bX}
+        params = {}
+
+        Xs = ol2c.conv(wrapped_node, params, xmap)
+
+        assert len(Xs) == 2
+        X, baX = Xs
+        assert X.name == 'y_Conv'
+        assert X.shapes.tolist() == [-1, 8, 4, 4]
+        assert X.attrs['padding'] == [(0, 0), (0, 0), (1, 0), (1, 0)]
+        assert X.attrs['strides'] == [1, 1]
+        assert X.attrs['dilation'] == [1, 1]
+        assert X.attrs['kernel_size'] == [2, 2]
+        assert X.attrs['channels'] == [16, 8]
+        assert X.attrs['data_layout'] == 'NCHW'
+        assert X.attrs['kernel_layout'] == 'OIHW'
+        assert X.attrs['groups'] == 4
+        assert X.attrs['onnx_id'] == 'y'
+
+        assert baX.name == 'y'
+        assert baX.shapes == [-1, 8, 4, 4]
+        assert baX.attrs['axis'] == 1
+        assert baX.attrs['onnx_id'] == 'y'
+
     def test_conv_transpose_node(self):
         x = np.zeros((1, 2, 3, 3))
         W = np.zeros((4, 2, 3, 3))
