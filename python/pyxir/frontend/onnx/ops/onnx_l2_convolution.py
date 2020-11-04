@@ -166,7 +166,11 @@ def conv(node, params, xmap):
         pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
         padding = [pad_ht, pad_hb, pad_wl, pad_wr]
     else:
-        padding = pads
+        assert len(pads) % 2 == 0
+        half = len(pads) // 2
+        padding = []
+        for i in range(half):
+            padding.extend([pads[i], pads[i+half]])
 
     # Quant_info (optional)
     vai_quant_in = node_attrs['vai_quant_in']\
