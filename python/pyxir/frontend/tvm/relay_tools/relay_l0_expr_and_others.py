@@ -22,6 +22,7 @@ import math
 import logging
 import numpy as np
 import tvm
+import pyxir as px
 
 from tvm import relay
 
@@ -70,8 +71,9 @@ def function(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     # ! We still have to add the last layer to the network, because this
     #   layer doesn't have a parent operation that can decide whether to
     #   add or not add this layer
-    schedule.append(id(expr.body))
-    net[id(expr.body)] = X
+    if not expr.body in net:
+        schedule.append(expr.body)
+        net[expr.body] = X
 
     return X
 
@@ -103,6 +105,42 @@ def call(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
     X = RELAY_2_XLAYER[op_type](expr, params, schedule, net, op_idx,
                                 RELAY_2_XLAYER, **kwargs)
+
+    return X
+
+
+@register_relay_2_xlayer_converter_base('layout_transform')
+def layout_transform(op_name, expr, in_xlayers):
+    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+    """
+    TVM: Transform the layout of a tensor
+
+    Relay
+    -----
+    Type: tvm.relay.strided_slice
+    Ref: https://docs.tvm.ai/api/python/relay/vision.html
+    Parameters:
+        - data (relay.Expr)
+            The source tensor to be transformed
+        - src_layout (str)
+            The source layout. (e.g NCHW)
+        - dst_layout (str)
+            The destination layout. (e.g. NCHW16c)
+    """
+    inX = in_xlayers[0]
+    in_shape = list(inX.shapes[:])
+    src_layout = str(expr.attrs.src_layout)
+    dst_layout = str(expr.attrs.dst_layout)
+    assert len(src_layout) == len(dst_layout), "Layout transform source and destination layout"\
+        " should be anagrams"
+
+    transpose_axes = [src_layout.index(e) for e in dst_layout]
+    if 'Constant' in inX.type:
+        data = np.transpose(inX.data[0], transpose_axes)
+        X = px.ops.constant(op_name, data, relay_id=[hash(expr)])
+    else:
+        newshape = [in_shape[i] for i in transpose_axes]
+        X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
 
     return X
 
@@ -139,6 +177,7 @@ def tuple_expr(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
     # Create tuple name
     op_name = 'tuple-' + str(hash(expr))
+    logger.debug("Tuple: {}".format(op_name))
 
     X = xlf.get_xop_factory_func('Tuple')(op_name, data_layers,
                                           relay_id=[hash(expr)])
@@ -169,6 +208,9 @@ def tuple_get_item(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         - index (int)
             The index.
     """
+    if expr in net:
+        logger.debug("MEMORY TupleGetItem: {}".format(str(hash(expr))))
+        return net[expr]
     # TODO is this always correct?
     child_expr = expr.tuple_value
     child_expr_class = child_expr.__class__.__name__
@@ -190,7 +232,17 @@ def tuple_get_item(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
 
     if isinstance(child_layer.shapes, TensorShape):
         # Skip TupleGetItem layer
+        logger.debug("-- Skip this TGI for tensor child layer: {}".format(child_layer.name))
+
         X = child_layer
+        X.attrs['relay_id'].append(hash(expr))
+        if child_expr not in net:
+            schedule.append(child_expr)
+            net[child_expr] = X
+
+        # Because we remove this tuple get item layer, we want it to refer to
+        # the child layer in the net map
+        net[expr] = X
     elif isinstance(child_layer.shapes, TupleShape):
 
         # Update schedule with input data layer
@@ -240,10 +292,11 @@ def constant(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
             The constant value
     """
     if expr in net:
-        raise ValueError("Relay constant expression should never be in"
-                         " memory!")
+        # raise ValueError("Relay constant expression should never be in"
+        #                  " memory!")
         # This expressions is already transformed so we reuse that one
-        # return net[expr]
+        logger.debug("MEMORY Constant: {}".format(str(hash(expr))))
+        return net[expr]
 
     logger.debug("constant: {}".format(""))
 
@@ -251,7 +304,8 @@ def constant(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     value = expr.data
     if isinstance(value, tvm.nd.NDArray):
         value = value.asnumpy()
-    # dtype = str(expr._checked_type_.dtype)
+    if value.ndim == 0:
+        value = value.reshape((-1,))
 
     # Create name
     op_name = 'constant-' + str(hash(expr))
@@ -352,7 +406,14 @@ def relay_op(op_name, expr, in_xlayers):
     logger.debug("-- op_name: {}".format(op_name))
     logger.debug("-- expr: {}".format(expr.op))
 
-    ty = expr.checked_type
+    try:
+        ty = expr.checked_type
+    except ValueError as e:
+        # TODO, this is not correct
+        if expr.type_args and len(expr.type_args) > 0:
+            ty = expr.type_args[0]
+        else:
+            raise e
     if isinstance(ty, relay.ty.TensorType):
         relay_shape = TensorShape([int(i) for i in list(ty.shape)])
         dtype = str(ty.dtype)
@@ -363,7 +424,7 @@ def relay_op(op_name, expr, in_xlayers):
         dtype = [str(t_ty.dtype) for t_ty in ty.fields]
 
     # TODO
-    relay_shape.set_value(axis=0, value=-1)
+    # relay_shape.set_value(axis=0, value=-1)
 
     attrs = {}
     for attr in dir(expr.attrs):

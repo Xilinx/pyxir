@@ -55,7 +55,7 @@ class MeanLayer(rt_layer.BaseLayer, RtLayerTF):
 
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 

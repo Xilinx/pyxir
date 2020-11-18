@@ -27,11 +27,52 @@ import numpy as np
 from pyxir.shapes import TensorShape
 
 from ..layer.xlayer import defaultXLayer, XLayer
-from ..layer.xlayer_factory import xop_register_factory
+from ..layer.xlayer_factory import xop_register_factory, xop_register
 from ..xop_registry import xop_register_op_layout_transform,\
     xop_register_op_transpose_transform
 
 logger = logging.getLogger("pyxir")
+
+
+
+###########
+# Greater #
+###########
+
+@xop_register('Greater')
+def greater(attrs, in_xlayers):
+    # type: (dict, List[XLayer]) -> XLayer
+    """ Return numpy-style greater layer registration information (shape)
+        NOTE: https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html"""
+
+    assert len(in_xlayers) == 2
+
+    lX, rX = in_xlayers
+    if len(lX.shapes) >= len(rX.shapes):
+        lshape = lX.shapes[:]
+        rshape = [None] * (len(lX.shapes) - len(rX.shapes)) + rX.shapes[:]
+    else:
+        rshape = rX.shapes[:]
+        lshape = [None] * (len(rX.shapes) - len(lX.shapes)) + lX.shapes[:]
+
+    assert len(lshape) == len(rshape)
+
+    reversed_shape = []
+    for ls, rs in zip(reversed(lshape), reversed(rshape)):
+        if ls == rs or ls in [1, None] or rs in [1, None]:
+            if ls is None:
+                reversed_shape.append(rs)
+            elif rs is None:
+                reversed_shape.append(ls)
+            else:
+                reversed_shape.append(max(ls, rs))
+        else:
+            raise ValueError("Invalid shapes for broadcasted additions:"
+                             " {} and {}".format(lX.shapes, rX.shapes))
+
+    shape = TensorShape(list(reversed(reversed_shape)))
+
+    return {'shape': shape}
 
 
 ########
@@ -108,3 +149,36 @@ def mean_transpose_transform(X, axes):
     new_shape = [X.shapes[i] for i in axes]
     X.shapes = new_shape
     X.attrs['axes'] = [axes.index(axis) for axis in X.attrs['axes']]
+
+
+################
+# StridedSlice #
+################
+
+@xop_register('StridedSlice')
+def strided_slice(attrs, in_xlayers):
+    """ Strided slice of an array """
+
+    # assert len(in_xlayers) == 1
+    begin = attrs['begin']
+    end = attrs['end']
+    strides = attrs['strides']
+    slice_mode = attrs['slice_mode']
+
+    in_shape = in_xlayers[0].shapes[:]
+    assert len(in_shape) == len(begin)
+    assert len(in_shape) == len(end)
+    assert len(in_shape) == len(strides)
+    newshape = []
+
+    if slice_mode == 'end':
+        for i in range(len(in_shape)):
+            newshape.append(int((end[i] - begin[i]) / strides[i]))
+    elif slice_mode == 'size':
+        raise ValueError("Slice mode `size` not supported yet in PyXIR")
+    else:
+        raise ValueError("Slice mode `{}` not supported yet in PyXIR".format(slice_mode))
+
+    logger.debug("-- new shape: {}".format(newshape))
+
+    return {'shape': TensorShape(newshape)}

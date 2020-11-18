@@ -34,24 +34,17 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
   
   in_tensor_names_ = dpu_internal_in_tensor_names;
 
-  std::vector<std::string> dpu_out_tensor_names = xl->tops;
+  std::vector<std::string> dpu_out_tensor_names = xl->get_attr("output_names").get_strings(); // xl->tops;
   out_tensor_names_ = dpu_out_tensor_names;
   
   std::unordered_map<std::string, std::string> rt_in_map = 
     xl->get_attr("rt_in_map").get_map_str_str();
   std::unordered_map<std::string, std::string> rt_out_map = 
     xl->get_attr("rt_out_map").get_map_str_str();
-  // assert(in_tensor_names_.size() == rt_in_map.size());
-  // assert(out_tensor_names_.size() == rt_out_map.size());
   
   pxDebug("Before DpuRunner init");
   // Setup DPU runner
-  // If PX_BUILD_DIR environment variable is set, we use that directory
-  //   to setup the DpuRunner
   std::string model_path;
-  // const char *env_build_dir = std::getenv("PX_BUILD_DIR");
-  // if (env_build_dir != NULL) {
-  //   model_path = env_build_dir;
   if (!build_dir.empty()) {
     model_path = build_dir;
   } else {
@@ -108,9 +101,9 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
 
   std::vector<std::string> rt_out_names;
   std::transform(out_tensor_names_.begin(), out_tensor_names_.end(),
-   std::back_inserter(rt_out_names),
-   [&rt_out_map](const std::string &elem)
-   -> const std::string & { return rt_out_map[elem]; });
+    std::back_inserter(rt_out_names),
+    [&rt_out_map](const std::string &elem)
+    -> const std::string & { return rt_out_map[elem]; });
 
   for (int i = 0; i < out_tensor_names_.size(); ++i)
   {
@@ -135,11 +128,22 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
   pxDebug("Inside Initialize print in/out maps");
 }
 
+DpuFunc::~DpuFunc() {
+  if (is_verbose()) {
+    std::cout << "---------------------" << std::endl;
+    std::cout << "PX DPU FUNC TIMINGS: " << std::endl;
+    std::cout << "Total DPU time: " << std::to_string(total_dpu_time_) << std::endl;
+    std::cout << "Total async time: " << std::to_string(total_async_time_) << std::endl;
+    std::cout << "Total wait time: " << std::to_string(total_wait_time_) << std::endl;
+    std::cout << "---------------------" << std::endl;
+  }
+}
+
 void DpuFunc::operator()(
   std::vector<XBufferHolder> &in_tensors,
   std::vector<XBufferHolder> &out_tensors)
 {
-  pxDebug("Inside VaiComputeFunc::()");
+  pxDebug("Inside DpuFunc::()");
   if (out_tensors.empty()) {
     for (const auto &shape : xl_->shapes) {
       std::vector<ssize_t> buffer_shape = shape;
@@ -155,8 +159,8 @@ void DpuFunc::operator()(
 
   for (ssize_t i = 0; i < in_tensor_names_.size(); ++i)
   {
-    std::vector<std::int32_t> in_dims(in_tensors[i]->shape.begin(),
-                                      in_tensors[i]->shape.end());
+    std::vector<std::int32_t> in_dims(in_tensors[in_tensor_order_[i]]->shape.begin(),
+                                      in_tensors[in_tensor_order_[i]]->shape.end());
     batch_tensors.push_back(std::shared_ptr<vitis::ai::Tensor>(
         new vitis::ai::Tensor(dpu_runner_in_tensors_[i]->get_name(), in_dims,
                               dpu_runner_in_tensors_[i]->get_data_type())));
@@ -169,8 +173,8 @@ void DpuFunc::operator()(
 
   for (ssize_t i = 0; i < out_tensor_names_.size(); ++i)
   {
-    std::vector<std::int32_t> out_dims(out_tensors[i]->shape.begin(),
-                                       out_tensors[i]->shape.end());
+    std::vector<std::int32_t> out_dims(out_tensors[out_tensor_order_[i]]->shape.begin(),
+                                       out_tensors[out_tensor_order_[i]]->shape.end());
     batch_tensors.push_back(std::shared_ptr<vitis::ai::Tensor>(
         new vitis::ai::Tensor(dpu_runner_out_tensors_[i]->get_name(), out_dims,
                               dpu_runner_out_tensors_[i]->get_data_type())));
@@ -202,6 +206,9 @@ void DpuFunc::operator()(
   pxDebug(("Exec_async Time: " + std::to_string(duration_async.count())).c_str());
   pxDebug(("Wait Time: " + std::to_string(duration_wait.count())).c_str());
   pxDebug(("DPU Time: " + std::to_string(duration.count())).c_str());
+  total_async_time_ += duration_async.count();
+  total_wait_time_ += duration_wait.count();
+  total_dpu_time_ += duration.count();
 }
 
 } // vai_rt

@@ -49,7 +49,7 @@ class ConstantLayer(rt_layer.ConstantLayer, RtLayerTF):
         self.res = self.inpt
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 0)
 
@@ -84,7 +84,7 @@ class InputLayer(rt_layer.InputLayer, RtLayerTF):
         self.res = self.inpt
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 0)
 
@@ -121,7 +121,7 @@ class OutputLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         return [tf.identity(inpts[0], name=self.name)]
@@ -147,7 +147,7 @@ class StrInputLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.inpt
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 0)
 
@@ -188,9 +188,9 @@ class TupleLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors(self.inpt)[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
-
+        inpts = [tf.identity(i) for i in inpts]
         res = tf.tuple(inpts)
         return [res]
 
@@ -231,7 +231,7 @@ class TupleGetItemLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         res = inpts[0][self.index]
 
@@ -283,7 +283,7 @@ class VariableLayer(rt_layer.BaseLayer, RtLayerTF):
             self.res = self.get_output_tensors([], force_trainable=False)[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, force_trainable=None):
+    def get_output_tensors(self, inpts, force_trainable=None, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 0)
 

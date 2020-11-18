@@ -97,7 +97,7 @@ def conv2d_op_support(X, bXs, tXs):
         padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
         padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
         padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in*groups >= 1 and ch_in*groups <= 4096 and\
+        ch_in >= 1 and ch_in <= 4096 and\
         ch_out >= 1 and ch_out <= 4096 and\
         dilation_h * ch_in <= 4096 and\
         (dilation_h == 1 or stride_h == 1) and\
@@ -131,7 +131,7 @@ def conv2d_transpose_op_support(X, bXs, tXs):
         padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
         padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
         padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in*groups >= 1 and ch_in*groups <= 4096 and\
+        ch_in >= 1 and ch_in <= 4096 and\
         ch_out >= 1 and ch_out <= 4096 and\
         dilation_h * ch_in <= 4096 and\
         (dilation_h == 1 or stride_h == 1) and\

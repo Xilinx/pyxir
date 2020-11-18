@@ -279,7 +279,7 @@ def scale_op_support(X, bXs, tXs):
     axis = X.attrs['axis']
     channels = X.shapes[axis]
 
-    return channels > 1 and channels <= 4096
+    return axis != -1 and channels > 1 and channels <= 4096
 
 
 @pyxir.register_op_support_check('DPUCADX8G', 'Upsampling2D')

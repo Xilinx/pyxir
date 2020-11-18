@@ -54,7 +54,7 @@ class QuantizeLayer(rt_layer.QuantizeLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 
@@ -110,7 +110,7 @@ class UnQuantizeLayer(rt_layer.UnQuantizeLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         threshold, axis, bitwidth = self.threshold, self.axis, self.bitwidth
@@ -163,7 +163,7 @@ class QuantizeBiasLayer(rt_layer.QuantizeBiasLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
 
         threshold_bias, threshold_ext, bitwidth, do_rounding = \
@@ -239,7 +239,7 @@ class QuantizeScaleBiasLayer(rt_layer.QuantizeScaleBiasLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         """
         Get output tensor for quantizing bias layer in scaling operation
@@ -350,7 +350,7 @@ class QuantizeInterLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         input_shape, prescale_shift, scale, postscale_shift, axis, bitwidth = \
@@ -466,7 +466,7 @@ class QuantizeInter12MSBitsLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         input_shape, prescale_shift, scale, postscale_shift, axis, bitwidth = \

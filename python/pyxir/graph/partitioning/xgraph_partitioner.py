@@ -81,6 +81,11 @@ class XGraphPartitioner(object):
         # Here, T3 has a non-target bottom layer and a new partition has to be
         #   started
         non_target_bottom_layers = set([])
+        # Keep track of layer partition dependencies
+        #  e.g. T1 --> NT --> T2 --> 
+        #        `------------^
+        # Here, T1 and T2 can't belong to the same partition because of NT in between
+        # partition_dep_map = {}
 
         logger.debug("Partition for target: {}".format(target))
 
@@ -90,6 +95,14 @@ class XGraphPartitioner(object):
 
             logger.debug("----------------")
             logger.debug(X.name)
+
+            # partition_dependencies = set([e for b in X.bottoms
+            #                               if b in partition_dep_map
+            #                               for e in partition_dep_map[b]])
+            # if X.name in partition_dep_map:
+            #     partition_dep_map[X.name] |= partition_dependencies
+            # else:
+            #     partition_dep_map[X.name] = partition_dependencies
 
             if target not in X.targets or stop_partitioning:
 
@@ -104,11 +117,20 @@ class XGraphPartitioner(object):
                 for t in X.tops:
                     non_target_bottom_layers.add(t)
 
+                # partition_dependencies = set([e for b in X.bottoms
+                #                               if b in name_2_pars
+                #                               for e in name_2_pars[b]])
+                # if X.name in partition_dep_map:
+                #     partition_dep_map[X.name] |= partition_dependencies
+
                 continue
 
-            elif X.name in name_2_pars and \
-                    X.name not in non_target_bottom_layers:
+            elif X.name in name_2_pars\
+                    and X.name not in non_target_bottom_layers:
+                    # and not partition_dep_map[X.name]\
+                    #     .isdisjoint(set(name_2_pars[X.name])):
 
+                # Check whether only one partition added this element
                 if len(name_2_pars[X.name]) == 1:
                     # -- p_0 --> A
                     pass
@@ -136,6 +158,9 @@ class XGraphPartitioner(object):
 
             else:
                 # Create new partition
+                # Also,
+                # -- p_0 --> A --> p_1 --> B
+                #     `--------------------^
 
                 new_p_name = name + str(idx)
                 idx += 1
