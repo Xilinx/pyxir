@@ -111,7 +111,9 @@ class RuntimeFactory(object):
                           target='cpu',
                           last_layers=None,
                           batch_size=-1,
-                          placeholder=False):
+                          placeholder=False,
+                          out_tensor_names=None,
+                          **kwargs):
             # type: (str, XGraph, str, str, List[str], int) -> BaseRuntime
             """
             Build an runtime graph based on the given target (e.g. tensorflow)
@@ -123,17 +125,17 @@ class RuntimeFactory(object):
             logger.info("Layers: {}".format(len(net)))
             logger.debug([X.name for X in net])
 
-            input_names = xgraph.get_input_names()
-            output_names = xgraph.get_output_names()
+            # input_names = xgraph.get_input_names()
+            output_names = set(xgraph.get_output_names())
+            hidden_out_tensor_names = [otn for otn in out_tensor_names if otn not in output_names]\
+                if out_tensor_names is not None else []
 
-            return self._runtimes[runtime](
-                xgraph.get_name(), net, params, target, batch_size, placeholder)
+            return self._runtimes[runtime](xgraph.get_name(), net, params, target, batch_size,
+                                           placeholder, hidden_out_tensor_names=hidden_out_tensor_names,
+                                           **kwargs)
 
-        def register_exec_graph(self, rt_name, runtime):
-            # type: (str, BaseRuntime) -> None
-            """
-            Register a creator for a new Runtime subclass
-            """
+        def register_exec_graph(self, rt_name: str, runtime: BaseRuntime):
+            """Register a creator for a new Runtime subclass"""
             if rt_name in self._runtimes:
                 raise ValueError("This runtime is already registered")
             if not issubclass(runtime, BaseRuntime):
@@ -146,7 +148,7 @@ class RuntimeFactory(object):
     __instance = None
 
     def __init__(self):
-        """ Create singleton instance """
+        """Create singleton instance"""
         # Check whether we already have an instance
         if RuntimeFactory.__instance is None:
             # Create and remember instance
@@ -158,9 +160,9 @@ class RuntimeFactory(object):
             RuntimeFactory.__instance
 
     def __getattr__(self, attr):
-        """ Delegate access to implementation """
+        """Delegate access to implementation"""
         return getattr(self.__instance, attr)
 
     def __setattr__(self, attr, value):
-        """ Delegate access to implementation """
+        """Delegate access to implementation"""
         return setattr(self.__instance, attr, value)

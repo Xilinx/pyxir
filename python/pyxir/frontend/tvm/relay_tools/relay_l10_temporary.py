@@ -16,14 +16,13 @@
 Module for transforming Relay L5 operators to XLayer objects
 
 L5: Vision operators
-
-
 """
 
 import math
 import logging
 import warnings
 import numpy as np
+import pyxir as px
 
 import tvm
 
@@ -70,6 +69,8 @@ def nn_adaptive_avg_pool2d(op_name, expr, in_xlayers):
 
     if output_size is None:
         out_h, out_w = in_h, in_w
+    elif len(output_size) == 1:
+        out_h, out_w = output_size[0], output_size[0]
     else:
         out_h, out_w = output_size
 
@@ -89,5 +90,41 @@ def nn_adaptive_avg_pool2d(op_name, expr, in_xlayers):
         count_include_pad=False,
         relay_id=[hash(expr)])
     logger.debug("-- outshape: {}".format(list(X.shapes)))
+
+    return X
+
+
+@register_relay_2_xlayer_converter_base('slice_like')
+def slice_like(op_name, expr, in_xlayers):
+    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+    """
+    Slice like
+
+    Relay
+    -----
+    Type: tvm.relay.slice_like
+    Ref: https://docs.tvm.ai/api/python/relay/index.html
+    Parameters:
+        - data (tvm.relay.Expr)
+            The source array.
+        - shape_like (tvm.relay.Expr)
+            The new shape.
+        - axes (Optional[Tuple[int]])
+            List of axes on which input data will be sliced according to the
+            corresponding size of the second input. By default will slice on
+            all axes. Negative axes mean counting in reverse.
+    """
+    data_shapes = list(in_xlayers[0].shapes[:])
+    shapes_like = list(in_xlayers[1].shapes[:])
+    axes = [int(e) for e in list(expr.attrs.axes)] if expr.attrs.axes is not None\
+        else list(range(min(len(data_shapes), len(shapes_like))))
+
+    new_shape = data_shapes[:]
+    for dim in axes:
+        new_shape[dim] = shapes_like[dim]
+
+    logger.debug("--newshape: {}".format(new_shape))
+
+    X = px.ops.any_op(op_name, in_xlayers, any_shape=new_shape, relay_id=[hash(expr)])
 
     return X

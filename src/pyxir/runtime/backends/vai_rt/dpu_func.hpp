@@ -33,22 +33,36 @@ class DpuFunc : public KernelFunc {
   public:
     DpuFunc() {}
     DpuFunc(XLayerHolder &xl, const std::string &build_dir);
+    ~DpuFunc();
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
 
   private:
+    /** @brief The names of the input tensor in the order that they will be provided */
     std::vector<std::string> in_tensor_names_;
+    /** @brief The names of the output tensor in the order that they will be provided */
     std::vector<std::string> out_tensor_names_;
-
-    // The input tensors and output tensors of the accelerator might be
-    //  different than the original input and output tensors
+    /** @brief The DPU input tensors */
     std::vector<vitis::ai::Tensor*> dpu_runner_in_tensors_;
+    /** @brief The DPU output tensors */
     std::vector<vitis::ai::Tensor*> dpu_runner_out_tensors_;
+    /** @brief Vector to match the order in which input tensors will be provided with
+        the order in which the DPU expects them */
     std::vector<int> in_tensor_order_;
+    /** @brief Vector to match the order in which output tensors will be provided with
+        the order in which the DPU expects them */
     std::vector<int> out_tensor_order_;
-
+    /** @brief Holder for the DPU runner that will be created using Vitis AI API's */
     std::unique_ptr<vitis::ai::DpuRunner> dpu_runner_;
+
+    // VERBOSE
+    /** @brief The total time spent in async DPU call */
+    int64_t total_async_time_ = 0;
+    /** @brief The total time spent in wait DPU call */
+    int64_t total_wait_time_ = 0;
+    /** @brief The total time spent in operator() call */
+    int64_t total_dpu_time_ = 0;
 };
 
 } // vai_rt

@@ -55,7 +55,7 @@ class CastLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 1
 
@@ -93,7 +93,7 @@ class LeakyReluLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         features, alpha = inpts[0], self.alpha
@@ -134,7 +134,7 @@ class PReluLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 
@@ -169,7 +169,7 @@ class ReshapeLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 
@@ -230,7 +230,7 @@ class SplitLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         res = tf.split(inpts[0], self.num_or_size_splits, axis=self.axis)
         return [res]
@@ -263,7 +263,7 @@ class SqueezeLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 
@@ -312,7 +312,7 @@ class TakeLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Indices shape: {}".format(indices.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 2
 
@@ -350,7 +350,7 @@ class TransposeLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         return [tf.transpose(inpts[0], list(self.axes))]

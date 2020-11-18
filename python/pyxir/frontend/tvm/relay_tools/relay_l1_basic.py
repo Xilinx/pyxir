@@ -16,19 +16,19 @@
 Module for transforming Relay L1 operators to XLayer objects
 
 L1: Basic NN operators that enable fully connected multi-layer perceptron
-
-
 """
 
 import math
 import logging
 import numpy as np
+import pyxir as px
 
 import tvm
 
 from pyxir import graph
 from pyxir.graph.layer import xlayer_factory as xlf
 
+from .util import broadcast_shapes
 from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
     register_relay_2_xlayer_converter_base
 
@@ -57,29 +57,40 @@ def add(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         # This expressions is already transformed so we reuse that one
         return net[expr]
 
+    def is_bias_add_constant(xl, in_xl):
+        return ('Constant' in xl.type)\
+            and (xl.data[0].ndim in [0, 1] or max(xl.data[0].shape) == np.prod(xl.data[0].shape))\
+            and (xl.data[0].shape == () or max(xl.data[0].shape) in in_xl.shapes[:])
+
     lhs_expr, lhs_expr_class = expr.args[0], expr.args[0].__class__.__name__
     rhs_expr, rhs_expr_class = expr.args[1], expr.args[1].__class__.__name__
 
     lhs_layer = RELAY_2_XLAYER[lhs_expr_class](lhs_expr, params, schedule,
                                                net, op_idx, RELAY_2_XLAYER,
                                                **kwargs)
-
-    # TODO Handling constants
-    if lhs_expr not in net and ('Constant' not in lhs_layer.type
-                                or lhs_layer.data[0].ndim > 1):
-        schedule.append(lhs_expr)
+    # Add to net to make sure that this lhs layer is cached, rhs might lead to this layer as well
+    lhs_idx = None
+    if lhs_expr not in net:
+        lhs_idx = len(schedule)
         net[lhs_expr] = lhs_layer
+        schedule.append(lhs_expr)
+        
 
     rhs_layer = RELAY_2_XLAYER[rhs_expr_class](rhs_expr, params, schedule,
                                                net, op_idx, RELAY_2_XLAYER,
                                                **kwargs)
 
-    if rhs_expr not in net and ('Constant' not in rhs_layer.type
-                                or rhs_layer.data[0].ndim > 1):
+    # TODO Handling constants
+    if is_bias_add_constant(lhs_layer, rhs_layer) and lhs_idx is not None:
+        # Remove constant layer from net
+        del net[lhs_expr]
+        del schedule[lhs_idx]
+
+    if rhs_expr not in net and not is_bias_add_constant(rhs_layer, lhs_layer):
         schedule.append(rhs_expr)
         net[rhs_expr] = rhs_layer
 
-    logger.debug("add: {}".format(""))
+    logger.debug("add: {}".format(hash(expr)))
     logger.debug("-- lhs: {}, {}, {}, {}".format(
         expr.args[0].__class__.__name__, lhs_layer.type,
         lhs_layer.name, lhs_layer.shapes))
@@ -90,16 +101,28 @@ def add(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     def get_add_const_layer(in_layer, const_layer):
 
         # Numpy style broadcasting == NHWC
-        const_ndim = const_layer.data[0].ndim
-        if const_ndim == 1:
+        data = const_layer.data[0]
+        # If data is in format (1, 1, ..., N, ..., 1), convert to (N,)
+        if max(data.shape) == np.prod(data.shape):
+            data = data.reshape((-1,))
+
+        in_shape = in_layer.shapes[:]
+        const_ndim = data.ndim
+        if is_bias_add_constant(const_layer, in_layer):
+            if const_ndim == 0:
+                data = data.reshape((-1,))
+            
             # Create name
             op_name = 'nn_bias_add-' + str(hash(expr))
+            logger.debug("-- Add = BiasAdd")
 
-            const_size = const_layer.data[0].shape[0]
-            in_shape = in_layer.shapes
+            const_size = data.shape[0]
+            
             # Retrieve axis according to numpy broadcasting rules
             axis = [i for i in range(len(in_shape)-1, -1, -1)
                     if in_shape[i] == const_size][0]
+            
+            const_layer.data = [data]
             X = xlf.get_xop_factory_func('BiasAdd')(
                 op_name, in_layer, const_layer, axis,
                 relay_id=[hash(expr)])
@@ -222,7 +245,7 @@ def nn_batch_norm(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
                                                          RELAY_2_XLAYER,
                                                          **kwargs)
 
-    logger.debug("nn_batch_norm: {}".format(""))
+    logger.debug("nn_batch_norm: {}".format(str(hash(expr))))
 
     # Update schedule with input data layer
     if data_expr not in net:
@@ -346,7 +369,7 @@ def concatenate(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
     axis = int(expr.attrs.axis)
     # logger.debug(expr.args[0].__class__.__name__)
-    logger.debug("Concatenate")
+    logger.debug("Concatenate: {}".format(hash(expr)))
 
     data_layers = []
     relay_idx = []
@@ -367,9 +390,10 @@ def concatenate(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     data_layer_types = [dl.type[0] for dl in data_layers]
     if len(set(data_layer_types)) == 1 and 'Constant' in data_layer_types:
         # Concatenate all constants TODO
-        raise NotImplementedError("")
-    elif 'Constant' in data_layer_types:
-        raise NotImplementedError("")
+        raise NotImplementedError("Cannot concatenate all constant layers")
+    # elif 'Constant' in data_layer_types:
+    #     raise NotImplementedError("Cannot concatenate data layers with type: {}"\
+    #         .format(data_layer_types))
 
     # Create XLayer
     op_name = 'concat-' + str(hash(expr))
@@ -831,5 +855,30 @@ def sqrt(op_name, expr, in_xlayers):
 
     X = xlf.get_xop_factory_func('Sqrt')(op_name, in_xlayers,
                                          relay_id=[hash(expr)])
+
+    return X
+
+
+@register_relay_2_xlayer_converter_base('subtract')
+def subtract(op_name, expr, in_xlayers):
+    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+    """
+    Suctract
+
+    Relay
+    -----
+    Type: tvm.relay.subtract
+    Ref: https://docs.tvm.ai/api/python/relay/index.html
+    Parameters:
+        - lhs (relay.Expr)
+            The left hand side input data
+        - rhs (relay.Expr)
+            The right hand side input data
+    """
+    lshape = list(in_xlayers[0].shapes[:])
+    rshape = list(in_xlayers[1].shapes[:])
+    shape = broadcast_shapes(lshape, rshape)
+
+    X = px.ops.any_op(op_name, in_xlayers, any_shape=shape, relay_id=[hash(expr)])
 
     return X

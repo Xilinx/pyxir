@@ -105,6 +105,8 @@ def bias_add(op_name, input_layer, bias_layer, axis, **kwargs):
         'axis': axis
     })
 
+    logger.debug("--bias_add shape: {}".format(input_layer.shapes[:]))
+
     X = XLayer()
     X = X._replace(
         shapes=input_layer.shapes[:],
@@ -154,14 +156,19 @@ def concat(op_name, input_layers, axis, **kwargs):
         The input layers to be concatenated
     """
     bottoms = [input_layer.name for input_layer in input_layers]
+    if axis < 0:
+        axis = axis + len(input_layers[0].shapes[:])
 
     # Check concatenation inputs
-    assert(len(set([len(il.shapes) for il in input_layers])) == 1)
+    assert len(set([len(il.shapes) for il in input_layers])) == 1
     for i in range(len(list(input_layers[0].shapes))):
         # Either i is the axis over which to concatenate or this dimension
         #   in the shape of each input layer is the same
-        assert i == axis or \
-            len(set([il.shapes[i] for il in input_layers])) == 1
+        check = set([il.shapes[i] for il in input_layers])
+        # TODO workaround for concatenating when batch is -1 and some other constant
+        if len(check) > 1 and -1 in check:
+            check.remove(-1)
+        assert i == axis or len(check) == 1
 
     shape = input_layers[0].shapes[:]
     shape[axis] = sum([il.shapes[axis] for il in input_layers])

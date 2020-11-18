@@ -86,7 +86,7 @@ class BatchNormLayer(rt_layer.BatchNormLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 5
 
@@ -168,7 +168,7 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def _get_conv_tensor(self, inpts):
+    def _get_conv_tensor(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
 
         if len(inpts) == 3:
@@ -316,7 +316,7 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
 
         return conv_res
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         # assert(len(inpts) == 1)
         res = self._get_conv_tensor(inpts)
@@ -452,7 +452,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def _get_conv_tensor(self, inpts, placeholder=False):
+    def _get_conv_tensor(self, inpts, placeholder=False, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
 
         if len(inpts) == 3:
@@ -620,7 +620,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
         return conv_res
 
-    def get_output_tensors(self, inpts, placeholder=False):
+    def get_output_tensors(self, inpts, placeholder=False, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         # assert(len(inpts) == 1)
         res = self._get_conv_tensor(inpts, placeholder=placeholder)
@@ -711,7 +711,7 @@ class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         return [tf.contrib.layers.flatten(inpts[0])]
@@ -746,7 +746,7 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 
@@ -831,7 +831,7 @@ def pooling_factory():
 
 class PoolingNoDivisionLayer(PoolingLayer):
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         """
         NOTE: On FPGA, average pooling is computed as a sum over the
@@ -897,15 +897,9 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 1
-
-        # res = tf.keras.layers.UpSampling2D(
-        #     size=[self.scale_h, self.scale_w],
-        #     data_format=self.data_format
-        #     # interpolation=self.interpolation
-        # )(inpts[0])
 
         res = inpts[0]
         if self.layout == 'NCHW':

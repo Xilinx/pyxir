@@ -14,8 +14,6 @@
 
 """
 Data structure for registering and tracking Relay to XLayer converters
-
-
 """
 
 import logging
@@ -115,6 +113,7 @@ def register_relay_2_xlayer_converter_base(relay_op):
 
             if expr in net:
                 # This expressions is already transformed so we reuse that one
+                logger.debug("MEMORY: {}".format(relay_op))
                 return net[expr]
 
             iXs = []

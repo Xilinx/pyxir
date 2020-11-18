@@ -54,3 +54,11 @@ inline void pxWarningMsg(const std::string &msg, const char *fname, int lineno)
 #else
 #define pxDebug(x)
 #endif
+
+/**
+ * @brief Return whether verbose flag was set and is true
+ */
+inline bool is_verbose() {
+  std::string verbose = std::string(std::getenv("PX_VERBOSE"));
+  return verbose == "True" || verbose == "true" || verbose == "1";
+}

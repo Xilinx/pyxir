@@ -58,10 +58,11 @@ class ReluLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, override_name=None, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
-        return [tf.nn.relu(inpts[0], name=self.name)]
+        name = self.name if override_name is None else override_name
+        return [tf.nn.relu(inpts[0], name=name)]
 
     def forward_exec(self, inputs):
         # type: (List[numpy.ndarray]) -> numpy.ndarray
@@ -97,7 +98,7 @@ class AddLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.debug("Add res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 2
         left, right = inpts[0], inpts[1]
@@ -134,7 +135,7 @@ class BiasAddLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt, self.bias])[0]
         logger.debug("BiasAdd res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 2
         inpt, bias = inpts[0], inpts[1]
@@ -189,7 +190,7 @@ class ConcatLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors(self.inpts)[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         return [tf.concat(inpts, axis=self.axis, name=self.name)]
 
@@ -241,7 +242,7 @@ class DenseLayer(rt_layer.DenseLayer, RtLayerTF):
         logger.debug("Dense layer: {}, res shape: {}"
                      .format(self.name, self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 3)
 
@@ -313,7 +314,7 @@ class ElementwiseLayer(rt_layer.BaseLayer, RtLayerTF):
         self.inpts = [left, right]
         self.res = self.get_output_tensors(self.inpts)[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 2
 
@@ -355,7 +356,7 @@ class ExpLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         return [tf.exp(inpts[0], name=self.name)]
@@ -383,7 +384,7 @@ class ExpandDimsLayer(rt_layer.BaseLayer, RtLayerTF):
                                      shape=self.input_shapes[0])
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 1
 
@@ -414,7 +415,7 @@ class PadLayer(rt_layer.BaseLayer, RtLayerTF):
                                      shape=self.input_shapes[0])
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 
@@ -448,7 +449,7 @@ class Relu6Layer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 1
         return [tf.nn.relu6(inpts[0], name=self.name)]
@@ -497,26 +498,49 @@ class ScaleLayer(rt_layer.ScaleLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 3)
 
         inpt, gamma, beta = inpts
-        assert(gamma.shape == beta.shape)
+        assert gamma.shape == beta.shape
 
-        inpt = tf.cast(inpt, RtLayerTF.dtype_to_tf[self.dtype])
-        gamma = tf.cast(gamma, RtLayerTF.dtype_to_tf[self.dtype])
-        beta = tf.cast(beta, RtLayerTF.dtype_to_tf[self.dtype])
+        if self.dtype not in ['float32']:
+            inpt = tf.cast(inpt, RtLayerTF.dtype_to_tf[self.dtype])
+            gamma = tf.cast(gamma, RtLayerTF.dtype_to_tf[self.dtype])
+            beta = tf.cast(beta, RtLayerTF.dtype_to_tf[self.dtype])
 
         if self.axis not in [None, -1]:
             shape = [(1 if i != self.axis else -1)
                      for i in range(len(self.shape))]
             gamma, beta = tf.reshape(gamma, shape), tf.reshape(beta, shape)
+        
+        if len(gamma.shape) == 0:
+            gamma = np.reshape(gamma, (1,)) if isinstance(gamma, np.ndarray) else tf.reshape(gamma, (1,))
+            beta = np.reshape(beta, (1,)) if isinstance(beta, np.ndarray) else tf.reshape(beta, (1,))
 
-        return [tf.add(
-            tf.multiply(inpt, gamma),
-            beta
-        )]
+        compiler_target = kwargs['compiler_target'] if 'compiler_target' in kwargs else None
+        if compiler_target == 'DPUv1Compiler':
+            return [tf.add(
+                tf.multiply(inpt, gamma, name=self.name),
+                beta,
+                name=self.name + "/Add"
+            )]
+        else:
+            return [tf.add(
+                tf.multiply(inpt, gamma),
+                beta,
+                name=self.name
+            )]
+        # return [tf.nn.batch_normalization(
+        #     inpt,
+        #     mean=tf.zeros(beta.shape),
+        #     variance=tf.ones(beta.shape),
+        #     offset=beta,
+        #     scale=gamma,
+        #     variance_epsilon=0.000001,
+        #     name=self.name
+        # )]
 
     def forward_exec(self, inputs):
         # type: (List[numpy.ndarray]) -> numpy.ndarray
@@ -554,7 +578,7 @@ class SigmoidLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> List[tf.Tensor]
         """ Return Tensorflow sigmoid computation op """
 
@@ -585,7 +609,7 @@ class SoftmaxLayer(rt_layer.BaseLayer, RtLayerTF):
                                      shape=self.input_shapes[0])
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
         return [tf.nn.softmax(inpts[0])]
@@ -623,7 +647,7 @@ class SubLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.debug("Sub res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert len(inpts) == 2
         left, right = inpts[0], inpts[1]
@@ -657,7 +681,7 @@ class TanhLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 

@@ -58,7 +58,7 @@ class CvxLayer(rt_layer.BaseLayer, RtLayerTF):
         self.inpt = tf.compat.v1.placeholder(tf.string)
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
+    def get_output_tensors(self, inpts, **kwargs):
         # type: (List[tf.Tensor]) -> tf.Tensor
         assert(len(inpts) == 1)
 
