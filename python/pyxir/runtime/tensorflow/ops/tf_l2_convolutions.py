@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XLayer neural network layers implemented on top of tensorflow
-
-
-"""
+"""Module for XLayer neural network layers implemented on top of tensorflow"""
 
 import os
 import abc
@@ -24,6 +20,8 @@ import math
 import numpy as np
 import tensorflow as tf
 import logging
+
+from typing import List
 
 from .tf_l0_input_and_other import ConstantLayer
 from .tf_l1_basic_nn import ReluLayer
@@ -44,8 +42,8 @@ logger = logging.getLogger("pyxir")
 
 class BatchNormLayer(rt_layer.BatchNormLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
 
         self.axis = self.attrs['axis']
 
@@ -86,8 +84,8 @@ class BatchNormLayer(rt_layer.BatchNormLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert len(inpts) == 5
 
         inpt, mean, variance, gamma, beta = inpts
@@ -104,8 +102,8 @@ class BatchNormLayer(rt_layer.BatchNormLayer, RtLayerTF):
             variance_epsilon=self.variance_epsilon
         )]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == len(self.input_shapes))
 
@@ -128,11 +126,8 @@ def bias_add_factory():
 
 class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
 
-    def init(self):
-        # () -> None
-        """
-        Initialize a convolution layer on top of tf.nn.conv2d operation
-        """
+    def init(self) -> None:
+        """Initialize a convolution layer on top of tf.nn.conv2d operation"""
         self.layout = self.attrs['data_layout']
 
         logger.info("Init {} layer: {}".format(
@@ -169,8 +164,6 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         logger.info("Res shape: {}".format(self.res.shape))
 
     def _get_conv_tensor(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-
         if len(inpts) == 3:
             inpt, kernel, biases = inpts
         elif len(inpts) == 1:
@@ -316,8 +309,8 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
 
         return conv_res
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         # assert(len(inpts) == 1)
         res = self._get_conv_tensor(inpts)
 
@@ -358,8 +351,8 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
         assert(len(inputs) == len(self.input_shapes))
         feed_dict = {
             self.inpts[i]: inputs[i] for i in range(len(inputs))
@@ -369,7 +362,7 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
             return sess.run(self.res, feed_dict=feed_dict)
 
     def get_output_for_quantization(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+        
         """
         TODO
         """
@@ -379,7 +372,6 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         }
 
         with tf.compat.v1.Session() as sess:
-            # return sess.run(self.quant_output, feed_dict=feed_dict)
             return sess.run(self.res, feed_dict=feed_dict)
 
 
@@ -412,8 +404,7 @@ class TensorInitializer(tf.keras.initializers.Initializer):
 
 class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
-    def init(self):
-        # () -> None
+    def init(self) -> None:
         """
         Initialize a transposed convolution layer on top of
             tf.nn.conv2d_tranpose operation
@@ -453,7 +444,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         logger.info("Res shape: {}".format(self.res.shape))
 
     def _get_conv_tensor(self, inpts, placeholder=False, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+        
 
         if len(inpts) == 3:
             inpt, kernel, _ = inpts
@@ -621,7 +612,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         return conv_res
 
     def get_output_tensors(self, inpts, placeholder=False, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+        
         # assert(len(inpts) == 1)
         res = self._get_conv_tensor(inpts, placeholder=placeholder)
 
@@ -663,8 +654,8 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
         assert len(inputs) == len(self.input_shapes)
         feed_dict = {
             self.inpts[i]: inputs[i] for i in range(len(inputs))
@@ -674,7 +665,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
             return sess.run(self.res, feed_dict=feed_dict)
 
     def get_output_for_quantization(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+        
         """
         TODO
         """
@@ -700,8 +691,8 @@ def conv2d_transpose_factory():
 @rt_register_xlayer_2_tf('Flatten')
 class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
 
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
@@ -711,13 +702,13 @@ class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert(len(inpts) == 1)
         return [tf.contrib.layers.flatten(inpts[0])]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == 1)
 
@@ -731,8 +722,8 @@ class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
 
 class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         self.layout = self.attrs['data_layout']
 
         logger.info("Init pooling layer: {}, shape: {}".format(self.op,
@@ -746,8 +737,8 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert(len(inpts) == 1)
 
         op, ksize, paddings, strides = \
@@ -759,7 +750,7 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
             strides = [strides[0], strides[2], strides[3], strides[1]]
 
         if op == 'Max':
-            tf_pool_func = tf.nn.max_pool
+            tf_pool_func = tf.nn.max_pool2d
         elif op == 'Avg':
             tf_pool_func = tf.nn.avg_pool2d
         else:
@@ -815,11 +806,8 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        assert(len(inputs) == 1)
-
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -831,8 +819,7 @@ def pooling_factory():
 
 class PoolingNoDivisionLayer(PoolingLayer):
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         """
         NOTE: On FPGA, average pooling is computed as a sum over the
             respective tiles
@@ -862,8 +849,8 @@ def pooling_no_division_factory():
 @rt_register_xlayer_2_tf('Upsampling2D')
 class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         self.scale_h = self.attrs['scale_h']
         self.scale_w = self.attrs['scale_w']
         self.layout = self.attrs['data_layout']
@@ -897,8 +884,8 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert len(inpts) == 1
 
         res = inpts[0]
@@ -937,8 +924,8 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == 1)
 

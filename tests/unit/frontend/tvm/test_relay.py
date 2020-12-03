@@ -12,29 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the relay pyxir frontend
-
-
-"""
+"""Module for testing the relay pyxir frontend"""
 
 import unittest
 import numpy as np
 
 # ! To import tvm
-try:
-    import pyxir.frontend.tvm
+import pyxir
 
+try:
     import tvm
     from tvm import relay
     from tvm.relay import testing
-
-    from pyxir.frontend.tvm import relay as xf_relay
 
     skip = False
 except Exception as e:
     # Skip TVM tests
     skip = True
+
+if not skip:
+    from pyxir.frontend.tvm import relay as xf_relay
 
 
 class TestRelayFrontend(unittest.TestCase):

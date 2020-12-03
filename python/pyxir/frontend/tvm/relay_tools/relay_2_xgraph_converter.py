@@ -23,6 +23,7 @@ from pyxir.graph.layer import xlayer_factory
 from pyxir.graph.optimization.optimizers.transposes_optimizer\
     import XGraphTransposesOptimizer
 
+from .util import Schedule
 from ..base import BaseConverter
 from .relay_2_xlayer_registry import Relay2XLayerRegistry
 
@@ -30,27 +31,7 @@ fancy_logger = fancy_logging.getLogger("pyxir")
 logger = logging.getLogger('pyxir')
 
 
-class Schedule(object):
 
-    def __init__(self, netmap):
-        self.netmap = netmap
-        self.schedule = []
-
-    def append(self, value):
-        self.schedule.append(value)
-
-    def __contains__(self, value):
-        return value in self.schedule
-
-    def __iter__(self):
-        for e in self.schedule:
-            yield e
-
-    def __delete__(self, instance):
-        del self.schedule[instance]
-
-    def __len__(self):
-        return len(self.schedule)
 
 
 

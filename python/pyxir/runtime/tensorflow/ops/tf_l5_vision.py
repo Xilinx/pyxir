@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XLayer neural network layers implemented on top of tensorflow
-
-
-"""
+"""Module for XLayer neural network layers implemented on top of tensorflow"""
 
 import os
 import abc
@@ -24,6 +20,8 @@ import math
 import numpy as np
 import tensorflow as tf
 import logging
+
+from typing import List
 
 from ..rt_layer_tf import RtLayerTF
 from ..x_2_tf_registry import rt_register_xlayer_2_tf,\
@@ -37,14 +35,13 @@ logger = logging.getLogger("pyxir")
 
 @rt_register_xlayer_2_tf('Cvx')
 class CvxLayer(rt_layer.BaseLayer, RtLayerTF):
-
     """
     Cvx layer which takes in a list of strings representing
     the image paths and subsequently loads the images and performs
     specified preprocessing.
     """
 
-    def init(self):
+    def init(self) -> None:
         from pyxir.io.cvx import ImgLoader, ImgProcessor
 
         self.ImgLoader = ImgLoader
@@ -58,9 +55,8 @@ class CvxLayer(rt_layer.BaseLayer, RtLayerTF):
         self.inpt = tf.compat.v1.placeholder(tf.string)
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-        assert(len(inpts) == 1)
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        assert len(inpts) == 1, "Cvx layer expects one input"
 
         def cvx_func(str_lst):
             str_lst = [e.decode('utf-8') for e in str_lst]
@@ -82,9 +78,7 @@ class CvxLayer(rt_layer.BaseLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[List[str]]) -> numpy.ndarray
-        assert(len(inputs) == 1)
-
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Cvx layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})

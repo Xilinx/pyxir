@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XLayer neural network layers implemented on top of tensorflow
-
-
-"""
+"""Module for XLayer neural network layers implemented on top of tensorflow"""
 
 import os
 import abc
@@ -24,6 +20,8 @@ import math
 import numpy as np
 import tensorflow as tf
 import logging
+
+from typing import List
 
 from ..rt_layer_tf import RtLayerTF
 from ..x_2_tf_registry import rt_register_xlayer_2_tf,\
@@ -41,11 +39,8 @@ logger = logging.getLogger("pyxir")
 
 class QuantizeLayer(rt_layer.QuantizeLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
-        """
-        See xfdnn/rt/xdnn_cpp/xdnn.cpp
-        """
+    def init(self) -> None:
+        """See xfdnn/rt/xdnn_cpp/xdnn.cpp"""
         logger.info("Quantizelayer init")
         self.inpt = tf.compat.v1.placeholder(
             RtLayerTF.dtype_to_tf[self.input_types[0]],
@@ -54,9 +49,8 @@ class QuantizeLayer(rt_layer.QuantizeLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-        assert(len(inpts) == 1)
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        assert len(inpts) == 1, "Quantize layer expects one input"
 
         threshold, axis, bitwidth, do_rounding = \
             self.threshold, self.axis, self.bitwidth, self.do_rounding
@@ -77,11 +71,8 @@ class QuantizeLayer(rt_layer.QuantizeLayer, RtLayerTF):
         res = tf.cast(val, RtLayerTF.dtype_to_tf[self.dtype])
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        assert(len(inputs) == 1)
-
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Quantize layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -97,8 +88,7 @@ def quantize_factory():
 
 class UnQuantizeLayer(rt_layer.UnQuantizeLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
         """
         See xfdnn/rt/xdnn_cpp/xdnn.cpp
         """
@@ -110,8 +100,8 @@ class UnQuantizeLayer(rt_layer.UnQuantizeLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert(len(inpts) == 1)
         threshold, axis, bitwidth = self.threshold, self.axis, self.bitwidth
 
@@ -128,8 +118,8 @@ class UnQuantizeLayer(rt_layer.UnQuantizeLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == 1)
 
@@ -148,8 +138,8 @@ def unquantize_factory():
 
 class QuantizeBiasLayer(rt_layer.QuantizeBiasLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         """
         See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeBias
         """
@@ -163,8 +153,8 @@ class QuantizeBiasLayer(rt_layer.QuantizeBiasLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
 
         threshold_bias, threshold_ext, bitwidth, do_rounding = \
             self.threshold_bias, self.threshold_ext, self.bitwidth,\
@@ -203,8 +193,8 @@ class QuantizeBiasLayer(rt_layer.QuantizeBiasLayer, RtLayerTF):
         res = tf.cast(val, RtLayerTF.dtype_to_tf[self.dtype])
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == 1)
 
@@ -223,8 +213,8 @@ def quantize_bias_factory():
 
 class QuantizeScaleBiasLayer(rt_layer.QuantizeScaleBiasLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         """
         See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNQuantizeBiasV3_scale
         # TODO discrepancy with xdnn.cpp implementation
@@ -239,8 +229,8 @@ class QuantizeScaleBiasLayer(rt_layer.QuantizeScaleBiasLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         """
         Get output tensor for quantizing bias layer in scaling operation
 
@@ -318,8 +308,8 @@ class QuantizeScaleBiasLayer(rt_layer.QuantizeScaleBiasLayer, RtLayerTF):
         res = tf.cast(val, RtLayerTF.dtype_to_tf[self.dtype])
         return [res]  # , val0, val1, val, scale_division_robust, inpt]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == 1)
 
@@ -338,8 +328,8 @@ def quantize_scale_bias_factory():
 
 class QuantizeInterLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         """
         See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeInterLayer
         """
@@ -350,8 +340,8 @@ class QuantizeInterLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert(len(inpts) == 1)
         input_shape, prescale_shift, scale, postscale_shift, axis, bitwidth = \
             self.input_shapes[0], self.prescale_shift, self.scale, \
@@ -430,8 +420,8 @@ class QuantizeInterLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         res = tf.cast(res, RtLayerTF.dtype_to_tf[self.dtype])
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == 1)
 
@@ -453,8 +443,8 @@ def quantize_inter_factory():
 
 class QuantizeInter12MSBitsLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         """
         See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeInterLayer
         """
@@ -466,8 +456,8 @@ class QuantizeInter12MSBitsLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, **kwargs):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert(len(inpts) == 1)
         input_shape, prescale_shift, scale, postscale_shift, axis, bitwidth = \
             self.input_shapes[0], self.prescale_shift, self.scale, \
@@ -551,8 +541,8 @@ class QuantizeInter12MSBitsLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         res = tf.cast(res, RtLayerTF.dtype_to_tf[self.dtype])
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == 1)
 
