@@ -24,6 +24,8 @@ import logging
 import warnings
 import numpy as np
 
+from typing import Dict, List, Any
+
 from pyxir.shapes import TensorShape
 
 from ..layer.xlayer import defaultXLayer, XLayer
@@ -80,8 +82,8 @@ def greater(attrs, in_xlayers):
 ########
 
 @xop_register_factory('Mean')
-def mean(op_name, input_layer, axes, keepdims, exclude, **kwargs):
-    # type: (str, XLayer, List[int], boolean, List[int]) -> XLayer
+def mean(op_name: str, input_layer: XLayer, axes: List[int], keepdims: bool,
+         exclude: bool, **kwargs) -> XLayer:
     """
     Compute the mean of the input layer over some axes
 
@@ -142,10 +144,8 @@ def mean(op_name, input_layer, axes, keepdims, exclude, **kwargs):
 
 
 @xop_register_op_transpose_transform('Mean')
-def mean_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
-    """ Transform Mean layer with transpose according to provided axes """
-
+def mean_transpose_transform(X: XLayer , axes: List[int]) -> None:
+    """Transform Mean layer with transpose according to provided axes"""
     new_shape = [X.shapes[i] for i in axes]
     X.shapes = new_shape
     X.attrs['axes'] = [axes.index(axis) for axis in X.attrs['axes']]

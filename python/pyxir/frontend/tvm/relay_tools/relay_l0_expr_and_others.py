@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for transforming Relay operators to XLayer objects
-
-
-"""
+"""Module for transforming Relay operators to XLayer objects"""
 
 import math
 import logging
@@ -24,12 +20,16 @@ import numpy as np
 import tvm
 import pyxir as px
 
+from typing import Dict, List, Callable
 from tvm import relay
+from tvm.relay.expr import Expr
 
 from pyxir import graph
+from pyxir.graph.layer import XLayer
 from pyxir.graph.layer import xlayer_factory as xlf
 from pyxir.shapes import TensorShape, TupleShape
 
+from .util import Schedule
 from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
     register_relay_2_xlayer_converter_base
 
@@ -41,11 +41,15 @@ logger = logging.getLogger("pyxir")
 
 
 @register_relay_2_xlayer_converter('Function')
-def function(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def function(expr: Expr,
+             params: Dict[str, np.ndarray],
+             schedule: Schedule,
+             net: Dict[Expr, Expr],
+             op_idx: Dict[str, int],
+             RELAY_2_XLAYER: Dict[str, Callable],
+             **kwargs):
     """
-    TODO
+    TVM function to XLayer converter
 
     Relay
     -----
@@ -79,11 +83,15 @@ def function(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
 
 @register_relay_2_xlayer_converter('Call')
-def call(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def call(expr: Expr,
+         params: Dict[str, np.ndarray],
+         schedule: Schedule,
+         net: Dict[Expr, Expr],
+         op_idx: Dict[str, int],
+         RELAY_2_XLAYER: Dict[str, Callable],
+         **kwargs):
     """
-    TODO
+    TVM Call to XLayer converter
 
     Relay
     -----
@@ -110,10 +118,9 @@ def call(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
 
 @register_relay_2_xlayer_converter_base('layout_transform')
-def layout_transform(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def layout_transform(op_name: str, expr: Expr, in_xlayers: List[XLayer]):
     """
-    TVM: Transform the layout of a tensor
+    TVM layout transform to XLayer converter
 
     Relay
     -----
@@ -146,11 +153,15 @@ def layout_transform(op_name, expr, in_xlayers):
 
 
 @register_relay_2_xlayer_converter('Tuple')
-def tuple_expr(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def tuple_expr(expr: Expr,
+               params: Dict[str, np.ndarray],
+               schedule: Schedule,
+               net: Dict[Expr, Expr],
+               op_idx: Dict[str, int],
+               RELAY_2_XLAYER: Dict[str, Callable],
+               **kwargs):
     """
-    TODO
+    TVM Tuple expression to XLayer converter
 
     Relay
     -----
@@ -179,8 +190,7 @@ def tuple_expr(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     op_name = 'tuple-' + str(hash(expr))
     logger.debug("Tuple: {}".format(op_name))
 
-    X = xlf.get_xop_factory_func('Tuple')(op_name, data_layers,
-                                          relay_id=[hash(expr)])
+    X = px.ops.tuple(op_name, data_layers, relay_id=[hash(expr)])
     logger.debug("-- newshape: {}".format(list(X.shapes)))
 
     for data_layer in data_layers:
@@ -190,12 +200,15 @@ def tuple_expr(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
 
 @register_relay_2_xlayer_converter('TupleGetItem')
-def tuple_get_item(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
+def tuple_get_item(expr: Expr,
+                   params: Dict[str, np.ndarray],
+                   schedule: Schedule,
+                   net: Dict[Expr, Expr],
+                   op_idx: Dict[str, int],
+                   RELAY_2_XLAYER: Dict[str, Callable],
                    **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
     """
-    TODO
+    TVM TupleGetItem to XLayer converter
 
     Relay
     -----
@@ -272,11 +285,15 @@ def tuple_get_item(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
 
 
 @register_relay_2_xlayer_converter('Constant')
-def constant(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def constant(expr: Expr,
+             params: Dict[str, np.ndarray],
+             schedule: Schedule,
+             net: Dict[Expr, Expr],
+             op_idx: Dict[str, int],
+             RELAY_2_XLAYER: Dict[str, Callable],
+             **kwargs):
     """
-    TODO
+    Relay Constant to XLayer converter
 
     Relay
     -----
@@ -317,11 +334,15 @@ def constant(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
 
 @register_relay_2_xlayer_converter('Var')
-def var(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def var(expr: Expr,
+        params: Dict[str, np.ndarray],
+        schedule: Schedule,
+        net: Dict[Expr, Expr],
+        op_idx: Dict[str, int],
+        RELAY_2_XLAYER: Dict[str, Callable],
+        **kwargs):
     """
-    TODO
+    Relay Var to XLayer converter
 
     Relay
     -----
@@ -369,15 +390,13 @@ def var(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
                              " `tvm.nd.NDArray` but found"
                              " type: {} for key: {}".format(type(value), name))
 
-        X = xlf.get_xop_factory_func('Constant')(name, value,
-                                                 relay_id=[hash(expr)])
+        X = px.ops.constant(name, value, relay_id=[hash(expr)])
     else:
         # data_layout = kwargs['data_layout']
         cvx_prep = kwargs['cvx_prep'] if 'cvx_prep' in kwargs else {}
 
         if name not in cvx_prep:
-            X = xlf.get_xop_factory_func('Input')(name, shape, dtype=dtype,
-                                                  relay_id=[hash(expr)])
+            X = px.ops.input(name, shape, dtype=dtype, relay_id=[hash(expr)])
         else:
             str_in_X = \
                 xlf.get_xop_factory_func('StrInput')(name,
@@ -399,9 +418,8 @@ def var(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
 
 @register_relay_2_xlayer_converter_base('RelayOp')
-def relay_op(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
-    """ Insert generic relay op operator """
+def relay_op(op_name: str, expr: Expr, in_xlayers: List[XLayer]):
+    """Insert generic RelayOp operator"""
 
     logger.debug("-- op_name: {}".format(op_name))
     logger.debug("-- expr: {}".format(expr.op))

@@ -12,10 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Utility module for Relay to XGraph conversion """
+"""Utility module for Relay to XGraph conversion"""
+
+from typing import Any, Dict, List
+
+class Schedule(object):
+    """"Schedule for Relay to XGraph converter to keep track of operations
+        in topological order"""
+
+    def __init__(self, netmap: dict):
+        self.netmap = netmap
+        self.schedule = []
+
+    def append(self, value: Any) -> None:
+        self.schedule.append(value)
+
+    def __contains__(self, value):
+        return value in self.schedule
+
+    def __iter__(self) -> Any:
+        for e in self.schedule:
+            yield e
+
+    def __delete__(self, instance: Any) -> None:
+        del self.schedule[instance]
+
+    def __len__(self) -> int:
+        return len(self.schedule)
 
 
-def broadcast_shapes(lshape_orig, rshape_orig):
+def broadcast_shapes(lshape_orig: List[int], rshape_orig: List[int]):
+    """Utility function for broadcasting two shapes"""
     if len(lshape_orig) >= len(rshape_orig):
         lshape = lshape_orig[:]
         rshape = [None] * (len(lshape_orig) - len(rshape_orig)) + rshape_orig[:]

@@ -23,9 +23,13 @@ import logging
 import numpy as np
 import pyxir as px
 
+from typing import Dict, List, Callable
+
 import tvm
+from tvm.relay.expr import Expr
 
 from pyxir import graph
+from pyxir.graph.layer import XLayer
 from pyxir.graph.layer import xlayer_factory as xlf
 
 from .util import broadcast_shapes
@@ -36,8 +40,7 @@ logger = logging.getLogger("pyxir")
 
 
 @register_relay_2_xlayer_converter_base('greater')
-def greater(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def greater(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     Compare two input layers
 
@@ -51,18 +54,14 @@ def greater(op_name, expr, in_xlayers):
         - rhs (relay.Expr)
             The right hand side input data
     """
-
     X = px.ops.greater(op_name, in_xlayers, relay_id=[hash(expr)])
-
     return X
 
 
-@register_relay_2_xlayer_converter('mean')
-def mean(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+@register_relay_2_xlayer_converter_base('mean')
+def mean(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
-    TODO
+    Relay Mean to XLayer converter
 
     Relay
     -----
@@ -84,11 +83,6 @@ def mean(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
             If exclude is true, reduction will be performed on the axes that
             are NOT in axis instead.
     """
-    if expr in net:
-        logger.debug("MEMORY: MEAN")
-        # This expressions is already transformed so we reuse that one
-        return net[expr]
-
     expr_axis = expr.attrs.axis
     if expr_axis is None:
         axis = None
@@ -99,36 +93,13 @@ def mean(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
     keepdims = bool(expr.attrs.keepdims)
     exclude = bool(expr.attrs.exclude)
 
-    data_expr, data_expr_class = expr.args[0], expr.args[0].__class__.__name__
-
-    data_layer = RELAY_2_XLAYER[data_expr_class](data_expr, params, schedule,
-                                                 net, op_idx, RELAY_2_XLAYER,
-                                                 **kwargs)
-
-    logger.debug("mean: {}".format(""))
-
-    # Update schedule with input data layer
-    if data_expr not in net:
-        schedule.append(data_expr)
-        net[data_expr] = data_layer
-
-    # Create XLayer
-    op_name = 'mean-' + str(hash(expr))
-
-    X = xlf.get_xop_factory_func('Mean')(op_name, data_layer,
-                                         axis, keepdims, exclude,
-                                         relay_id=[hash(expr)])
+    X = px.ops.mean(op_name, in_xlayers[0], axis, keepdims, exclude, relay_id=[hash(expr)])
     logger.debug("-- outshape: {}".format(list(X.shapes)))
-
-    # !Important: set input layer tops:
-    data_layer.tops.append(op_name)
-
     return X
 
 
 @register_relay_2_xlayer_converter_base('strided_slice')
-def strided_slice(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def strided_slice(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     Strided slice
 
@@ -170,9 +141,9 @@ def strided_slice(op_name, expr, in_xlayers):
 
 
 @register_relay_2_xlayer_converter_base('where')
-def where(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def where(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
+    Relay Where to XLayer
     Selecting elements from input layers input layers
 
     Relay
@@ -187,10 +158,9 @@ def where(op_name, expr, in_xlayers):
         - y (relay.Expr)
             The second array or scalar to be selected.
     """
-    lshape = list(in_xlayers[0].shapes[:])
-    rshape = list(in_xlayers[1].shapes[:])
-    shape = broadcast_shapes(lshape, rshape)
-
+    cshape = list(in_xlayers[0].shapes[:])
+    lshape = list(in_xlayers[1].shapes[:])
+    rshape = list(in_xlayers[2].shapes[:])
+    shape = broadcast_shapes(broadcast_shapes(lshape, rshape), cshape)
     X = px.ops.any_op(op_name, in_xlayers, any_shape=shape, relay_id=[hash(expr)])
-
     return X

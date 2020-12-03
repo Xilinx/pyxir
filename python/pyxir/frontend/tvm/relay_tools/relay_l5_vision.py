@@ -16,8 +16,6 @@
 Module for transforming Relay L5 operators to XLayer objects
 
 L5: Vision operators
-
-
 """
 
 import math
@@ -25,9 +23,13 @@ import logging
 import numpy as np
 import pyxir as px
 
+from typing import Dict, List, Callable
+
 import tvm
+from tvm.relay.expr import Expr
 
 from pyxir import graph
+from pyxir.graph.layer import XLayer
 from pyxir.graph.layer import xlayer_factory as xlf
 
 from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
@@ -36,10 +38,8 @@ from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
 logger = logging.getLogger("pyxir")
 
 
-@register_relay_2_xlayer_converter('vision.yolo_reorg')
-def yolo_reorg(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+@register_relay_2_xlayer_converter_base('vision.yolo_reorg')
+def yolo_reorg(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     Conversion of Relay 'yolo_reorg' layer
 
@@ -53,42 +53,14 @@ def yolo_reorg(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         - stride (int)
             The stride value for reorganisation.
     """
-    if expr in net:
-        # This expressions is already transformed so we reuse that one
-        return net[expr]
-
     stride = int(expr.attrs.stride)
-
-    data_expr, data_expr_class = expr.args[0], expr.args[0].__class__.__name__
-
-    data_layer = RELAY_2_XLAYER[data_expr_class](data_expr, params, schedule,
-                                                 net, op_idx, RELAY_2_XLAYER,
-                                                 **kwargs)
-
-    logger.debug("yolo reorg:")
-
-    # Update schedule with input data layer
-    if data_expr not in net:
-        schedule.append(data_expr)
-        net[data_expr] = data_layer
-
-    # Create XLayer
-    op_name = 'yolo_reorg-' + str(hash(expr))
-
-    X = xlf.get_xop_factory_func('YoloReorg')(op_name, data_layer,
-                                              stride, 'NCHW',
-                                              relay_id=[hash(expr)])
+    X = px.ops.yolo_reorg(op_name, in_xlayers[0], stride, 'NCHW', relay_id=[hash(expr)])
     logger.debug("-- outshape: {}".format(list(X.shapes)))
-
-    # !Important: set input layer tops:
-    data_layer.tops.append(op_name)
-
     return X
 
 
 @register_relay_2_xlayer_converter_base('vision.get_valid_counts')
-def vision_get_valid_counts(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def vision_get_valid_counts(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     TVM: Get valid count of bounding boxes given a score threshold. Also moves valid boxes
     to the top of input data.
@@ -115,13 +87,11 @@ def vision_get_valid_counts(op_name, expr, in_xlayers):
     X = px.ops.any_op(op_name, in_xlayers,
                       any_shape=[valid_count_shape, out_tensor_shape, out_indices_shape],
                       relay_id=[hash(expr)])
-
     return X
 
 
 @register_relay_2_xlayer_converter_base('vision.non_max_suppression')
-def vision_nms(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def vision_nms(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     Non-max suppression operation
 
@@ -177,5 +147,4 @@ def vision_nms(op_name, expr, in_xlayers):
         newshape = [[data_shape[0], data_shape[1]], [data_shape[0], -1]]
 
     X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
-
     return X
