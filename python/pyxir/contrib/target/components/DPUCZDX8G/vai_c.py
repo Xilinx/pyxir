@@ -58,9 +58,6 @@ class VAICompiler(XGraphBaseCompiler):
             raise ValueError("Unsupported CPU architecture: {}. Supported"
                              " architectures are: 'arm64'")
 
-        warnings.warn("This compilation only works with one network"
-                      " configuration at the moment!!")
-
         q_output = self.xgraph.get_quantizer_output()
         self.netcfgs = {q_key: q_output.get_q_file(q_key)
                         for q_key in q_output.keys()}
@@ -125,6 +122,7 @@ class VAICompiler(XGraphBaseCompiler):
             output = output.decode('utf-8')
 
             logger.info("Output: {}".format(output))
+            logger.info("Output names: {}".format(output_names))
 
             do = DNNCOutput(str(repr(output)))
 
