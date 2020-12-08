@@ -87,8 +87,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         frozen_graph = self.partition_graphs[xgraph.get_name()]
         logger.info("Load frozen graph from: {}".format(frozen_graph))
-        input_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(frozen_graph, "rb") as f:
+        input_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile(frozen_graph, "rb") as f:
             input_graph_def.ParseFromString(f.read())
 
         # input_names = xgraph.get_input_names()
@@ -186,8 +186,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         quant_info = []
 
-        input_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(deploy_frozen_graph, "rb") as f:
+        input_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile(deploy_frozen_graph, "rb") as f:
             input_graph_def.ParseFromString(f.read())
 
             for idx, node in enumerate(input_graph_def.node):
@@ -242,8 +242,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         quant_info = []
 
-        input_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(deploy_frozen_graph, "rb") as f:
+        input_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile(deploy_frozen_graph, "rb") as f:
             input_graph_def.ParseFromString(f.read())
 
             for idx, node in enumerate(input_graph_def.node):
