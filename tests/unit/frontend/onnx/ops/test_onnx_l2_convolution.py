@@ -131,7 +131,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
         assert X.attrs['data_layout'] == 'NCHW'
         assert X.attrs['type'] == 'Avg'
 
-    def test_conv_node(self):
+    def test_conv_node_0(self):
         x = np.array([[[[1, 2, 3],
                         [4, 5, 6],
                         [7, 8, 9]]]]).astype(np.float32)
@@ -146,7 +146,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             inputs=['x', 'W', 'B'],
             outputs=['y'],
             kernel_shape=[2, 2],
-            pads=[1, 0, 1, 0]
+            pads=[1, 1, 0, 0]
         )
 
         wrapped_node = NodeWrapper(node)
@@ -181,7 +181,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
         assert baX.attrs['axis'] == 1
         assert baX.attrs['onnx_id'] == 'y'
 
-    def test_conv_node(self):
+    def test_conv_node_1(self):
         x = np.array([[[[1, 2, 3],
                         [4, 5, 6],
                         [7, 8, 9]]]]).astype(np.float32)
@@ -196,7 +196,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             inputs=['x', 'W', 'B'],
             outputs=['y'],
             kernel_shape=[2, 2],
-            pads=[1, 0, 1, 0]
+            pads=[1, 1, 0, 0]
         )
 
         wrapped_node = NodeWrapper(node)
@@ -241,7 +241,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             inputs=['x', 'W', 'B'],
             outputs=['y'],
             kernel_shape=[2, 2],
-            pads=[1, 0, 1, 0],
+            pads=[1, 1, 0, 0],
             group=4
         )
 
