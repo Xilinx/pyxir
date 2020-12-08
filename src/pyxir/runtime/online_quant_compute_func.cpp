@@ -115,6 +115,14 @@ void OnlineQuantComputeFunc::operator()(
     }
     // The final runtime has been built now
     run_options_->is_prebuilt = true;
+    // We possibly save the runtime module using a callback function
+    //  Currently necessary for ONNX Runtime flow. TODO: remove this requirement
+    if (run_options_ && !run_options_->export_runtime_module_path.empty()) {
+      if (!rt_mod_save_callback_)
+        throw std::runtime_error("Trying to export cross compiled runtime module but"
+                                 " compute save function was initialized uncorrectly");
+      rt_mod_save_callback_(run_options_->export_runtime_module_path);
+    }
   }
 }
 

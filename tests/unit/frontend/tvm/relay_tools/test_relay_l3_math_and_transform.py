@@ -12,33 +12,235 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the relay pyxir frontend
-
-
-"""
+"""Module for testing the relay pyxir frontend"""
 
 import unittest
 import numpy as np
 
-try:
-    # ! To import tvm
-    import pyxir.frontend.tvm
+# ! To import tvm
+import pyxir
 
+try:
     import tvm
     from tvm import relay
     from tvm.relay import testing
-
-    from pyxir.frontend.tvm import relay as xf_relay
 
     skip = False
 except Exception as e:
     skip = True
 
+if not skip:
+    from pyxir.frontend.tvm import relay as xf_relay
+
 from pyxir.shapes import TensorShape, TupleShape
 
 
 class TestRelayL3MathAndTransform(unittest.TestCase):
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_arange(self):
+        start = relay.expr.const(1.)
+        stop = relay.expr.const(5.)
+        interval = relay.expr.const(1.5)
+        a = relay.arange(start, stop, interval)
+        net = relay.Function([], a)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert len(layers) == 4
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes == [1]
+
+        assert layers[1].type[0] == 'Constant'
+        assert layers[1].shapes == [1]
+
+        assert layers[2].type[0] == 'Constant'
+        assert layers[2].shapes == [1]
+
+        assert layers[3].type[0] == 'AnyOp'
+        assert layers[3].shapes == [3]
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_cast(self):
+        data = relay.var("data", relay.TensorType((-1, 6, 4, 4), "float32"))
+
+        net = relay.cast(data, dtype='int8')
+        net = relay.Function([data], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert layers[1].type[0] == 'Cast'
+        assert layers[1].attrs['dtype'] == 'int8'
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_clip(self):
+        data = relay.var("data", relay.TensorType((-1, 6, 4, 4), "float32"))
+
+        net = relay.clip(data, 0., 7.)
+        net = relay.Function([data], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert layers[1].type[0] == 'Clip'
+        assert layers[1].attrs['a_min'] == 0.
+        assert layers[1].attrs['a_max'] == 7.
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_ones_like(self):
+        c = relay.expr.const(np.ones((1, 6, 4, 4), np.float32))
+        net = relay.ones_like(c)
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[1].type[0] == 'AnyOp'
+        assert layers[1].shapes == [1, 6, 4, 4]
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_leaky_relu(self):
+        data = relay.var("data", relay.TensorType((-1, 6, 4, 4), "float32"))
+        net = relay.nn.leaky_relu(data, alpha=0.1)
+        net = relay.Function([data], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert layers[1].type[0] == 'LeakyReLU'
+        assert layers[1].attrs['alpha'] == .1
+
+    # @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    # def test_prelu(self):
+    #     data = relay.var("data", relay.TensorType((-1, 2, 4, 4), "float32"))
+    #     c = relay.expr.const(np.array([0.1, 0.2], dtype=np.float32))
+    #     net = relay.nn.prelu(data, alpha=c)
+    #     net = relay.Function([data], net)
+    #     mod = tvm.IRModule.from_expr(net)
+    #     mod = relay.transform.InferType()(mod)
+
+    #     xgraph = xf_relay.from_relay(mod, {})
+    #     layers = xgraph.get_layers()
+
+    #     assert layers[0].type[0] == 'Input'
+    #     assert layers[1].type[0] == 'pReLU'
+    #     assert layers[1].attrs['alpha'] == .1
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_repeat(self):
+        c = relay.expr.const(np.ones((2, 2), dtype=np.float32))
+        net = relay.repeat(c, repeats=2, axis=0)
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[1].type[0] == 'AnyOp'
+        assert layers[1].shapes == [8]
+
+        c = relay.expr.const(np.ones((2, 2), dtype=np.float32))
+        net = relay.repeat(c, repeats=2, axis=1)
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[1].type[0] == 'AnyOp'
+        assert layers[1].shapes == [2, 4]
+
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_reshape(self):
+        # 1
+        c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
+        net = relay.reshape(c, (4, 0, 2))
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes == [4, 3, 2]
+
+        # 2
+        c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
+        net = relay.reshape(c, (6, 1, -1))
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes == [6, 1, 4]
+
+        # 3
+        c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
+        net = relay.reshape(c, (-2,))
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes == [2, 3, 4]
+
+        # 4
+        c = relay.expr.const(np.ones((2, 3, 4, 5), dtype=np.float32))
+        net = relay.reshape(c, (-3, -3))
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes == [6, 20]
+
+        # 5
+        data = relay.var("data", relay.TensorType((-1, 6, 1, 1), "float32"))
+        net = relay.reshape(data, (-1, 6))
+        net = relay.Function([data], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert layers[0].shapes == [-1, 6, 1, 1]
+
+        assert layers[1].type[0] == 'Reshape'
+        assert layers[1].shapes == [-1, 6]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_split_int(self):
@@ -94,6 +296,21 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         assert layers[1].shapes == TupleShape([TensorShape([-1, 1, 4, 4]),
                                                TensorShape([-1, 3, 4, 4]),
                                                TensorShape([-1, 1, 4, 4])])
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_squeeze(self):
+        data = relay.var("data", relay.TensorType((-1, 6, 1, 1), "float32"))
+        net = relay.squeeze(data, axis=(2, 3))
+        net = relay.Function([data], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert layers[1].type[0] == 'Squeeze'
+        assert layers[1].shapes == [-1, 6]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_take(self):
@@ -172,3 +389,18 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         assert layers[0].shapes == [-1, 3, 2, 2]
         assert layers[1].type[0] == 'Transpose'
         assert layers[1].shapes == [-1, 2, 2, 3]
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_zeros_like(self):
+        c = relay.expr.const(np.ones((1, 6, 4, 4), np.float32))
+        net = relay.zeros_like(c)
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[1].type[0] == 'AnyOp'
+        assert layers[1].shapes == [1, 6, 4, 4]

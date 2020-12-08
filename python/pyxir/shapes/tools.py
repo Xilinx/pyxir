@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for shape utility functions """
+"""Module for shape utility functions"""
 
 
 def get_numpy_broadcasted_shape(shape_a, shape_b):

@@ -87,7 +87,8 @@ class RuntimeNP(BaseRuntime):
                  params,
                  device='cpu',
                  batch_size=-1,
-                 placeholder: bool = False):
+                 placeholder: bool = False,
+                 **kwargs):
         # type: (str, List[XLayer], Dict[str,numpy.ndarray], str, int)
         super(RuntimeNP, self).__init__(
             name, network, params, device, batch_size, placeholder)

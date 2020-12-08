@@ -24,6 +24,8 @@ import logging
 import warnings
 import numpy as np
 
+from typing import Dict, List, Any
+
 from pyxir.shapes import TensorShape, TupleShape
 
 from ..layer.xlayer import defaultXLayer, XLayer
@@ -40,23 +42,18 @@ logger = logging.getLogger("pyxir")
 
 
 @xop_register('Cast')
-def cast(attrs, in_xlayers):
-    # type: (str, List[XLayer]) -> XLayer
+def cast(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> XLayer:
     """ Cast input tensor to the provided data type """
-
     assert len(in_xlayers) == 1
     assert 'dtype' in attrs
 
     shape = in_xlayers[0].shapes[:]
-
     return {'shape': shape}
 
 
 @xop_register_op_transpose_transform('Cast')
-def cast_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
+def cast_transpose_transform(X: XLayer, axes: List[int]) -> None:
     """ Transform Cast layer with transpose according to provided axes """
-
     new_shape = TensorShape([X.shapes[i] for i in axes])
     X.shapes = new_shape
 
@@ -66,8 +63,7 @@ def cast_transpose_transform(X, axes):
 ########
 
 @xop_register_factory('Clip')
-def clip(op_name, input_layer, a_min, a_max, **kwargs):
-    # type: (str, XLayer, float, float) -> XLayer
+def clip(op_name: str, input_layer: XLayer, a_min: float, a_max: float, **kwargs) -> XLayer:
     """
     Clip the outputs of the previous layer between a_min and a_max
 
@@ -126,19 +122,15 @@ def clip(op_name, input_layer, a_min, a_max, **kwargs):
 
 
 @xop_register_op_transpose_transform('Clip')
-def clip_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
+def clip_transpose_transform(X: XLayer, axes: List[int]) -> None:
     """ Transform clip layer with transpose according to provided axes """
-
     new_shape = TensorShape([X.shapes[i] for i in axes])
     X.shapes = new_shape
 
 
 @xop_register_op_transpose_transform('ReLU6')
-def relu6_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
+def relu6_transpose_transform(X: XLayer, axes: List[int]) -> None:
     """ Transform ReLU6 layer with transpose according to provided axes """
-
     new_shape = TensorShape([X.shapes[i] for i in axes])
     X.shapes = new_shape
 
@@ -149,27 +141,22 @@ def relu6_transpose_transform(X, axes):
 
 
 @xop_register('LeakyReLU')
-def leaky_relu(attrs, in_xlayers):
-    # type: (str, List[XLayer]) -> XLayer
+def leaky_relu(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> XLayer:
     """
     Leaky ReLU operation
 
     Returns Leaky ReLU registration information (shape)
     """
-
     assert len(in_xlayers) == 1
     assert 'alpha' in attrs
 
     shape = in_xlayers[0].shapes[:]
-
     return {'shape': shape}
 
 
 @xop_register_op_transpose_transform('LeakyReLU')
-def leaky_relu_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
+def leaky_relu_transpose_transform(X: XLayer, axes: List[int]) -> None:
     """ Transform LeakyReLU layer with transpose according to provided axes """
-
     new_shape = TensorShape([X.shapes[i] for i in axes])
     X.shapes = new_shape
 
@@ -179,8 +166,7 @@ def leaky_relu_transpose_transform(X, axes):
 
 
 @xop_register_factory('pReLU')
-def prelu(op_name, input_layer, alpha, axis, **kwargs):
-    # type: (str, XLayer, float) -> XLayer
+def prelu(op_name: str, input_layer: XLayer, alpha: float, axis: int, **kwargs) -> XLayer:
     """
     Create a parametric ReLU Xlayer
 
@@ -221,10 +207,8 @@ def prelu(op_name, input_layer, alpha, axis, **kwargs):
 
 
 @xop_register_op_transpose_transform('pReLU')
-def prelu_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
+def prelu_transpose_transform(X: XLayer, axes: List[int]) -> None:
     """ Transform pReLU layer with transpose according to provided axes """
-
     new_shape = TensorShape([X.shapes[i] for i in axes])
     X.shapes = new_shape
 
@@ -234,10 +218,9 @@ def prelu_transpose_transform(X, axes):
 ###########
 
 @xop_register_factory('Reshape')
-def reshape(op_name, input_layer, newshape, **kwargs):
-    # type: (str, XLayer, List[int]) -> XLayer
+def reshape(op_name: str, input_layer: XLayer, newshape: List[int], **kwargs) -> XLayer:
     """
-    Create a Reshape parameters layer
+    Create a Reshape XLayer
 
     Arguments
     ---------
@@ -251,7 +234,7 @@ def reshape(op_name, input_layer, newshape, **kwargs):
     if 'Constant' in input_layer.type:
         X = input_layer._replace(
             shapes=TensorShape(newshape),
-            data=input_layer.data.reshape(newshape)
+            data=[input_layer.data[0].reshape(newshape)]
         )
 
         return X
@@ -285,8 +268,7 @@ def reshape(op_name, input_layer, newshape, **kwargs):
 
 
 @xop_register('Split')
-def split(attrs, in_xlayers):
-    # type: (dict, List[XLayer]) -> dict
+def split(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> Dict[str, List[int]]:
     """
     Registration of 'split' operator and shape computation.
 
@@ -352,8 +334,7 @@ def split(attrs, in_xlayers):
 ###########
 
 @xop_register_factory('Squeeze')
-def squeeze(op_name, input_layer, axis, **kwargs):
-    # type: (str, XLayer, List[int]) -> XLayer
+def squeeze(op_name: str, input_layer: XLayer, axis: List[int], **kwargs) -> XLayer:
     """
     Create a Squeeze XLayer
 
@@ -393,7 +374,6 @@ def squeeze(op_name, input_layer, axis, **kwargs):
         attrs=attrs,
         targets=[]
     )
-
     return X
 
 
@@ -402,8 +382,7 @@ def squeeze(op_name, input_layer, axis, **kwargs):
 ########
 
 @xop_register('Take')
-def take(attrs, in_xlayers):
-    # type: (str, List[XLayer]) -> XLayer
+def take(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> Dict[str, List[int]]:
     """
     Slice input tensor according to specified axis and indices
 
@@ -420,21 +399,17 @@ def take(attrs, in_xlayers):
 
     Returns Take registration information (shape)
     """
-
-    assert len(in_xlayers) == 2
+    assert len(in_xlayers) == 2, "Take layer expects two input layers"
     assert 'axis' in attrs
     if 'mode' in attrs:
         attrs['mode'] = 'clip'
-
     axis = attrs['axis']
 
     in_shape = in_xlayers[0].shapes[:]
     indices_shape = in_xlayers[1].shapes[:]
-
     assert all([s <= in_shape[axis] for s in indices_shape])
 
     shape = TensorShape(in_shape[:axis] + indices_shape + in_shape[axis + 1:])
-
     return {'shape': shape}
 
 
@@ -443,8 +418,7 @@ def take(attrs, in_xlayers):
 #############
 
 @xop_register_factory('Transpose')
-def transpose(op_name, input_layer, axes, **kwargs):
-    # type: (str, XLayer, List[int]) -> XLayer
+def transpose(op_name: str, input_layer: XLayer, axes: List[int], **kwargs):
     """
     Create a Transpose XLayer
 
@@ -484,5 +458,4 @@ def transpose(op_name, input_layer, axes, **kwargs):
             attrs=attrs,
             targets=[]
         )
-
     return X

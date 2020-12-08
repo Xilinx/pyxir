@@ -40,8 +40,8 @@ FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
 class DPUCompiler(XGraphBaseCompiler):
-
-    """ TODO """
+    """Wrapper around DPUCADX8G compiler"""
+    
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
     tf_generator = TfGenerator()
@@ -104,23 +104,26 @@ class DPUCompiler(XGraphBaseCompiler):
         # netcfg = list(self.netcfgs.values())[0]  # orig pb file
         quant_info_file = list(self.quant_info.values())[0]  # quant info file
 
-        subxg_layers = DPUCompiler.xgraph_partitioner\
-            .get_subgraphs(self.xgraph)[0].subgraph_data
+        Xp = DPUCompiler.xgraph_partitioner\
+            .get_subgraphs(self.xgraph)[0]
+        subxg_layers = Xp.subgraph_data
         xgraph = DPUCompiler.xgraph_factory.build_from_xlayer(subxg_layers)
         net_name = list(self.netcfgs.keys())[0]
-        fs = DPUCompiler.tf_generator.generate(xgraph,
+        fs = DPUCompiler.tf_generator.generate(self.xgraph,
                                                'graph',
                                                subgraphs_only=True,
                                                layout='NHWC',
                                                batch_size=1,
                                                placeholder=True,
-                                               out_dir=self.work_dir)
+                                               out_dir=self.work_dir,
+                                               # kwargs
+                                               compiler_target='DPUv1Compiler')
         netcfg = list(fs.values())[0]
 
         input_names = xgraph.get_input_names()
         input_shapes = [xgraph.get(in_name).shapes.tolist()[:]
                         for in_name in input_names]
-        output_names = xgraph.get_output_names()
+        output_names = list(Xp.attrs['__top_tensors'].keys()) # xgraph.get_output_names()
         output_shapes = [xgraph.get(out_name).shapes.tolist()[:]
                          for out_name in output_names]
         if len(input_names) > 1:
@@ -171,13 +174,11 @@ class DPUCompiler(XGraphBaseCompiler):
         logger.debug("{} {}".format(output_names, graph_outputs))
 
         in_map = {in_name: in_name for in_name in input_names}
-        out_node_merged = []
+        compiler_map = {layer['name']: layer for layer in json_graph['network']}
         out_nodes = [graph_output['previous_layers'][0] for graph_output in graph_outputs]
-        for i in range(len(out_nodes)):
-            out_node_merged.append([layer['merged'][-1] for layer in json_graph['network'] if layer['name'] == out_nodes[i]][0])
+        out_nodes_merged = [compiler_map[out_name]['merged'][-1] for out_name in out_nodes]
         in_map = {in_name: in_name for in_name in input_names}
-        out_map = {out_name: t for out_name,t in zip(output_names, out_nodes)}
-        #out_map = {out_name: out_name for out_name in output_names}
+        out_map = {out_name: out_nodes[out_nodes_merged.index(out_name)] for out_name in output_names}
 
         self.c_output.add(net_name, ['dpuv1lib.so'], in_map, out_map)
         self.xgraph.set_compiler_output(self.c_output)

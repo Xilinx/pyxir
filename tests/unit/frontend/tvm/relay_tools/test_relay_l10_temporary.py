@@ -12,29 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the relay pyxir frontend
-
-
-"""
+"""Module for testing the relay pyxir frontend"""
 
 import warnings
 import unittest
 import numpy as np
 
-try:
-    # ! To import tvm
-    import pyxir.frontend.tvm
+# ! To import tvm
+import pyxir
 
+try:
     import tvm
     from tvm import relay
     from tvm.relay import testing
 
-    from pyxir.frontend.tvm import relay as xf_relay
-
     skip = False
 except Exception as e:
     skip = True
+
+if not skip:
+    from pyxir.frontend.tvm import relay as xf_relay
 
 
 class TestRelayL10TemporaryOperationConversions(unittest.TestCase):
@@ -158,3 +155,35 @@ class TestRelayL10TemporaryOperationConversions(unittest.TestCase):
         assert layers[1].attrs['strides'] == [5, 5]
         assert layers[1].attrs['kernel_size'] == [5, 5]
         assert layers[1].attrs['pool_type'] == 'Avg'
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_slice_like(self):
+        data = relay.expr.const(np.ones((1, 6, 4, 4), np.float32))
+        sl = relay.expr.const(np.ones((1, 4, 3, 3), np.float32))
+        net = relay.slice_like(data, sl)
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[1].type[0] == 'Constant'
+        assert layers[2].type[0] == 'AnyOp'
+        assert layers[2].shapes == [1, 4, 3, 3]
+
+        data = relay.expr.const(np.ones((1, 6, 4, 4), np.float32))
+        sl = relay.expr.const(np.ones((1, 4, 3, 3), np.float32))
+        net = relay.slice_like(data, sl, axes=(2, 3))
+        net = relay.Function([], net)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
+        assert layers[1].type[0] == 'Constant'
+        assert layers[2].type[0] == 'AnyOp'
+        assert layers[2].shapes == [1, 6, 3, 3]

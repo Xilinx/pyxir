@@ -509,7 +509,7 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
                                     it.to_numpy(copy=True)],
                                    axis=0)
             else:
-                calibration_inputs[in_name] = it.to_numpy(copy=True)
+                calibration_inputs[in_name] = it.to_numpy(copy=True)     
 
         # Run on inputs
         inputs = {it_name: it.to_numpy()
@@ -522,7 +522,8 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
         #   those transposes
         for idx, ot_name in enumerate(out_tensor_names):
             tXs = xgraph.get_top_layers(ot_name)
-            if len(tXs) == 1 and 'Transpose' in tXs[0].type:
+            # TODO previous: if len(tXs) == 1 and 'Transpose' in tXs[0].type:
+            if any(['Transpose' in tX.type for tX in tXs]):
                 outs[idx] = np.transpose(outs[idx], axes=tuple(tXs[0].attrs['axes']))
 
         for out, out_tensor in zip(outs, out_tensors):
