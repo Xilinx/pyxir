@@ -452,14 +452,13 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         
 
         if len(inpts) == 3:
-            inpt, kernel, _ = inpts
+            inpt, kernel, biases = inpts
         elif len(inpts) == 1:
             inpt = inpts[0]
             kernel = \
                 tf.compat.v1.placeholder_with_default(self.kernel,
                                                       self.kernel.shape)
-            # biases = tf.compat.v1.placeholder_with_default(self.biases,
-            # self.biases.shape)
+            biases = tf.compat.v1.placeholder_with_default(self.biases, self.biases.shape)
         else:
             raise ValueError("Invalid number of inputs for convolution"
                              " operator constructor: {}. Number of inputs"
