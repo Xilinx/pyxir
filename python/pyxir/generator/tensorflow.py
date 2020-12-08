@@ -125,7 +125,7 @@ class TfGenerator(object):
 
             with tf.compat.v1.Session(graph=executor.tf_graph) as sess:
                 sess.run(tf.compat.v1.global_variables_initializer())
-                graph_def = tf.graph_util.convert_variables_to_constants(
+                graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
                     sess,
                     graph_def,
                     output_names
@@ -133,7 +133,7 @@ class TfGenerator(object):
 
             file_path = os.path.join(out_dir, file_name + '.pb')
 
-            with tf.gfile.GFile(file_path, "wb") as f:
+            with tf.io.gfile.GFile(file_path, "wb") as f:
                 f.write(graph_def.SerializeToString())
 
             ret[name] = file_path

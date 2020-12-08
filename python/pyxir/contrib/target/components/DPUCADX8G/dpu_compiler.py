@@ -59,9 +59,6 @@ class DPUCompiler(XGraphBaseCompiler):
         if not os.path.isfile(arch):
             raise ValueError("Arch file: {} does not exist".format(arch))
 
-        warnings.warn("This compilation only works with one network"
-                      " configuration at the moment!!")
-
         q_output = self.xgraph.get_quantizer_output()
         self.netcfgs = {q_key: q_output.get_orig_pb(q_key)
                         for q_key in q_output.keys()}

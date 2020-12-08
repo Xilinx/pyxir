@@ -289,6 +289,8 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
             logger.debug("Padded input shape: {}".format(padded_inpt.shape))
 
         use_bias = (not isinstance(biases, np.ndarray)) or biases.any()
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if self.kernel_groups == 1:
             conv_res = tf.nn.conv2d(
                 padded_inpt,
@@ -297,14 +299,15 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
                 padding_type,
                 data_format='NHWC',
                 dilations=dilations,
-                name=self.name  # if not use_bias else self.name + '_Conv'
+                name=self.name if not (use_bias or use_activation) else self.name + '_Conv'
             )
         else:
             conv_res = tf.nn.depthwise_conv2d(
                 input=padded_inpt,
                 filter=kernel_trans,
                 strides=strides,
-                padding=padding_type
+                padding=padding_type,
+                name=self.name if not (use_bias or use_activation) else self.name + '_Conv'
             )
 
         return conv_res
@@ -328,10 +331,12 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         if biases.dtype not in ['float32', tf.float32]:
             biases = tf.cast(biases, RtLayerTF.dtype_to_tf[self.dtype])
 
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if (not isinstance(biases, np.ndarray)) or biases.any():
             # Remove biases if numpy.ndarray and all zeros
             res = tf.nn.bias_add(res, biases, data_format='NHWC',
-                                 name=self.name + '_Bias')
+                                 name=self.name if not (use_activation) else self.name + '_Bias')
         # if self.use_activation not
         # in ['relu', 'leaky_relu']
         # else self.name + '_Bias')
@@ -339,12 +344,12 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         # TODO:name of convolution
         # ACTIVATIONS
         if self.use_activation == 'relu':
-            res = tf.nn.relu(res, name=self.name + "_Relu")
+            res = tf.nn.relu(res, name=self.name)
         elif self.use_activation == 'leaky_relu':
             res = tf.nn.leaky_relu(
                 res,
                 alpha=self.activation_attrs['alpha'],
-                name=self.name + "_Relu")
+                name=self.name)
 
         if self.layout == 'NCHW':
             res = tf.transpose(res, (0, 3, 1, 2))
@@ -447,14 +452,13 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         
 
         if len(inpts) == 3:
-            inpt, kernel, _ = inpts
+            inpt, kernel, biases = inpts
         elif len(inpts) == 1:
             inpt = inpts[0]
             kernel = \
                 tf.compat.v1.placeholder_with_default(self.kernel,
                                                       self.kernel.shape)
-            # biases = tf.compat.v1.placeholder_with_default(self.biases,
-            # self.biases.shape)
+            biases = tf.compat.v1.placeholder_with_default(self.biases, self.biases.shape)
         else:
             raise ValueError("Invalid number of inputs for convolution"
                              " operator constructor: {}. Number of inputs"
@@ -548,6 +552,9 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         else:
             output_shape = tf.stack([self.batch_size] + output_shape_hwc)
 
+        use_bias = (not isinstance(biases, np.ndarray)) or biases.any()
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if self.kernel_groups == 1:
             if self.placeholder is True:
                 # For stepwise tensorflow model, TODO: remove stepwise
@@ -557,7 +564,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
                     strides=strides,
                     padding=padding_type,
                     output_shape=output_shape,
-                    name=self.name
+                    name=self.name if not (use_bias or use_activation) else self.name + '_ConvTrans'
                     # dilations=dilations TODO: not available in 1.13
                 )
             else:
@@ -590,7 +597,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
                     strides=strides,
                     padding=padding_type,
                     output_shape=output_shape_reconst,
-                    name=self.name
+                    name=self.name if not (use_bias or use_activation) else self.name + '_ConvTrans'
                     # dilations=dilations TODO: not available in 1.13
                 )
 
@@ -632,21 +639,23 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         if biases.dtype not in ['float32', tf.float32]:
             biases = tf.cast(biases, RtLayerTF.dtype_to_tf[self.dtype])
 
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if (not isinstance(biases, np.ndarray)) or biases.any():
             # Remove biases if numpy.ndarray and all zeros
             res = tf.nn.bias_add(res, biases, data_format='NHWC',
-                                 name=self.name + '_Bias')
+                                 name=self.name if not (use_activation) else self.name + '_Bias')
             # if self.use_activation not
             # in ['relu', 'leaky_relu']
             # else self.name + '_Bias')
 
         if self.use_activation == 'relu':
-            res = tf.nn.relu(res, name=self.name + '_Relu')
+            res = tf.nn.relu(res, name=self.name)
         elif self.use_activation == 'leaky_relu':
             res = tf.nn.leaky_relu(
                 res,
                 alpha=self.activation_attrs['alpha'],
-                name=self.name + '_Relu'
+                name=self.name
             )
 
         if self.data_layout == 'NCHW':
