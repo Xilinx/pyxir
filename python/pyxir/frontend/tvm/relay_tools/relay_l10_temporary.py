@@ -16,18 +16,21 @@
 Module for transforming Relay L5 operators to XLayer objects
 
 L5: Vision operators
-
-
 """
 
 import math
 import logging
 import warnings
 import numpy as np
+import pyxir as px
+
+from typing import Dict, List, Callable
 
 import tvm
+from tvm.relay.expr import Expr
 
 from pyxir import graph
+from pyxir.graph.layer import XLayer
 from pyxir.graph.layer import xlayer_factory as xlf
 
 from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
@@ -37,9 +40,10 @@ logger = logging.getLogger("pyxir")
 
 
 @register_relay_2_xlayer_converter_base('nn.adaptive_avg_pool2d')
-def nn_adaptive_avg_pool2d(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def nn_adaptive_avg_pool2d(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
+    Relay Adaptive Avg pool 2D to XLayer
+
     Experimental 2D adaptive average pooling operator. Takes as
     argument the output size and automatically computes the kernel and
     strides.
@@ -70,6 +74,8 @@ def nn_adaptive_avg_pool2d(op_name, expr, in_xlayers):
 
     if output_size is None:
         out_h, out_w = in_h, in_w
+    elif len(output_size) == 1:
+        out_h, out_w = output_size[0], output_size[0]
     else:
         out_h, out_w = output_size
 
@@ -77,7 +83,7 @@ def nn_adaptive_avg_pool2d(op_name, expr, in_xlayers):
     kernel_h = in_h - (out_h - 1) * stride_h
     kernel_w = in_w - (out_w - 1) * stride_w
 
-    X = xlf.get_xop_factory_func('Pooling')(
+    X = px.ops.pool2d(
         op_name=op_name,
         input_layer=in_xlayers[0],
         pool_type='Avg',
@@ -87,7 +93,41 @@ def nn_adaptive_avg_pool2d(op_name, expr, in_xlayers):
         layout=layout,
         ceil_mode=False,
         count_include_pad=False,
-        relay_id=[hash(expr)])
+        relay_id=[hash(expr)]
+    )
     logger.debug("-- outshape: {}".format(list(X.shapes)))
 
+    return X
+
+
+@register_relay_2_xlayer_converter_base('slice_like')
+def slice_like(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+    """
+    Slice like to XLayer
+
+    Relay
+    -----
+    Type: tvm.relay.slice_like
+    Ref: https://docs.tvm.ai/api/python/relay/index.html
+    Parameters:
+        - data (tvm.relay.Expr)
+            The source array.
+        - shape_like (tvm.relay.Expr)
+            The new shape.
+        - axes (Optional[Tuple[int]])
+            List of axes on which input data will be sliced according to the
+            corresponding size of the second input. By default will slice on
+            all axes. Negative axes mean counting in reverse.
+    """
+    data_shapes = list(in_xlayers[0].shapes[:])
+    shapes_like = list(in_xlayers[1].shapes[:])
+    axes = [int(e) for e in list(expr.attrs.axes)] if expr.attrs.axes is not None\
+        else list(range(min(len(data_shapes), len(shapes_like))))
+
+    new_shape = data_shapes[:]
+    for dim in axes:
+        new_shape[dim] = shapes_like[dim]
+
+    logger.debug("--newshape: {}".format(new_shape))
+    X = px.ops.any_op(op_name, in_xlayers, any_shape=new_shape, relay_id=[hash(expr)])
     return X

@@ -26,6 +26,7 @@ import pyxir
 from pyxir.runtime import base
 from pyxir.runtime.rt_layer import BaseLayer
 from pyxir.graph.transformers import subgraph
+from pyxir.generator.tensorflow import XGraphTfGeneratorOptimizer
 from pyxir.graph.optimization.optimizers import QOptimizer, ExternalQOptimizer
 from pyxir.quantization.default_quantizer import XGraphDefaultQuantizer
 from pyxir.quantization.mse_quantization.mse_threshold_quantizer import\
@@ -62,7 +63,9 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
         XGraphLayoutTransformationPass('NHWC', target=target)
     dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
 
-    optimizer = QOptimizer(dpu_xgraph)
+    # optimizer = QOptimizer(dpu_xgraph)
+    # optimizer.optimize()
+    optimizer = XGraphTfGeneratorOptimizer(dpu_xgraph)
     optimizer.optimize()
 
     return dpu_xgraph
@@ -93,7 +96,7 @@ def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
 
     # quantizer = XGraphMSEThresholdQuantizer(xgraph, inputs_func, **kwargs)
     # q_xgraph = quantizer.quantize()
-    quantizer = DECENTQuantizer(xgraph, inputs_func, **kwargs)
+    quantizer = DECENTQuantizer(xgraph, inputs_func, compiler_target='DPUv1Compiler', **kwargs)
     q_xgraph = quantizer.quantize()
 
     return q_xgraph

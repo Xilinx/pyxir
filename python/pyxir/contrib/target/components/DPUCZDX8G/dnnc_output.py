@@ -46,6 +46,7 @@ class DNNCOutput(BaseDNNCOutput):
         d = {
             'Boundary Input Tensors': {},
             'Boundary Output Tensors': {},
+            'Boundary Output Tensors Shapes': {},
             'Input Nodes': {},
             'Output Nodes': {}
         }
@@ -90,7 +91,7 @@ class DNNCOutput(BaseDNNCOutput):
                         raise ValueError("DNNC compiler cannot handle multiple"
                                          " inputs with the same shape")
 
-                    d['Boundary Input Tensors'][shape] = name[:-5]
+                    d['Boundary Input Tensors'][shape] = name.split(":")[0]
             elif split_line[0] == 'Boundary Output Tensor(s)   (H*W*C)':
                 for i in range(idx + 1, len(lines)):
                     split_line_i = lines[i].lstrip().rstrip().split(" : ")
@@ -99,12 +100,14 @@ class DNNCOutput(BaseDNNCOutput):
                         break
 
                     name, shape = split_line_i
+                    name = name.split(":")[0]
 
-                    if shape in d['Boundary Output Tensors']:
-                        raise ValueError("DNNC compiler cannot handle multiple"
-                                         " outputs with the same shape")
-
-                    d['Boundary Output Tensors'][shape] = name[:-5]
+                    # if shape in d['Boundary Output Tensors']:
+                    #     raise ValueError("DNNC compiler cannot handle multiple"
+                    #                      " outputs with the same shape")
+                    
+                    d['Boundary Output Tensors'][name] = name + ':0'
+                    d['Boundary Output Tensors Shapes'][shape] = name + ':0'
             elif split_line[0] == 'Total Node Count':
                 d['Total Node Count'] = split_line[1]
             elif split_line[0] in ['Input Node(s)   (H*W*C)',
@@ -133,10 +136,11 @@ class DNNCOutput(BaseDNNCOutput):
 
                     name, shape = split_line_i
 
-                    if shape in d['Output Nodes']:
-                        raise ValueError("DNNC compiler cannot handle multiple"
-                                         " outputs with the same shape")
+                    # if shape in d['Output Nodes']:
+                    #     raise ValueError("DNNC compiler cannot handle multiple"
+                    #                      " outputs with the same shape")
 
+                    d['Output Nodes'][name[:-3]] = name[:-3]
                     d['Output Nodes'][shape] = name[:-3]
 
         return d
@@ -148,3 +152,10 @@ class DNNCOutput(BaseDNNCOutput):
     def get_output_nodes(self):
         # type: () -> Dict[str, str]
         return self.d['Boundary Output Tensors']
+
+    def get_output_nodes_on_shapes(self):
+        # type: () -> Dict[str, str]
+        return self.d['Boundary Output Tensors Shapes']
+
+    def get_dnnc_str(self, str_value: str) -> str:
+        return str_value.replace('-', '_')

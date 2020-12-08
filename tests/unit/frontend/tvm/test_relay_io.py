@@ -12,30 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the IO for the relay pyxir frontend
-
-
-"""
+"""Module for testing the IO for the relay pyxir frontend"""
 
 import os
 import json
 import unittest
 import numpy as np
 
-try:
-    # ! To import tvm
-    import pyxir.frontend.tvm
+# ! To import tvm
+import pyxir
 
+try:
     import tvm
     from tvm import relay
     from tvm.relay import testing
-
-    from pyxir.frontend.tvm import relay as xf_relay
-    from pyxir.frontend.tvm.io import load_model_from_file
+    
     skip = False
 except Exception as e:
     skip = True
+
+if not skip:
+    from pyxir.frontend.tvm import relay as xf_relay
+    from pyxir.frontend.tvm.io import load_model_from_file
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -89,8 +87,8 @@ class TestRelayFrontend(unittest.TestCase):
         mod, params = testing.create_workload(simple_net)
 
         json_file = os.path.join(FILE_DIR, "relay_mod_test.json")
-        with open(json_file, 'w') as f:
-            json.dump(tvm.ir.save_json(mod), f)
+        with open(json_file, 'w') as fo:
+            fo.write(tvm.ir.save_json(mod))
 
         params_file = os.path.join(FILE_DIR, "relay_params_test.params")
         with open(params_file, "wb") as fo:

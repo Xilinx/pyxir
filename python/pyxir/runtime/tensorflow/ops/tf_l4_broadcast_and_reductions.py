@@ -25,6 +25,8 @@ import numpy as np
 import tensorflow as tf
 import logging
 
+from typing import List
+
 from ..rt_layer_tf import RtLayerTF
 from ..x_2_tf_registry import rt_register_xlayer_2_tf,\
     rt_register_xlayer_2_tf_factory_func
@@ -34,17 +36,15 @@ from ... import rt_layer
 
 logger = logging.getLogger("pyxir")
 
+
 ########
 # Mean #
 ########
-
 
 @rt_register_xlayer_2_tf('Mean')
 class MeanLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self):
-        # type: (List[int], List[int], bool, bool) -> None
-
         self.axes, self.keepdims = \
             self.attrs['axes'], self.attrs['keepdims']
 
@@ -55,10 +55,8 @@ class MeanLayer(rt_layer.BaseLayer, RtLayerTF):
 
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-        assert(len(inpts) == 1)
-
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        assert len(inpts) == 1, "Mean layer expects one input"
         axes, keepdims = self.axes, self.keepdims
 
         return [tf.reduce_mean(
@@ -67,10 +65,7 @@ class MeanLayer(rt_layer.BaseLayer, RtLayerTF):
             keepdims=keepdims
         )]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        assert(len(inputs) == 1)
-
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Mean layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})

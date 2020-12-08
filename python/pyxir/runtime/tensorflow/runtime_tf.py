@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Tensorflow runtime module
-
-
-"""
+"""Tensorflow runtime module"""
 
 import copy
 import warnings
+import numpy as np
 import tensorflow as tf
 import logging
+
+from typing import List
 
 from pyxir.shared import fancy_logging
 
@@ -34,8 +33,7 @@ fancy_logger = fancy_logging.getLogger("pyxir")
 
 
 class RuntimeTF(BaseRuntime):
-
-    """ Runtime on top of Tensorflow """
+    """Runtime on top of Tensorflow"""
 
     def __init__(self,
                  name: str,
@@ -43,7 +41,9 @@ class RuntimeTF(BaseRuntime):
                  params: dict,
                  device: str = 'cpu',
                  batch_size: int = -1,
-                 placeholder: bool = False):
+                 placeholder: bool = False,
+                 hidden_out_tensor_names: List[str] = None,
+                 **kwargs):
         tf.compat.v1.reset_default_graph()
 
         self.tf_step_graph = tf.Graph()
@@ -51,8 +51,18 @@ class RuntimeTF(BaseRuntime):
             with g.name_scope('tf_step_graph'):
                 super(RuntimeTF, self).__init__(
                     name, network, params, device, batch_size, placeholder)
+        
+        # In the Tensorflow model we might need to create a dummy output layer
+        # if an intermediate layer is an out as in for example: Relu -> Conv
+        #                                                           \-> Conv
+        # if the Relu is also an output of the model. This is required for 
+        # some of the quantization/compilation tools to parse the outputs 
+        # correctly
+        self.hidden_out_tensor_names = hidden_out_tensor_names \
+            if hidden_out_tensor_names is not None else []
 
-        # logger.debug("trainable", trainable)
+        # TODO Explanation
+        self.compiler_target = kwargs['compiler_target'] if 'compiler_target' in kwargs else None
 
         # The Runtime builds an executable graph as a list of executable layers
         # To execute the graph on a given input we have to call forward execute
@@ -62,12 +72,10 @@ class RuntimeTF(BaseRuntime):
         tf.compat.v1.reset_default_graph()
         self.tf_graph = tf.Graph()
         with self.tf_graph.as_default() as g:
-            # with g.name_scope('tf_graph'):
             self.init_tf_graph(self.net)
 
     def init_tf_graph(self, net):
         # type: (List[RtLayer]) -> None
-
         fancy_logger.banner("INIT TF NET")
 
         self.tf_inputs = set()
@@ -83,21 +91,55 @@ class RuntimeTF(BaseRuntime):
             logger.info(f"Layer type: {layer.type}")
             logger.info("Layer inputs: {}".format(layer.get_input_names()))
 
-            in_tensors = [self.tf_tensors[inpt] for inpt in
-                          layer.get_input_names() if inpt in self.tf_tensors]
-            out_tensors = layer.get_output_tensors(in_tensors)
+            # TODO Explanation
+            in_tensors = []
+            for inpt in layer.get_input_names():
+                if inpt in self.hidden_out_tensor_names:
+                    in_tensors.append(self.tf_tensors[inpt + "_hidden"])
+                elif inpt in self.tf_tensors:
+                    in_tensors.append(self.tf_tensors[inpt])
+            
+            layer_name = layer.name
+            if layer_name not in self.hidden_out_tensor_names:
+                out_tensors = layer.get_output_tensors(in_tensors, compiler_target=self.compiler_target)
+            else:
+                out_tensors = layer.get_output_tensors(in_tensors,
+                                                       override_name=layer.name + "_hidden",
+                                                       compiler_target=self.compiler_target)
+                layer_name = layer.name + "_hidden"
 
             logger.info("Out shapes: {}"
                         .format([o.shape if not isinstance(o, list)
                                  else [oo.shape for oo in o]
                                  for o in out_tensors]))
 
-            self.tf_tensors[layer.name] = out_tensors[0]
+            self.tf_tensors[layer_name] = out_tensors[0]
             # For now, the first output is the main outputs,
             #   other outputs are returned for optimization purposes
             self.tf_outputs.extend(out_tensors[1:])
             if layer.is_input_layer():
-                self.tf_inputs.add(layer.name)
+                self.tf_inputs.add(layer_name)
+
+            # TODO
+            if layer.name in self.hidden_out_tensor_names:
+                inpt = self.tf_tensors[layer_name]
+                if self.compiler_target == 'DPUv1Compiler':
+                    # identity = tf.add(
+                    #     tf.multiply(inpt, np.ones((1,), dtype=np.float32), name=layer.name),
+                    #     np.zeros((1,), dtype=np.float32),
+                    #     name=layer.name + "/Add"
+                    # )
+                    # TODO
+                    channels = inpt.shape[-1]
+                    kernel = tf.constant(np.ones((1, 1, channels, channels), dtype=np.float32))
+                    identity = tf.nn.conv2d(inpt, kernel, strides=[1], padding='VALID', name=layer.name)
+                else:
+                    identity = tf.add(
+                        tf.multiply(inpt, np.ones((1,), dtype=np.float32)),
+                        np.zeros((1,), dtype=np.float32),
+                        name=layer.name
+                    )
+                self.tf_tensors[layer.name] = identity
 
         # TODO: Merge with tf_outputs?
         logger.info("-----------------------")
