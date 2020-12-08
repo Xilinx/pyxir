@@ -404,3 +404,30 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         assert layers[0].type[0] == 'Constant'
         assert layers[1].type[0] == 'AnyOp'
         assert layers[1].shapes == [1, 6, 4, 4]
+
+
+        
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_arange_reshape(self):
+
+        start = relay.expr.const(0.0)
+        stop = relay.expr.const(10.0)
+        step = relay.expr.const(1.0)
+
+
+        left = relay.arange(start,stop,step,dtype)
+        left = relay.reshape(left,[-1,1])
+        left = relay.reshape(left,[1,-1])
+        right = relay.arange(start,stop,step,dtype)
+        right = relay.reshape(right,[1,-1])
+        net = relay.multiply(left,right)
+
+        mod = tvm.IRModule.from_expr(net)
+        params={}
+        import pdb
+        pdb.set_trace()
+        xgraph = xf_relay.from_relay(mod, params)
+        pdb.set_trace()
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == 'Constant'
