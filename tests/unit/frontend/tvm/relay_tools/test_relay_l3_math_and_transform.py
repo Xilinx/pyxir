@@ -414,11 +414,8 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         stop = relay.expr.const(10.0)
         step = relay.expr.const(1.0)
 
-
         fill_val = relay.expr.const(1.0)
         fill_shape = [10,1]
-
-
 
         left = relay.arange(start,stop,step,dtype)
         left = relay.reshape(left,[-1,1])

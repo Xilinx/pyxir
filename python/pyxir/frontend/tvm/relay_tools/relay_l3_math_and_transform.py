@@ -313,7 +313,6 @@ def reshape(expr: Expr,
                              "reshape")
         i += 1
         j += 1
-    print('newshape {} relayshape {}'.format(newshape,relayshape))
 
     logger.debug("-- newshape: {}".format(newshape))
     if list(data_layer.shapes)[0] == -1:
