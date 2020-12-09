@@ -1,3 +1,4 @@
+
 # Copyright 2020 Xilinx Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -272,12 +273,17 @@ def reshape(expr: Expr,
     i, j = 0, 0  # i is index in relayshape, j in input_shape
     while i < len(relayshape):
         dim = relayshape[i]
-        if dim > 0:
+        if dim == 1 and i == 0: # ex: relayshape -> [1, -1] input_shape -> [10,1]
+            newshape.append(dim)
+            j -=1
+        elif dim > 0:
             newshape.append(dim)
         elif dim == 0:
             newshape.append(input_shape[j])
         elif dim == -1 and i == 0 and input_shape[0] == -1:
             newshape.append(-1)
+        elif dim == -1 and i == 0 and len(input_shape) == 1: # ex: relayshape -> [-1,1] input_shape -> [10]
+            newshape.append(input_shape[0])
         elif dim == -1:
             newshape.append(int(np.prod(input_shape[j:]) / np.prod(relayshape[i+1:])))
         elif dim == -2:
@@ -307,9 +313,9 @@ def reshape(expr: Expr,
                              "reshape")
         i += 1
         j += 1
+    print('newshape {} relayshape {}'.format(newshape,relayshape))
 
     logger.debug("-- newshape: {}".format(newshape))
-
     if list(data_layer.shapes)[0] == -1:
         assert abs(np.prod(list(data_layer.shapes))) % np.prod(newshape) == 0
         newshape[0] = -1
@@ -556,4 +562,35 @@ def zeros_like(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     assert len(in_xlayers) == 1
     newshape = list(in_xlayers[0].shapes[:])
     X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
+    return X
+
+@register_relay_2_xlayer_converter_base('full')
+def full(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+    """
+    TVM full to XLayer
+
+    Relay
+    -----
+    Type: tvm.relay.full
+    Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.full
+    Parameters:
+        - fill_value
+            The value to fill. Must be scalar
+        - shape
+            The shape of the target
+        - dtype (str, optional)
+            The target data type.
+    """
+
+    assert len(in_xlayers) == 1
+    
+    newshape   = [ int(dim) for dim in expr.attrs.shape ]
+    dtype      = expr.attrs.dtype
+    fill_value = expr.args[0].data.asnumpy()
+    value      = np.full(newshape,fill_value,dtype)
+
+    #X = xlf.get_xop_factory_func('Constant')(op_name, value,
+    #                                         relay_id=[hash(expr)])
+    X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
+
     return X
