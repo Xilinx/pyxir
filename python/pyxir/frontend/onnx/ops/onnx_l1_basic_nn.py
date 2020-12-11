@@ -387,7 +387,7 @@ def instancenormalization(node: NodeWrapper,
 def log(node: NodeWrapper,
         params: Dict[str, np.ndarray],
         xmap: Dict[str, XLayer]):
-    """ ONNX Log to XLayer Log conversion function """
+    """ONNX Log to XLayer Log conversion function"""
 
     logger.info("ONNX Log -> XLayer Log")
 

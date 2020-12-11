@@ -398,7 +398,7 @@ def flatten(node: NodeWrapper,
 
         newshape = [shape_1, shape_2]
 
-        X = xlf.get_xop_factory_func('Reshape')(
+        X = px.ops.reshape(
             op_name=px.stringify(name),
             newshape=newshape,
             input_layer=iX,
