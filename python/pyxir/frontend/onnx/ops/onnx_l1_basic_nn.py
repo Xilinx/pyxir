@@ -16,15 +16,13 @@
 Module for transforming ONNX L1 operators to XLayer objects
 
 L1: Basic NN operators that enable fully connected multi-layer perceptron
-
-
 """
 
 import logging
 import numpy as np
 import pyxir as px
 
-from typing import Dict
+from typing import Dict, List
 
 from pyxir.graph.layer import xlayer_factory as xlf
 from pyxir.graph.layer import XLayer
@@ -110,11 +108,10 @@ def add(node: NodeWrapper,
 
 
 @register_onnx_2_xlayer_converter("BatchNormalization")
-def batchnorm(node, params, xmap):
-    # type: (NodeWrapper, Dict[str, np.ndarray], Dict[str, XLayer])
-    #   -> List[XLayer]
-    """ ONNX BatchNormalization to XLayer BatchNorm conversion function """
-
+def batchnorm(node: NodeWrapper,
+              params: Dict[str, np.ndarray],
+              xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX BatchNormalization to XLayer BatchNorm conversion function"""
     logger.info("ONNX BatchNorm -> XLayer BatchNorm")
 
     assert len(node.get_outputs()) == 1
@@ -164,9 +161,8 @@ def batchnorm(node, params, xmap):
 @register_onnx_2_xlayer_converter("Concat")
 def concat(node: NodeWrapper,
            params: Dict[str, np.ndarray],
-           xmap: Dict[str, XLayer]):
-    """ ONNX Concat to XLayer Concat conversion function """
-
+           xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Concat to XLayer Concat conversion function"""
     logger.info("ONNX Concat -> XLayer Concat")
 
     assert len(node.get_outputs()) == 1
@@ -201,9 +197,8 @@ def concat_from_sequence(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Div")
 def div(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: Dict[str, XLayer]):
-    """ ONNX Div to XLayer Divide conversion function """
-
+        xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Div to XLayer Divide conversion function"""
     logger.info("ONNX And -> XLayer Divide")
 
     assert len(node.get_outputs()) == 1
@@ -227,9 +222,8 @@ def div(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Dropout")
 def dropout(node: NodeWrapper,
             params: Dict[str, np.ndarray],
-            xmap: Dict[str, XLayer]):
-    """ ONNX Dropout to XLayer Dropout conversion function """
-
+            xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Dropout to XLayer Dropout conversion function"""
     logger.info("ONNX Dropout -> XLayer Dropout")
 
     assert len(node.get_outputs()) == 1
@@ -254,8 +248,8 @@ def dropout(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Exp")
 def exp(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: Dict[str, XLayer]):
-    """ ONNX Exp to XLayer Exp conversion function """
+        xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Exp to XLayer Exp conversion function"""
 
     logger.info("ONNX Exp -> XLayer Exp")
 
@@ -274,17 +268,15 @@ def exp(node: NodeWrapper,
 
 
 @register_onnx_2_xlayer_converter("Gemm")
-def gemm(node, params, xmap):
-    # type: (NodeWrapper, Dict[str, np.ndarray], Dict[str, XLayer])
-    #   -> List[XLayer]
+def gemm(node: NodeWrapper,
+         params: Dict[str, np.ndarray],
+         xmap: Dict[str, XLayer]) -> List[XLayer]:
     """
     ONNX Gemm to XLayer Dense (+ Scale) (+ BiasAdd) conversion function
 
     Compute Y = alpha * A' * B' + beta * C
     See https://github.com/onnx/onnx/blob/master/docs/Operators.md#Gemm
-
     """
-
     logger.info("ONNX Gemm-> XLayer Dense (+ Scale) (+ BiasAdd)")
 
     assert len(node.get_outputs()) == 1
@@ -387,7 +379,7 @@ def gemm(node, params, xmap):
 @register_onnx_2_xlayer_converter("InstanceNormalization")
 def instancenormalization(node: NodeWrapper,
                           params: Dict[str, np.ndarray],
-                          xmap: Dict[str, XLayer]):
+                          xmap: Dict[str, XLayer]) -> List[XLayer]:
     return eltwise_any_op("InstanceNormalization", node, params, xmap)
 
 
@@ -423,9 +415,8 @@ def logsoftmax(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("MatMul")
 def matmul(node: NodeWrapper,
            params: Dict[str, np.ndarray],
-           xmap: Dict[str, XLayer]):
-    """ ONNX MatMul to XLayer Dense/AnyOp conversion function """
-
+           xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX MatMul to XLayer Dense/AnyOp conversion function"""
     logger.info("ONNX MatMul -> XLayer Dense/AnyOp")
 
     assert len(node.get_outputs()) == 1
@@ -460,18 +451,16 @@ def matmul(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("MatMulInteger")
 def matmul_integer(node: NodeWrapper,
                    params: Dict[str, np.ndarray],
-                   xmap: Dict[str, XLayer]):
-    """ ONNX MatMulInteger to XLayer Dense/AnyOp conversion function """
-
+                   xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX MatMulInteger to XLayer Dense/AnyOp conversion function"""
     return matmul(node, params, xmap)
 
 
 @register_onnx_2_xlayer_converter("Mod")
 def mod(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: Dict[str, XLayer]):
-    """ ONNX Mod to XLayer AnyOp conversion function """
-
+        xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Mod to XLayer AnyOp conversion function"""
     logger.info("ONNX Mod -> XLayer AnyOp")
 
     assert len(node.get_outputs()) == 1
@@ -499,8 +488,8 @@ def mod(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Mul")
 def mul(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: XLayer):
-    """ ONNX Mul to XLayer conversion function """
+        xmap: XLayer) -> List[XLayer]:
+    """ONNX Mul to XLayer conversion function"""
 
     logger.info("ONNX Mul -> XLayer Multiply")
 
@@ -578,9 +567,8 @@ def mul(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("QLinearMatMul")
 def qlinear_matmul(node: NodeWrapper,
                    params: Dict[str, np.ndarray],
-                   xmap: Dict[str, XLayer]):
-    """ ONNX QLinearMatMul to XLayer AnyOp conversion function """
-
+                   xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX QLinearMatMul to XLayer AnyOp conversion function"""
     logger.info("ONNX QLinearMatMul -> XLayer AnyOp")
 
     assert len(node.get_outputs()) == 1
@@ -605,15 +593,15 @@ def qlinear_matmul(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Reciprocal")
 def reciprocal(node: NodeWrapper,
                params: Dict[str, np.ndarray],
-               xmap: Dict[str, XLayer]):
+               xmap: Dict[str, XLayer]) -> List[XLayer]:
     return eltwise_any_op("Reciprocal", node, params, xmap)
 
 
 @register_onnx_2_xlayer_converter("Relu")
 def relu(node: NodeWrapper,
          params: Dict[str, np.ndarray],
-         xmap: Dict[str, XLayer]):
-    """ ONNX Relu to XLayer ReLU conversion function """
+         xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Relu to XLayer ReLU conversion function"""
 
     logger.info("ONNX Relu -> XLayer Relu")
 
@@ -622,21 +610,15 @@ def relu(node: NodeWrapper,
     bottoms = node.get_inputs()
 
     iX = xmap[bottoms[0]]  # NCHW
-
-    X = xlf.get_xop_factory_func('ReLU')(
-        op_name=px.stringify(name),
-        input_layer=iX,
-        onnx_id=name)
-
+    X = px.ops.relu(px.stringify(name), [iX], onnx_id=name)
     return [X]
 
 
 @register_onnx_2_xlayer_converter("Sigmoid")
 def sigmoid(node: NodeWrapper,
             params: Dict[str, np.ndarray],
-            xmap: Dict[str, XLayer]):
-    """ ONNX Sigmoid to XLayer Sigmoid conversion function """
-
+            xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Sigmoid to XLayer Sigmoid conversion function"""
     logger.info("ONNX Sigmoid -> XLayer Sigmoid")
 
     assert len(node.get_outputs()) == 1
@@ -656,9 +638,8 @@ def sigmoid(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Softmax")
 def softmax(node: NodeWrapper,
             params: Dict[str, np.ndarray],
-            xmap: Dict[str, XLayer]):
-    """ ONNX Softmax to XLayer Softmax conversion function """
-
+            xmap: Dict[str, XLayer])  -> List[XLayer]:
+    """ONNX Softmax to XLayer Softmax conversion function"""
     logger.info("ONNX Softmax -> XLayer Softmax")
 
     assert len(node.get_outputs()) == 1
@@ -685,9 +666,8 @@ def softmax(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Sqrt")
 def sqrt(node: NodeWrapper,
          params: Dict[str, np.ndarray],
-         xmap: Dict[str, XLayer]):
-    """ ONNX Sqrt to XLayer Sqrt conversion function """
-
+         xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Sqrt to XLayer Sqrt conversion function"""
     logger.info("ONNX Sqrt -> XLayer Sqrt")
 
     assert len(node.get_outputs()) == 1
@@ -707,9 +687,8 @@ def sqrt(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Sub")
 def sub(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: Dict[str, XLayer]):
-    """ ONNX Sub to XLayer Sub conversion function """
-
+        xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Sub to XLayer Sub conversion function"""
     logger.info("ONNX Sub -> XLayer Sub")
 
     assert len(node.get_outputs()) == 1
@@ -752,9 +731,8 @@ def sub(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Sum")
 def sum(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: Dict[str, XLayer]):
-    """ ONNX Sum to XLayer Add conversion function """
-
+        xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Sum to XLayer Add conversion function"""
     logger.info("ONNX Sum -> XLayer Add")
 
     assert len(node.get_outputs()) == 1
@@ -788,9 +766,8 @@ def sum(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Tanh")
 def tanh(node: NodeWrapper,
          params: Dict[str, np.ndarray],
-         xmap: Dict[str, XLayer]):
-    """ ONNX Tanh to XLayer Tanh conversion function """
-
+         xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Tanh to XLayer Tanh conversion function"""
     logger.info("ONNX Tanh -> XLayer Tanh")
 
     assert len(node.get_outputs()) == 1

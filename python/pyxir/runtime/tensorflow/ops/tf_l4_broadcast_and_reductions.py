@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XLayer neural network layers implemented on top of tensorflow
-
-
-"""
+"""Module for XLayer neural network layers implemented on top of tensorflow"""
 
 import os
 import abc
@@ -44,7 +40,7 @@ logger = logging.getLogger("pyxir")
 @rt_register_xlayer_2_tf('Mean')
 class MeanLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    def init(self):
+    def init(self) -> None:
         self.axes, self.keepdims = \
             self.attrs['axes'], self.attrs['keepdims']
 
@@ -58,11 +54,11 @@ class MeanLayer(rt_layer.BaseLayer, RtLayerTF):
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert len(inpts) == 1, "Mean layer expects one input"
         axes, keepdims = self.axes, self.keepdims
-
         return [tf.reduce_mean(
             inpts[0],
             axis=list(axes),
-            keepdims=keepdims
+            keepdims=keepdims,
+            name=self.name
         )]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
