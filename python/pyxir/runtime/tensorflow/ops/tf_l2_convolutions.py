@@ -701,8 +701,6 @@ def conv2d_transpose_factory():
 class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        
-
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
@@ -712,15 +710,11 @@ class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Output shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
-        return [tf.contrib.layers.flatten(inpts[0])]
+        assert len(inpts) == 1, "Flatten layer expects one input"
+        return [tf.contrib.layers.flatten(inpts[0], name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Flatten layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -732,13 +726,9 @@ class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
 class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
 
     def init(self) -> None:
-        
         self.layout = self.attrs['data_layout']
-
-        logger.info("Init pooling layer: {}, shape: {}".format(self.op,
-                                                               self.shape))
+        logger.info("Init pooling layer: {}, shape: {}".format(self.op, self.shape))
         logger.debug("Paddings: {}".format(self.paddings))
-
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
@@ -747,8 +737,7 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
         logger.info("Res shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
+        assert len(inpts) == 1, "Pooling layer expects one input"
 
         op, ksize, paddings, strides = \
             self.op, self.ksize, self.paddings, self.strides
@@ -772,19 +761,10 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
             inpt = tf.transpose(inpt, (0, 2, 3, 1))
             logger.debug("Input shape transformed: {}".format(inpt.shape))
 
-        # pad_along_height = max((out_height - 1) * strides[1] +
-        #   filter_height - in_height, 0)
         out_h = self.shape[2] if self.layout == 'NCHW' else self.shape[1]
         out_w = self.shape[3] if self.layout == 'NCHW' else self.shape[2]
         in_h, strides_h = int(inpt.shape[1]), strides[1]
         in_w, strides_w = int(inpt.shape[2]), strides[2]
-        # pad_along_height = max((out_h - 1) * strides[1] + ksize[1] -
-        #                        int(inpt.shape[1]), 0)
-        # pad_along_width = max((out_w - 1) * strides[2] + ksize[2] -
-        #                       int(inpt.shape[2]), 0)
-        # logger.debug("Paddings: {}".format(paddings))
-        # logger.debug("out_h: {}, pad_along_h: {}, out_w: {}, pad_along_w: {}"
-        #             .format(out_h, pad_along_height, out_w, pad_along_width))
 
         if [list(pad) for pad in paddings] == [[0, 0], [0, 0], [0, 0], [0, 0]]:
             padded_inpt = inpt
@@ -816,7 +796,7 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
         return [res]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        assert len(inputs) == 1
+        assert len(inputs) == 1, "Pooling layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -894,8 +874,7 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Output shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert len(inpts) == 1
+        assert len(inpts) == 1, "Upsampling2D layer expects one input"
 
         res = inpts[0]
         if self.layout == 'NCHW':
@@ -934,9 +913,6 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
         return [res]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Upsampling2D layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})

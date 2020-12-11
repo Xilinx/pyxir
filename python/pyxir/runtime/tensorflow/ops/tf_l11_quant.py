@@ -90,7 +90,7 @@ class UnQuantizeLayer(rt_layer.UnQuantizeLayer, RtLayerTF):
 
     def init(self) -> None:
         """
-        See xfdnn/rt/xdnn_cpp/xdnn.cpp
+        NOTE See xfdnn/rt/xdnn_cpp/xdnn.cpp
         """
 
         self.inpt = tf.compat.v1.placeholder(
@@ -139,9 +139,8 @@ def unquantize_factory():
 class QuantizeBiasLayer(rt_layer.QuantizeBiasLayer, RtLayerTF):
 
     def init(self) -> None:
-        
         """
-        See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeBias
+        NOTE See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeBias
         """
         logger.info("Init quantize bias layer")
 
@@ -154,8 +153,6 @@ class QuantizeBiasLayer(rt_layer.QuantizeBiasLayer, RtLayerTF):
         logger.info("Res shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-
         threshold_bias, threshold_ext, bitwidth, do_rounding = \
             self.threshold_bias, self.threshold_ext, self.bitwidth,\
             self.do_rounding
@@ -214,7 +211,6 @@ def quantize_bias_factory():
 class QuantizeScaleBiasLayer(rt_layer.QuantizeScaleBiasLayer, RtLayerTF):
 
     def init(self) -> None:
-        
         """
         See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNQuantizeBiasV3_scale
         # TODO discrepancy with xdnn.cpp implementation
@@ -230,7 +226,6 @@ class QuantizeScaleBiasLayer(rt_layer.QuantizeScaleBiasLayer, RtLayerTF):
         logger.info("Res shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
         """
         Get output tensor for quantizing bias layer in scaling operation
 
@@ -309,10 +304,7 @@ class QuantizeScaleBiasLayer(rt_layer.QuantizeScaleBiasLayer, RtLayerTF):
         return [res]  # , val0, val1, val, scale_division_robust, inpt]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -329,9 +321,8 @@ def quantize_scale_bias_factory():
 class QuantizeInterLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
 
     def init(self) -> None:
-        
         """
-        See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeInterLayer
+        NOTE See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeInterLayer
         """
         self.inpt = tf.compat.v1.placeholder(
             RtLayerTF.dtype_to_tf['int64'],  # TODO
@@ -421,10 +412,7 @@ class QuantizeInterLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         return [res]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1
         with tf.compat.v1.Session() as sess:
             # logger.debug("TEST")
             # logger.debug(sess.run(self.test,
@@ -444,9 +432,8 @@ def quantize_inter_factory():
 class QuantizeInter12MSBitsLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
 
     def init(self) -> None:
-        
         """
-        See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeInterLayer
+        NOTE See xfdnn/rt/xdnn_cpp/xdnn.cpp, XDNNV3QuantizeInterLayer
         """
         logger.info("Init QuantizeInter12MSBitsLayer: {}".format(self.name))
         self.inpt = tf.compat.v1.placeholder(
@@ -542,14 +529,8 @@ class QuantizeInter12MSBitsLayer(rt_layer.QuantizeInterLayer, RtLayerTF):
         return [res]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1
         with tf.compat.v1.Session() as sess:
-            # logger.debug("TEST")
-            # logger.debug(sess.run(self.test,
-            #              feed_dict={self.inpt: inputs[0]}))
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
 
