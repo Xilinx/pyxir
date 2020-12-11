@@ -51,14 +51,11 @@ class CastLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert len(inpts) == 1
-
+        assert len(inpts) == 1, "Cast layer expects one input"
         return [tf.cast(inpts[0], dtype=self.target_dtype, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         assert len(inputs) == 1, "Cast layer expects one input"
-
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -86,8 +83,7 @@ class LeakyReluLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
+        assert len(inpts) == 1, "LeakyRelu layer expects one input"
         features, alpha = inpts[0], self.alpha
 
         with tf.name_scope(self.name, "LeakyRelu", [features, alpha]) as name:
@@ -96,7 +92,7 @@ class LeakyReluLayer(rt_layer.BaseLayer, RtLayerTF):
                 features = tf.to_float(features)
             alpha = tf.convert_to_tensor(alpha, dtype=features.dtype,
                                          name="alpha")
-        return [tf.maximum(alpha * features, features, name=name)]
+            return [tf.maximum(alpha * features, features, name=name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         assert len(inputs) == 1, "LeakyRelu layer expects one input"
@@ -115,7 +111,6 @@ class PReluLayer(rt_layer.BaseLayer, RtLayerTF):
         y = x for x> 0
         """
         self.alpha = self.attrs['alpha']
-
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
@@ -123,16 +118,11 @@ class PReluLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
-
-        return [tf.nn.leaky_relu(inpts[0], alpha=self.alpha)]
+        assert len(inpts) == 1, "PRelu layer expects one input"
+        return [tf.nn.leaky_relu(inpts[0], alpha=self.alpha, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "PRelu layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -145,8 +135,6 @@ class PReluLayer(rt_layer.BaseLayer, RtLayerTF):
 class ReshapeLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        
-
         self.target_shape = self.attrs['shape']
 
         self.inpt = \
@@ -158,9 +146,7 @@ class ReshapeLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Output shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
-
+        assert len(inpts) == 1, "Reshape layer expects one input"
         input_shape, shape = self.input_shapes[0], self.target_shape
         logger.debug("New shape: {}".format(shape))
         if input_shape[0] in [-1, None] and shape[0] != -1:
@@ -177,10 +163,7 @@ class ReshapeLayer(rt_layer.BaseLayer, RtLayerTF):
         )]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Reshape layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -191,7 +174,7 @@ class ReshapeLayer(rt_layer.BaseLayer, RtLayerTF):
 
 @rt_register_xlayer_2_tf('Split')
 class SplitLayer(rt_layer.BaseLayer, RtLayerTF):
-    """ Split an input tensor along axis and according to provided indeices """
+    """Split an input tensor along axis and according to provided indeices"""
 
     def init(self) -> None:
         logger.debug("Initializing SplitLayer with shape: {}"
@@ -218,12 +201,11 @@ class SplitLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
         res = tf.split(inpts[0], self.num_or_size_splits, axis=self.axis)
         return [res]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray: 
-        assert(len(inputs) == 1)
+        assert len(inputs) == 1, "Split layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -237,7 +219,6 @@ class SqueezeLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
         self.axis = list(self.attrs['axis'])
-
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
@@ -247,19 +228,11 @@ class SqueezeLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Output shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
-
-        return [tf.squeeze(
-            inpts[0],
-            axis=self.axis
-        )]
+        assert len(inpts) == 1, "Squeeze layer expects one input"
+        return [tf.squeeze(inpts[0], axis=self.axis, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Squeeze layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -272,8 +245,6 @@ class SqueezeLayer(rt_layer.BaseLayer, RtLayerTF):
 class TakeLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        
-
         self.axis = self.attrs['axis']
         self.mode = self.attrs['mode']
 
@@ -296,16 +267,13 @@ class TakeLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Output shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        assert len(inpts) == 2
-
-        return [tf.gather(inpts[0], inpts[1], axis=self.axis)]
+        assert len(inpts) == 2, "Take layer expects two inputs"
+        return [tf.gather(inpts[0], inpts[1], axis=self.axis, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        assert(len(inputs) == len(self.input_shapes))
-        feed_dict = {
-            self.inpts[i]: inputs[i] for i in range(len(inputs))
-        }
-
+        assert len(inputs) == len(self.input_shapes),\
+            "Take layer expects {} inputs".format(len(self.input_shapes))
+        feed_dict = {self.inpts[i]: inputs[i] for i in range(len(inputs))}
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict=feed_dict)
 
@@ -319,7 +287,6 @@ class TransposeLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
         self.axes = self.attrs['axes']
-
         logger.debug("Transpose layer axes: {}".format(self.axes))
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
