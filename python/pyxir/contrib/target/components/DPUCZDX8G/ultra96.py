@@ -57,12 +57,13 @@ def xgraph_dpu_ultra96_compiler(xgraph, **kwargs):
         "dpu_task_pool": 16
     }
 
+    dcf_path = os.path.join(FILE_DIR, "./Ultra96.dcf")
     arch_path = "/tmp/Ultra96.json"
     if not os.path.exists(arch_path):
         # Write arch json 
         arch = {   
             "target"   : "DPUCZDX8G",
-            "dcf"      : os.path.join(FILE_DIR, "./Ultra96.dcf"),
+            "dcf"      : dcf_path,
             "cpu_arch" : "arm64"
         }
 
@@ -81,7 +82,7 @@ def xgraph_dpu_ultra96_compiler(xgraph, **kwargs):
     # else:
     #     arch = old_arch
 
-    compiler = VAICompiler(xgraph, arch=arch_path, meta=meta, **kwargs)
+    compiler = VAICompiler(xgraph, arch=arch_path, meta=meta, dcf=dcf_path, **kwargs)
     c_xgraph = compiler.compile()
 
     return c_xgraph
