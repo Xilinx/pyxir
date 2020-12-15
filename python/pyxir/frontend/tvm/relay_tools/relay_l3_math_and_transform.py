@@ -41,6 +41,66 @@ from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
 logger = logging.getLogger("pyxir")
 
 
+
+@register_relay_2_xlayer_converter_base('tile')
+def tile(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+    """
+    TVM full to XLayer
+
+    Relay
+    -----
+    Type: tvm.relay.full
+    Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.full
+    Parameters:
+        - reps
+            The number of times repeating the tensor
+    """
+
+    assert len(in_xlayers) == 1
+    
+    reps        = [int(r) for r in expr.attrs['reps']]
+    input_shape = [int(s) for s in expr.type_args[0].shape]
+    newshape    = [ r*s for r,s in zip(reps,input_shape) ]
+
+    logger.debug("tile: {}".format(op_name))
+    X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
+    logger.debug("-- outshape: {}".format(list(X.shapes)))
+    
+    return X
+
+@register_relay_2_xlayer_converter_base('full')
+def full(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+    """
+    TVM full to XLayer
+
+    Relay
+    -----
+    Type: tvm.relay.full
+    Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.full
+    Parameters:
+        - fill_value
+            The value to fill. Must be scalar
+        - shape
+            The shape of the target
+        - dtype (str, optional)
+            The target data type.
+    """
+
+    assert len(in_xlayers) == 1
+    
+    newshape   = [ int(dim) for dim in expr.attrs.shape ]
+
+    # currently not used
+    dtype      = expr.attrs.dtype
+    fill_value = expr.args[0].data.asnumpy() 
+    value      = np.full(newshape,fill_value,dtype)
+
+    logger.debug("full: {}".format(op_name))
+    X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
+    logger.debug("-- outshape: {}".format(list(X.shapes)))
+    
+    return X
+
 @register_relay_2_xlayer_converter_base('arange')
 def arange(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
@@ -563,33 +623,3 @@ def zeros_like(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
     return X
 
-@register_relay_2_xlayer_converter_base('full')
-def full(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
-    """
-    TVM full to XLayer
-
-    Relay
-    -----
-    Type: tvm.relay.full
-    Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.full
-    Parameters:
-        - fill_value
-            The value to fill. Must be scalar
-        - shape
-            The shape of the target
-        - dtype (str, optional)
-            The target data type.
-    """
-
-    assert len(in_xlayers) == 1
-    
-    newshape   = [ int(dim) for dim in expr.attrs.shape ]
-    dtype      = expr.attrs.dtype
-    fill_value = expr.args[0].data.asnumpy()
-    value      = np.full(newshape,fill_value,dtype)
-
-    #X = xlf.get_xop_factory_func('Constant')(op_name, value,
-    #                                         relay_id=[hash(expr)])
-    X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
-
-    return X
