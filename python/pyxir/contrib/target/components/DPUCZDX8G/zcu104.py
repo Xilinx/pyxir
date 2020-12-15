@@ -15,6 +15,7 @@
 """ Module for registering DPUCZDX8G zcu104 target """
 
 import os
+import json
 import pyxir
 import logging
 
@@ -25,7 +26,7 @@ from .vai_c import VAICompiler
 
 logger = logging.getLogger('pyxir')
 
-
+FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 def xgraph_dpu_zcu104_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     # TODO here or in optimizer, both?
@@ -53,17 +54,30 @@ def xgraph_dpu_zcu104_compiler(xgraph, **kwargs):
         "dpu_task_pool": 16
     }
 
+    dcf_path =  os.path.join(FILE_DIR, "./ZCU104.dcf")
+    arch_path = "/tmp/ZCU104.json"
+    if not os.path.exists(arch_path):
+        # Write arch json 
+        arch = {   
+            "target"   : "DPUCZDX8G",
+            "dcf"      : dcf_path,
+            "cpu_arch" : "arm64"
+        }
+
+        with open(arch_path, 'w') as f:
+            json.dump(arch, f, indent=4, sort_keys=True)
+
     # Vitis-AI 1.1
-    old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/ZCU104/ZCU104.json"
+    #old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/ZCU104/ZCU104.json"
     # Vitis-AI 1.2 - ...
-    new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/ZCU104/arch.json"
+    #new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/ZCU104/arch.json"
 
-    if os.path.exists(new_arch):
-        arch = new_arch
-    else:
-        arch = old_arch
+    #if os.path.exists(new_arch):
+    #    arch = new_arch
+    #else:
+        #arch = old_arch
 
-    compiler = VAICompiler(xgraph, arch=arch, meta=meta, **kwargs)
+    compiler = VAICompiler(xgraph, arch=arch_path, meta=meta, dcf=dcf_path, **kwargs)
     c_xgraph = compiler.compile()
 
     return c_xgraph
