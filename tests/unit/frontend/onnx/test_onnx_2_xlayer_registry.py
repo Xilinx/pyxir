@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the ONNX 2 XLayer registry
-
-
-"""
+"""Module for testing the ONNX 2 XLayer registry"""
 
 import unittest
 
