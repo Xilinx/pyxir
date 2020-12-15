@@ -44,6 +44,7 @@ class VAICompiler(XGraphBaseCompiler):
                  xgraph,
                  arch,
                  meta,
+                 dcf,
                  cpu_arch='arm64',
                  work_dir=os.path.join(os.getcwd(), 'work'),
                  build_dir=os.getcwd(),
@@ -58,17 +59,16 @@ class VAICompiler(XGraphBaseCompiler):
             raise ValueError("Unsupported CPU architecture: {}. Supported"
                              " architectures are: 'arm64'")
 
-        warnings.warn("This compilation only works with one network"
-                      " configuration at the moment!!")
-
         q_output = self.xgraph.get_quantizer_output()
         self.netcfgs = {q_key: q_output.get_q_file(q_key)
                         for q_key in q_output.keys()}
         assert(len(self.netcfgs) == 1)
         self.arch = arch
         self.meta = meta
+        self.dcf = dcf
         self.cpu_arch = cpu_arch
         self.work_dir = work_dir
+
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
         self.build_dir = build_dir if build_dir is not None else work_dir
@@ -76,6 +76,7 @@ class VAICompiler(XGraphBaseCompiler):
             os.makedirs(self.build_dir)
         self.mode = mode
         self.c_output = CompilerOutput(name=xgraph.get_name())
+        
 
     def compile(self) -> None:
         """ Start DPUv2 compilation """
@@ -83,15 +84,17 @@ class VAICompiler(XGraphBaseCompiler):
         net_name = list(self.netcfgs.keys())[0]
         netcfg = list(self.netcfgs.values())[0]
 
-        subxg_layers = VAICompiler.xgraph_partitioner\
-            .get_subgraphs(self.xgraph)[0].subgraph_data
+        # We only handle one partition at the moment
+        Xp = VAICompiler.xgraph_partitioner\
+            .get_subgraphs(self.xgraph)[0]
+        subxg_layers = Xp.subgraph_data
         xgraph = VAICompiler.xgraph_factory.build_from_xlayer(subxg_layers)
         # assert xgraph.get_name() == net_name
 
         input_names = xgraph.get_input_names()
         input_shapes = [xgraph.get(in_name).shapes[:]
                         for in_name in input_names]
-        output_names = xgraph.get_output_names()
+        output_names = list(Xp.attrs['__top_tensors'].keys()) # xgraph.get_output_names()
         output_shapes = [xgraph.get(out_name).shapes[:]
                          for out_name in output_names]
 
@@ -100,14 +103,24 @@ class VAICompiler(XGraphBaseCompiler):
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
 
+        #command = """
+        #vai_c_tensorflow \
+        #    --frozen_pb {} \
+        #    --arch {} \
+        #    --output_dir {} \
+        #    --net_name {} \
+        #    --options "{}"
+        #""".format(netcfg, self.arch, self.work_dir, net_name, str(dict()))
+
         command = """
-        vai_c_tensorflow \
+        dnnc-dpuv2 --parser tensorflow\
             --frozen_pb {} \
-            --arch {} \
+            --cpu_arch {} \
             --output_dir {} \
             --net_name {} \
-            --options "{}"
-        """.format(netcfg, self.arch, self.work_dir, net_name, str(dict()))
+            --dcf {}
+        """.format(netcfg, self.cpu_arch, self.work_dir, net_name, self.dcf)
+
 
         logger.info("Command: {}".format(command))
 
@@ -123,31 +136,35 @@ class VAICompiler(XGraphBaseCompiler):
             output = output.decode('utf-8')
 
             logger.info("Output: {}".format(output))
+            logger.info("Output names: {}".format(output_names))
 
             do = DNNCOutput(str(repr(output)))
 
             dpu_input_nodes = do.get_input_nodes()
             dpu_output_nodes = do.get_output_nodes()
+            dpu_output_nodes_on_shapes = do.get_output_nodes_on_shapes()
 
             in_shapes_log = ["{}*{}*{}".format(ishape[1], ishape[2], ishape[3])
                              for ishape in input_shapes]
             out_shapes_log = ["{}*{}*{}".format(os[1], os[2], os[3])
                               for os in output_shapes]
 
-            in_map = {
-                in_name: in_name + ':0'  # Tensorflow -> add :0
-                # in_name: dpu_input_nodes[in_shape_str]
-                for in_name, in_shape_str in
-                zip(input_names, in_shapes_log)
-            }
-            out_map = {
-                out_name: dpu_output_nodes[out_shape_str] + ':0'
-                for out_name, out_shape_str in
-                zip(output_names, out_shapes_log)
-            }
+            in_map = {in_name: in_name + ':0' for in_name, _ in zip(input_names, in_shapes_log)}
+            out_map = {}
 
-            logger.debug("in_map: {}".format(in_map))
-            logger.debug("out_map: {}".format(out_map))
+            for out_name, out_shape_str in zip(output_names, out_shapes_log):
+                # DNNC changes naming
+                dnnc_out_name = do.get_dnnc_str(out_name)
+                if dnnc_out_name in dpu_output_nodes:
+                    out_map[out_name] = dpu_output_nodes[dnnc_out_name]
+                # out_name: dpu_output_nodes[out_shape_str] + ':0'
+                else:
+                    assert len(dpu_output_nodes_on_shapes) == len(output_names),\
+                        "Can't retrieve right out tensor names from DNNC compiler output"
+                    out_map[out_name] = dpu_output_nodes_on_shapes[out_shape_str]
+
+            logger.info("DPU kernel in_map: {}".format(in_map))
+            logger.info("DPU kernel out_map: {}".format(out_map))
 
         if error is not None:
             error = error.decode('utf-8')

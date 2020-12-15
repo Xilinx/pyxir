@@ -12,29 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the relay pyxir frontend
-
-
-"""
+"""Module for testing the relay pyxir frontend"""
 
 import unittest
 import numpy as np
 
-try:
-    # ! To import tvm
-    import pyxir.frontend.tvm
+import pyxir
 
+try:
     import tvm
     from tvm import relay
     from tvm.relay import testing
-
-    from pyxir.frontend.tvm import relay as xf_relay
 
     skip = False
 except Exception as e:
     skip = True
 
+
+if not skip:
+    from pyxir.frontend.tvm import relay as xf_relay
+
+from pyxir.shapes import TupleShape, TensorShape
 
 class TestRelayL0Other(unittest.TestCase):
 
@@ -66,6 +64,67 @@ class TestRelayL0Other(unittest.TestCase):
         assert layers[1].type[0] == 'BiasAdd'
         assert layers[1].shapes == [-1, 4, 2, 2]
         assert 'relay_id' in layers[1].attrs
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_tuple(self):
+        var1 = relay.var("var1", relay.TensorType((-1, 4, 2, 2), "int64"))
+        var2 = relay.var("var2", relay.TensorType((-1, 3, 2, 2), "int64"))
+
+        t = relay.Tuple([var1, var2])
+        net = relay.Function([var1, var2], t)
+
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xg = xf_relay.from_relay(mod, {})
+        layers = xg.get_layers()
+
+        assert layers[0].type[0] == 'Input'
+        assert isinstance(layers[0].attrs['dtype'], str)
+        assert layers[0].attrs['dtype'] == 'int64'
+        assert 'relay_id' in layers[0].attrs
+
+        assert layers[1].type[0] == 'Input'
+        assert isinstance(layers[0].attrs['dtype'], str)
+        assert layers[0].attrs['dtype'] == 'int64'
+        assert 'relay_id' in layers[0].attrs
+
+        assert layers[2].type[0] == 'Tuple'
+        assert layers[2].shapes == TupleShape([[-1, 4, 2, 2], [-1, 3, 2, 2]])
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_tuple_get_item(self):
+        var1 = relay.var("var1", relay.TensorType((-1, 4, 2, 2), "int64"))
+        var2 = relay.var("var2", relay.TensorType((-1, 3, 2, 2), "int64"))
+
+        t = relay.Tuple([var1, var2])
+        tgi = relay.TupleGetItem(t, 0)
+        net = relay.Function([var1, var2], tgi)
+
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xg = xf_relay.from_relay(mod, {})
+        layers = xg.get_layers()
+
+        assert len(layers) == 4
+
+        assert layers[0].type[0] == 'Input'
+        assert isinstance(layers[0].attrs['dtype'], str)
+        assert layers[0].attrs['dtype'] == 'int64'
+        assert 'relay_id' in layers[0].attrs
+
+        assert layers[1].type[0] == 'Input'
+        assert isinstance(layers[0].attrs['dtype'], str)
+        assert layers[0].attrs['dtype'] == 'int64'
+        assert 'relay_id' in layers[0].attrs
+
+        assert layers[2].type[0] == 'Tuple'
+        assert layers[2].shapes == TupleShape([[-1, 4, 2, 2], [-1, 3, 2, 2]])
+
+        assert layers[3].type[0] == 'TupleGetItem'
+        assert layers[3].attrs['index'] == 0
+        assert layers[3].shapes == TensorShape([-1, 4, 2, 2])
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_relay_op(self):

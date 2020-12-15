@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XLayer neural network layers implemented on top of tensorflow
-
-
-"""
+"""Module for XLayer neural network layers implemented on top of tensorflow"""
 
 import os
 import abc
@@ -24,6 +20,8 @@ import math
 import numpy as np
 import tensorflow as tf
 import logging
+
+from typing import List
 
 from ..x_2_tf_registry import rt_register_xlayer_2_tf,\
     rt_register_xlayer_2_tf_factory_func
@@ -43,14 +41,13 @@ logger = logging.getLogger("pyxir")
 
 class ConstantLayer(rt_layer.ConstantLayer, RtLayerTF):
 
-    def init(self):
-        # type: (List[int]) -> None
+    def init(self) -> None:
+        
         self.inpt = self.value
         self.res = self.inpt
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert(len(inpts) == 0)
 
         # dtype = RtLayerTF.dtype_to_tf[self.dtype]
@@ -59,8 +56,8 @@ class ConstantLayer(rt_layer.ConstantLayer, RtLayerTF):
         dtype = RtLayerTF.dtype_to_np[self.dtype]
         return [self.value.astype(dtype)]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
         assert(len(inputs) == 0)
 
         return self.res
@@ -78,14 +75,12 @@ def constant_factory():
 
 class InputLayer(rt_layer.InputLayer, RtLayerTF):
 
-    def init(self):
-        # type: (List[int]) -> None
+    def init(self) -> None:
         self.inpt = self.get_output_tensors([])[0]
         self.res = self.inpt
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert(len(inpts) == 0)
 
         dtype = RtLayerTF.dtype_to_tf[self.dtype]
@@ -93,10 +88,8 @@ class InputLayer(rt_layer.InputLayer, RtLayerTF):
         return [tf.compat.v1.placeholder(dtype, shape=self.input_shapes[0],
                                          name=self.name)]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-        assert(len(inputs) == 1)
-        # return inputs[0]
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Input layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -113,23 +106,21 @@ def input_factory():
 @rt_register_xlayer_2_tf('Output')
 class OutputLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert(len(inpts) == 1)
         return [tf.identity(inpts[0], name=self.name)]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-        assert(len(inputs) == 1)
-        # return inputs[0]
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Output layer expects one output"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -141,22 +132,20 @@ class OutputLayer(rt_layer.BaseLayer, RtLayerTF):
 @rt_register_xlayer_2_tf('StrInput')
 class StrInputLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    def init(self):
-        # type: (List[int]) -> None
+    def init(self) -> None:
+        
         self.inpt = self.get_output_tensors([])[0]
         self.res = self.inpt
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert(len(inpts) == 0)
 
         return [tf.compat.v1.placeholder(tf.string, name=self.name)]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-        assert(len(inputs) == 1)
-        # return inputs[0]
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "StrInput layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -170,12 +159,9 @@ class StrInputLayer(rt_layer.BaseLayer, RtLayerTF):
 
 @rt_register_xlayer_2_tf('Tuple')
 class TupleLayer(rt_layer.BaseLayer, RtLayerTF):
+    """Tuple layer takes input layers and groups them in a tuple output"""
 
-    """
-    Tuple layer takes input layers and groups them in a tuple output
-    """
-
-    def init(self):
+    def init(self) -> None:
         logger.debug("Initializing TupleLayer with shape: {}"
                      .format(self.shape))
 
@@ -188,15 +174,14 @@ class TupleLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors(self.inpt)[0]
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
+        inpts = [tf.identity(i) for i in inpts]
         res = tf.tuple(inpts)
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[List[str]]) -> numpy.ndarray
-        assert(len(inputs) == len(self.inputs))
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == len(self.inputs)
 
         with tf.compat.v1.Session() as sess:
             feed_dict = \
@@ -210,10 +195,9 @@ class TupleLayer(rt_layer.BaseLayer, RtLayerTF):
 
 @rt_register_xlayer_2_tf('TupleGetItem')
 class TupleGetItemLayer(rt_layer.BaseLayer, RtLayerTF):
+    """Tuple layer takes an element from a tuple input"""
 
-    """ Tuple layer takes an element from a tuple input """
-
-    def init(self):
+    def init(self) -> None:
         logger.debug("Initializing TupleGetItemLayer with shape: {}"
                      .format(self.shape))
 
@@ -231,8 +215,7 @@ class TupleGetItemLayer(rt_layer.BaseLayer, RtLayerTF):
 
         self.res = self.get_output_tensors([self.inpt])[0]
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         res = inpts[0][self.index]
 
         if self.transpose:
@@ -240,8 +223,7 @@ class TupleGetItemLayer(rt_layer.BaseLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[List[str]]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         assert len(inputs) == len(self.inpt)
 
         with tf.compat.v1.Session() as sess:
@@ -257,12 +239,8 @@ class TupleGetItemLayer(rt_layer.BaseLayer, RtLayerTF):
 @rt_register_xlayer_2_tf('Variable')
 class VariableLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    constraints = {
-        'non-negativity': lambda x: x
-    }
-
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         """
         """
         self.value = self.data[0]
@@ -283,8 +261,7 @@ class VariableLayer(rt_layer.BaseLayer, RtLayerTF):
             self.res = self.get_output_tensors([], force_trainable=False)[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts, force_trainable=None):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts, force_trainable=None, **kwargs):
         assert(len(inpts) == 0)
 
         trainable = self.trainable if force_trainable is None else\
@@ -293,11 +270,6 @@ class VariableLayer(rt_layer.BaseLayer, RtLayerTF):
             if self.constraint is not None else None
         logger.debug("Variable constraint: {}".format(constraint))
 
-        # TODO
-        # if constraint == 'non-negativity':
-        #    initial_value = np.log(self.value)
-        # else:
-        #    initial_value = self.value
         initial_value = self.value
 
         var = tf.Variable(
@@ -307,14 +279,10 @@ class VariableLayer(rt_layer.BaseLayer, RtLayerTF):
             constraint=constraint
         )
 
-        # if constraint == 'non-negativity':
-        #    var = tf.exp(var)
-
         return [var]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-        assert(len(inputs) == 0)
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 0, "VariableLayer expects no inputs"
 
         with tf.compat.v1.Session() as sess:
             sess.run(tf.compat.v1.global_variables_initializer())

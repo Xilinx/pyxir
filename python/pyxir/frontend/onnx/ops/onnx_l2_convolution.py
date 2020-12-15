@@ -16,15 +16,13 @@
 Module for transforming ONNX L2 operators to XLayer objects
 
 L2: Convolution related operators
-
-
 """
 
 import logging
 import numpy as np
 import pyxir as px
 
-from typing import Dict
+from typing import Dict, List
 
 from pyxir.graph.layer import xlayer_factory as xlf
 from pyxir.graph.layer import XLayer
@@ -38,9 +36,8 @@ logger = logging.getLogger('pyxir')
 @register_onnx_2_xlayer_converter("AveragePool")
 def avg_pool(node: NodeWrapper,
              params: Dict[str, np.ndarray],
-             xmap: Dict[str, XLayer]):
-    """ ONNX AveragePool to XLayer Pooling (Avg) conversion function """
-
+             xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX AveragePool to XLayer Pooling (Avg) conversion function"""
     logger.info("ONNX AveragePool -> XLayer Pooling (Avg)")
 
     assert len(node.get_outputs()) == 1
@@ -104,11 +101,10 @@ def avg_pool(node: NodeWrapper,
 
 
 @register_onnx_2_xlayer_converter("Conv")
-def conv(node, params, xmap):
-    # type: (NodeWrapper, Dict[str, np.ndarray], Dict[str, XLayer])
-    #   -> List[XLayer]
-    """ ONNX Conv to XLayer Conv conversion function """
-
+def conv(node: NodeWrapper,
+         params: Dict[str, np.ndarray],
+         xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Conv to XLayer Conv conversion function"""
     logger.info("ONNX Conv -> XLayer Conv (+ BiasAdd)")
 
     assert len(node.get_outputs()) == 1
@@ -121,7 +117,6 @@ def conv(node, params, xmap):
 
     W_name = bottoms[1]
     wX = xmap[W_name]  # OIHW
-    assert wX.shapes[1] == in_c
 
     B_name = bottoms[2] if len(bottoms) == 3 else None
     bX = xmap[B_name] if len(bottoms) == 3 else None
@@ -143,6 +138,7 @@ def conv(node, params, xmap):
     stride_h, stride_w = strides
 
     channels = wX.shapes[0]
+    assert wX.shapes[1] == in_c // groups
 
     assert auto_pad == 'NOTSET' or pads is None
     if (auto_pad == 'NOTSET' and pads is None) or auto_pad == 'VALID':
@@ -166,7 +162,11 @@ def conv(node, params, xmap):
         pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
         padding = [pad_ht, pad_hb, pad_wl, pad_wr]
     else:
-        padding = pads
+        assert len(pads) % 2 == 0
+        half = len(pads) // 2
+        padding = []
+        for i in range(half):
+            padding.extend([pads[i], pads[i+half]])
 
     # Quant_info (optional)
     vai_quant_in = node_attrs['vai_quant_in']\
@@ -200,11 +200,6 @@ def conv(node, params, xmap):
         vai_quant_biases=vai_quant_biases,
         onnx_id=name
     )
-    # X = xlf.get_xop_factory_func('Convolution')(
-    #     conv_name, iX, wX, kernel_shape, strides,
-    #     padding, dilations, groups, channels,
-    #     'NCHW', 'OIHW', onnx_id=name
-    # )
     res = [X]
 
     if B_name is not None:
@@ -224,20 +219,17 @@ def conv(node, params, xmap):
 @register_onnx_2_xlayer_converter("ConvInteger")
 def conv_integer(node: NodeWrapper,
                  params: Dict[str, np.ndarray],
-                 xmap: Dict[str, XLayer]):
-    """ ONNX Convinteger to XLayer Conv conversion function """
-
+                 xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Convinteger to XLayer Conv conversion function"""
     logger.info("ONNX ConvInteger -> XLayer Conv")
-
     return conv(node, params, xmap)
 
 
 @register_onnx_2_xlayer_converter("ConvTranspose")
 def conv_transpose(node: NodeWrapper,
                    params: Dict[str, np.ndarray],
-                   xmap: Dict[str, XLayer]):
-    """ ONNX ConvTranspose to XLayer Conv2DTranspose conversion function """
-
+                   xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX ConvTranspose to XLayer Conv2DTranspose conversion function"""
     logger.info("ONNX ConvTranspose -> XLayer Conv2DTranspose (+ BiasAdd)")
 
     assert len(node.get_outputs()) == 1
@@ -310,7 +302,7 @@ def conv_transpose(node: NodeWrapper,
         pad_w = stride_w * (in_w - 1) + output_padding[1] + \
             ((kernel_w - 1) * dil_w + 1) - output_shape[1]
 
-        if auto_pads != 'SAME_UPPER':
+        if auto_pad != 'SAME_UPPER':
             pad_ht = pad_h // 2
             pad_hb = pad_h - (pad_h // 2)
             pad_wl = pad_w // 2
@@ -371,9 +363,9 @@ def conv_transpose(node: NodeWrapper,
 
 
 @register_onnx_2_xlayer_converter("Flatten")
-def flatten(node, params, xmap):
-    # type: (NodeWrapper, Dict[str, np.ndarray], Dict[str, XLayer])
-    #   -> List[XLayer]
+def flatten(node: NodeWrapper,
+            params: Dict[str, np.ndarray],
+            xmap: Dict[str, XLayer]) -> List[XLayer]:
     """
     ONNX Flatten to XLayer Flatten or Reshape conversion function
 
@@ -382,7 +374,6 @@ def flatten(node, params, xmap):
     (d_0 X d_1 ... d_(axis-1), d_axis X d_(axis+1) ... X dn).
     See https://github.com/onnx/onnx/blob/master/docs/Operators.md#Flatten
     """
-
     logger.info("ONNX Flatten -> XLayer Flatten/Reshape")
 
     assert len(node.get_outputs()) == 1
@@ -400,18 +391,14 @@ def flatten(node, params, xmap):
     assert axis >= -rank and axis <= rank
 
     if axis == 1 or axis == -(rank-1):
-        X = xlf.get_xop_factory_func('Flatten')(
-            op_name=px.stringify(name),
-            input_layer=iX,
-            onnx_id=name
-        )
+        X = px.ops.batch_flatten(px.stringify(name), [iX], onnx_id=name)
     else:
         shape_1 = int(np.prod(shape[:axis])) if shape[:axis] != [] else 1
         shape_2 = int(np.prod(shape[axis:])) if shape[axis:] != [] else 1
 
         newshape = [shape_1, shape_2]
 
-        X = xlf.get_xop_factory_func('Reshape')(
+        X = px.ops.reshape(
             op_name=px.stringify(name),
             newshape=newshape,
             input_layer=iX,
@@ -422,11 +409,10 @@ def flatten(node, params, xmap):
 
 
 @register_onnx_2_xlayer_converter("GlobalAveragePool")
-def global_avg_pool(node, params, xmap):
-    # type: (NodeWrapper, Dict[str, np.ndarray], Dict[str, XLayer])
-    #   -> List[XLayer]
-    """ ONNX GlobalAveragePool to XLayer Pooling (Avg) conversion function """
-
+def global_avg_pool(node: NodeWrapper,
+                    params: Dict[str, np.ndarray],
+                    xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX GlobalAveragePool to XLayer Pooling (Avg) conversion function"""
     logger.info("ONNX GlobalAveragePool -> XLayer Pooling (Avg)")
 
     assert len(node.get_outputs()) == 1
@@ -462,9 +448,8 @@ def global_avg_pool(node, params, xmap):
 @register_onnx_2_xlayer_converter("GlobalMaxPool")
 def global_max_pool(node: NodeWrapper,
                     params: Dict[str, np.ndarray],
-                    xmap: Dict[str, XLayer]):
-    """ ONNX GlobalMaxPool to XLayer Pooling (Max) conversion function """
-
+                    xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX GlobalMaxPool to XLayer Pooling (Max) conversion function"""
     logger.info("ONNX GlobalMaxPool -> XLayer Pooling (Max)")
 
     assert len(node.get_outputs()) == 1
@@ -500,7 +485,7 @@ def global_max_pool(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("LRN")
 def lrn(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: Dict[str, XLayer]):
+        xmap: Dict[str, XLayer]) -> List[XLayer]:
     return eltwise_any_op("LRN", node, params, xmap)
 
 
@@ -508,8 +493,7 @@ def lrn(node: NodeWrapper,
 def max_pool(node: NodeWrapper,
              params: Dict[str, np.ndarray],
              xmap: Dict[str, XLayer]):
-    """ ONNX MaxPool to XLayer MaxPool conversion function """
-
+    """ONNX MaxPool to XLayer MaxPool conversion function"""
     logger.info("ONNX MaxPool -> XLayer Pooling")
 
     assert len(node.get_outputs()) == 1
@@ -538,7 +522,7 @@ def max_pool(node: NodeWrapper,
         else [1, 1]
     stride_h, stride_w = strides
 
-    if auto_pad != 'NOTSET':
+    if auto_pad != 'NOTSET' and auto_pad != 'VALID':
         raise ValueError("MaxPool autopad attribute not supported but was: {}"
                          .format(auto_pad))
     if storage_order != 0:
@@ -586,9 +570,8 @@ def max_pool(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("MaxRoiPool")
 def max_roi_pool(node: NodeWrapper,
                  params: Dict[str, np.ndarray],
-                 xmap: Dict[str, XLayer]):
-    """ ONNX MaxRoiPool to XLayer AnyOp conversion function """
-
+                 xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX MaxRoiPool to XLayer AnyOp conversion function"""
     logger.info("ONNX MaxRoiPool -> XLayer AnyOp")
 
     assert len(node.get_outputs()) == 1
@@ -618,9 +601,8 @@ def max_roi_pool(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("MaxUnPool")
 def max_unpool(node: NodeWrapper,
                params: Dict[str, np.ndarray],
-               xmap: Dict[str, XLayer]):
-    """ ONNX MaxUnPool to XLayer AnyOp conversion function """
-
+               xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX MaxUnPool to XLayer AnyOp conversion function"""
     logger.info("ONNX MaxPool -> XLayer Pooling")
 
     assert len(node.get_outputs()) == 1
@@ -667,9 +649,8 @@ def max_unpool(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("Pad")
 def pad(node: NodeWrapper,
         params: Dict[str, np.ndarray],
-        xmap: Dict[str, XLayer]):
-    """ ONNX Pad to XLayer Pad conversion function """
-
+        xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Pad to XLayer Pad conversion function"""
     logger.info("ONNX Pad -> XLayer Pad")
 
     assert len(node.get_outputs()) == 1
@@ -690,12 +671,23 @@ def pad(node: NodeWrapper,
     h = len(padding) // 2
     padding = [[padding[i], padding[i + h]] for i in range(h)]
 
+    # Quant_info (optional)
+    vai_quant_in = node_attrs['vai_quant_in']\
+        if 'vai_quant_in' in node_attrs else []
+    vai_quant_out = node_attrs['vai_quant_out']\
+        if 'vai_quant_out' in node_attrs else []
+    vai_quant = node_attrs['vai_quant']\
+        if 'vai_quant' in node_attrs else []
+
     X = px.ops.pad(
         op_name=px.stringify(name),
         input_layer=iX,
         padding=padding,
         pad_value=pad_value,
-        onnx_id=name
+        onnx_id=name,
+        vai_quant=vai_quant,
+        vai_quant_in=vai_quant_in,
+        vai_quant_out=vai_quant_out,
     )
 
     return [X]
@@ -704,16 +696,16 @@ def pad(node: NodeWrapper,
 @register_onnx_2_xlayer_converter("QLinearConv")
 def qlinearconv(node: NodeWrapper,
                 params: Dict[str, np.ndarray],
-                xmap: Dict[str, XLayer]):
-    """ ONNX QLinearConv to XLayer AnyOp conversion function """
+                xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX QLinearConv to XLayer AnyOp conversion function"""
     raise NotImplementedError("Unsupported ONNX QLinearConv operator")
 
 
 @register_onnx_2_xlayer_converter("Upsample")
 def upsample(node: NodeWrapper,
              params: Dict[str, np.ndarray],
-             xmap: Dict[str, XLayer]):
-    """ ONNX Upsample to XLayer Upsampling2D conversion function """
+             xmap: Dict[str, XLayer]) -> List[XLayer]:
+    """ONNX Upsample to XLayer Upsampling2D conversion function"""
 
     logger.info("ONNX Upsample -> XLayer Upsampling2D")
 

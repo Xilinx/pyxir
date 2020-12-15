@@ -65,7 +65,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
                  xgraph,
                  inputs_func,
                  work_dir=os.path.join(os.getcwd(), 'work'),
-                 quant_iter=1):
+                 quant_iter=1,
+                 **kwargs):
 
         super(DECENTQuantizer, self).__init__(xgraph, inputs_func, work_dir)
 
@@ -73,6 +74,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         self.gen = TfGenerator()
         self.partition_graphs = {}
         self.res = {}
+        self.kwargs = kwargs
 
         self.q_output = QuantizerOutput(name=xgraph.get_name())
 
@@ -85,13 +87,13 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         frozen_graph = self.partition_graphs[xgraph.get_name()]
         logger.info("Load frozen graph from: {}".format(frozen_graph))
-        input_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(frozen_graph, "rb") as f:
+        input_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile(frozen_graph, "rb") as f:
             input_graph_def.ParseFromString(f.read())
 
         # input_names = xgraph.get_input_names()
         # output_names = xgraph.get_output_names()
-        logger.debug("Quantization input: {} and output names: {}"
+        logger.info("Quantization input: {} and output names: {}"
                      .format(input_names, output_names))
         input_shapes = [X.shapes.tolist() for X in xgraph.get_input_layers()]
 
@@ -136,7 +138,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
                                subgraphs_only=True,
                                layout='NHWC',
                                batch_size=batch_size,
-                               out_dir=self.work_dir)
+                               out_dir=self.work_dir,
+                               **self.kwargs)
 
         warnings.warn("This quantization only works with one partition and"
                       " only in the beginning of the graph!!")
@@ -168,6 +171,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
            }
 
         self.xgraph.set_quantizer_output(self.q_output)
+        # import pdb; pdb.set_trace()
 
         return q_xgraph
 
@@ -182,8 +186,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         quant_info = []
 
-        input_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(deploy_frozen_graph, "rb") as f:
+        input_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile(deploy_frozen_graph, "rb") as f:
             input_graph_def.ParseFromString(f.read())
 
             for idx, node in enumerate(input_graph_def.node):
@@ -238,8 +242,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         quant_info = []
 
-        input_graph_def = tf.GraphDef()
-        with tf.gfile.GFile(deploy_frozen_graph, "rb") as f:
+        input_graph_def = tf.compat.v1.GraphDef()
+        with tf.io.gfile.GFile(deploy_frozen_graph, "rb") as f:
             input_graph_def.ParseFromString(f.read())
 
             for idx, node in enumerate(input_graph_def.node):

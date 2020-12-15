@@ -24,6 +24,8 @@ import logging
 import warnings
 import numpy as np
 
+from typing import List
+
 from pyxir.shapes import TensorShape
 
 from ..layer.xlayer import defaultXLayer, XLayer
@@ -39,8 +41,7 @@ logger = logging.getLogger("pyxir")
 #######
 
 @xop_register_factory('Cvx')
-def cvx(op_name, input_layer, cvx_key, shape, dtype, **kwargs):
-    # type: (str, XLayer, str, List[int], str) -> XLayer
+def cvx(op_name: str, input_layer: XLayer, cvx_key: str, shape: List[int], dtype: str, **kwargs):
     """
     Create a cvx input XLayer
 
@@ -62,11 +63,6 @@ def cvx(op_name, input_layer, cvx_key, shape, dtype, **kwargs):
 
     shape[0] = -1
     shape = TensorShape(shape)
-
-    # if cvx_key.split("__")[-1].split("-")[0] == 'transpose':
-    #     axes_str = cvx_key.split("__")[-1].split("-")[1]
-    #     t_axes = [0] + [int(axis) + 1 for axis in axes_str.split(",")]
-    #     shape = [shape[axis] for axis in t_axes]
 
     attrs = kwargs
     attrs.update({
@@ -93,8 +89,7 @@ def cvx(op_name, input_layer, cvx_key, shape, dtype, **kwargs):
 #############
 
 @xop_register_factory('YoloReorg')
-def yolo_reorg(op_name, input_layer, stride, layout, **kwargs):
-    # type: (str, XLayer, int, str) -> XLayer
+def yolo_reorg(op_name: str, input_layer: XLayer, stride: int, layout: str, **kwargs) -> XLayer:
     """
     Shuffle and shape transform input data based on stride
 
@@ -146,5 +141,4 @@ def yolo_reorg(op_name, input_layer, stride, layout, **kwargs):
         attrs=attrs,
         targets=[]
     )
-
     return X

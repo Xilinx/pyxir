@@ -13,69 +13,70 @@
 # limitations under the License.
 
 """
-Module for declaring and specifying supported operations for
-DPUCZDX8G zcu104 target.
+Module for declaring and specifying supported operations for the
+DPUCZDX8G ultra96 target.
 """
 
 import math
 import logging
+
 import pyxir
 
 logger = logging.getLogger('pyxir')
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'BatchNorm')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'BatchNorm')
 def batchnorm_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BatchNorm operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
 
-    return channels >= 1 and channels <= 4096
+    return channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'BiasAdd')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'BiasAdd')
 def biasadd_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BiasAdd operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
 
-    return channels >= 1 and channels <= 4096
+    return channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Cast')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Cast')
 def cast_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Cast operator
-        on the DPUCZDX8G-zcu104 target """
+        on the DPUCZDX8G-ultra96 target """
 
     dtype = X.attrs['dtype']
 
     return dtype == 'float32'
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Concat')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Concat')
 def concat_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Concat operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
 
-    return channels >= 1 and channels <= 4096
+    return channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Convolution')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Convolution')
 def conv2d_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2D operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     data_layout = X.attrs['data_layout']
 
@@ -97,19 +98,19 @@ def conv2d_op_support(X, bXs, tXs):
         padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
         padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
         padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in*groups >= 1 and ch_in*groups <= 4096 and\
-        ch_out >= 1 and ch_out <= 4096 and\
-        dilation_h * ch_in <= 4096 and\
+        ch_in >= 1 and ch_in <= 2560 and\
+        ch_out >= 1 and ch_out <= 2560 and\
+        dilation_h * ch_in <= 2560 and\
         (dilation_h == 1 or stride_h == 1) and\
-        dilation_w * ch_in <= 4096 and\
+        dilation_w * ch_in <= 2560 and\
         (dilation_w == 1 or stride_w == 1)
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Conv2DTranspose')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Conv2DTranspose')
 def conv2d_transpose_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2DTranspose operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     data_layout = X.attrs['data_layout']
 
@@ -125,58 +126,56 @@ def conv2d_transpose_op_support(X, bXs, tXs):
 
     return kernel_h >= 1 and kernel_h <= 16 and\
         kernel_w >= 1 and kernel_w <= 16 and\
-        stride_w * ch_out >= 1 and stride_w * ch_out <= 4096 and\
+        stride_w * ch_out >= 1 and stride_w * ch_out <= 2560 and\
         stride_h >= 1 and\
         padding_h_top >= 0 and padding_h_top <= kernel_h - 1 and\
         padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
         padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
         padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in*groups >= 1 and ch_in*groups <= 4096 and\
-        ch_out >= 1 and ch_out <= 4096 and\
-        dilation_h * ch_in <= 4096 and\
+        ch_in >= 1 and ch_in <= 2560 and\
+        ch_out >= 1 and ch_out <= 2560 and\
+        dilation_h * ch_in <= 2560 and\
         (dilation_h == 1 or stride_h == 1) and\
-        dilation_w * ch_in <= 4096 and\
+        dilation_w * ch_in <= 2560 and\
         (dilation_w == 1 or stride_w == 1)
 
 
-# @pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Dense')
+# @pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Dense')
 # def dense_op_support(X, bXs, tXs):
 #     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
 #     """ Check whether we can execute the provided Dense operator
-#         on the zcu104 target """
+#         on the ultra96 target """
 
 #     # TODO out_ch
 
 #     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'DPU')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'DPU')
 def DPUCZDX8G_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided DPU operator
-        on the zcu104 target """
-
-    # TODO out_ch
+        on the ultra96 target """
 
     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Eltwise')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Eltwise')
 def eltwise_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Eltwise operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     # TODO in_ch
 
     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Pad')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Pad')
 def pad_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     if len(tXs) == 1 and tXs[0].type[0] in ['Pooling', 'Convolution']:
         t_data_layout = tXs[0].attrs['data_layout']
@@ -205,11 +204,11 @@ def pad_op_support(X, bXs, tXs):
     return False
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Pooling')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Pooling')
 def pooling_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     data_layout = X.attrs['data_layout']
 
@@ -230,14 +229,14 @@ def pooling_op_support(X, bXs, tXs):
         padding_h_bot >= 0 and padding_h_bot <= 4 and\
         padding_w_left >= 0 and padding_w_left <= 4 and\
         padding_w_right >= 0 and padding_w_right <= 4 and\
-        channels >= 1 and channels <= 4096
+        channels >= 1 and channels <= 2560
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Mean')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Mean')
 def mean_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Mean operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     axes = X.attrs['axes']
     keepdims = X.attrs['keepdims']
@@ -245,11 +244,11 @@ def mean_op_support(X, bXs, tXs):
     return len(axes) == 2 and keepdims
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'LeakyReLU')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'LeakyReLU')
 def leaky_relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided LeakyRelu operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     # TODO: position?
 
@@ -259,11 +258,11 @@ def leaky_relu_op_support(X, bXs, tXs):
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'pReLU')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'pReLU')
 def prelu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided pRelu operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     # TODO: position?
 
@@ -273,46 +272,35 @@ def prelu_op_support(X, bXs, tXs):
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'ReLU')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'ReLU')
 def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     # TODO always?
 
     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'ReLU6')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'ReLU6')
 def relu6_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     # TODO always?
 
     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Scale')
+@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'Scale')
 def scale_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Scale operator
-        on the zcu104 target """
+        on the ultra96 target """
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
 
-    return channels > 1 and channels <= 4096
-
-
-@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Upsampling2D')
-def scale_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided Upsampling2D operator
-        on the zcu104 target """
-
-    method = X.attrs['method']
-    # TODO
-    return method == 'nearest_neighbor'
+    return channels > 1 and channels <= 2560

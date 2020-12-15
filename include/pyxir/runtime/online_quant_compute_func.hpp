@@ -16,13 +16,12 @@
 
 #pragma once
 
-#include "pyxir/opaque_func_registry.hpp"
-#include "pyxir/graph/xgraph.hpp"
-#include "pyxir/common/xbuffer.hpp"
-#include "pyxir/runtime/compute_func.hpp"
-#include "pyxir/io/io.hpp"
-#include "pyxir/runtime/run_options.hpp"
-
+#include "../common/xbuffer.hpp"
+#include "../graph/xgraph.hpp"
+#include "../io/io.hpp"
+#include "../opaque_func_registry.hpp"
+#include "../runtime/compute_func.hpp"
+#include "../runtime/run_options.hpp"
 
 namespace pyxir {
 namespace runtime {
@@ -35,12 +34,27 @@ class OnlineQuantComputeFunc : public IComputeFunc {
       run_options_ = RunOptionsHolder(new RunOptions());
     }
 
-    OnlineQuantComputeFunc(XGraphHolder &xg,
-                           const std::string &target,
+    OnlineQuantComputeFunc(const OnlineQuantComputeFunc &other)
+        : xg_(other.xg_), target_(other.target_),
+          in_tensor_names_(other.in_tensor_names_),
+          out_tensor_names_(other.out_tensor_names_), runtime_(other.runtime_),
+          run_options_(other.run_options_) {
+      init();
+    }
+
+    OnlineQuantComputeFunc(OnlineQuantComputeFunc &&other)
+        : xg_(other.xg_), target_(other.target_),
+          in_tensor_names_(other.in_tensor_names_),
+          out_tensor_names_(other.out_tensor_names_), runtime_(other.runtime_),
+          run_options_(other.run_options_), count_(other.count_),
+          is_target_supported_(other.is_target_supported_),
+          cf_(std::move(other.cf_)), quant_of_(other.quant_of_) {}
+
+    OnlineQuantComputeFunc(XGraphHolder &xg, const std::string &target,
                            const std::vector<std::string> &in_tensor_names,
                            const std::vector<std::string> &out_tensor_names,
                            const std::string &runtime,
-                           RunOptionsHolder const &run_options);
+                           RunOptionsHolder &run_options);
     ~OnlineQuantComputeFunc();
 
     /**
@@ -85,14 +99,10 @@ class OnlineQuantComputeFunc : public IComputeFunc {
     RunOptionsHolder run_options_;
     /** @brief The counter for counting the number of provided inputs */
     int count_ = 0;
-    // If we are compiling for a different runtime we won't switch to the provided runtime
-    //  after quantization and compilation. E.g. this might be set to true when we compile
-    //  for an edge device on an server host machine.
-    // bool compile_only_;
     /** @brief Whether the provided target is supported on this device */
     bool is_target_supported_;
     /** @brief The internal compute function */
-    ComputeFuncHolder cf_ = nullptr;
+    ComputeFuncHolder cf_; //= nullptr;
     /** @brief The inernal quantization function */
     OpaqueFuncHolder quant_of_;
 };

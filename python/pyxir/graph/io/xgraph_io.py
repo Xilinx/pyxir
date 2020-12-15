@@ -23,6 +23,7 @@ import os
 import json
 import h5py
 import logging
+import tempfile
 import numpy as np
 
 import libpyxir as lpx
@@ -111,20 +112,18 @@ class XGraphIO(object):
 
     @classmethod
     def to_string(cls, xgraph: XGraph):
-        """ Return the XGraph in string format """
-        bio = io.BytesIO()
-        h5f = h5py.File(bio, 'w')
+        """Return the XGraph in string format"""
+        bio = tempfile.NamedTemporaryFile() # io.BytesIO()
+        h5f = h5py.File(bio.name, 'w')
 
         d = {}
         cls.__to_json_h5(xgraph, d, h5f)
         h5f.close()
 
         graph_str = json.dumps(d).encode('utf-8')
-        # graph_str = bytes(json.dumps(d), 'utf-8').hex()
-        # data_str = bio.getvalue().decode('latin1')
-        data_str = bio.getvalue() # .decode('latin1') # .encode('utf-8')
+        # data_str = bio.getvalue() # .decode('latin1') # .encode('utf-8')
 
-        # import pdb; pdb.set_trace()
+        data_str = bio.read()
 
         return graph_str, data_str
 
@@ -314,18 +313,13 @@ class XGraphIO(object):
 
     @classmethod
     def from_string(cls, graph_str, data_str):
-        """ Read  serialized XGraph from graph and data string """
-        # import pdb; pdb.set_trace()
-        # ds = data_str.encode('latin1')
-        # ds = bytes.fromhex(data_str)
-        # ds = bytes(data_str, 'utf-8').decode('utf-8').encode('latin1')
+        """Read  serialized XGraph from graph and data string"""
         ds = data_str # .decode('utf-8').encode('latin1')
-        bio = io.BytesIO(ds) # bytes.fromhex(data_str))
-        h5f = h5py.File(bio, 'r')
-        # import pdb; pdb.set_trace()
+        bio = tempfile.NamedTemporaryFile()
+        bio.write(ds) # io.BytesIO(ds) # bytes.fromhex(data_str))
+        h5f = h5py.File(bio.name, 'r')
         json_str = graph_str
-        # json_str = bytes.fromhex(graph_str).decode('utf-8')
-        # json_str = graph_str.encode('latin1')
+        
         net = json.loads(json_str)
         xgraph = cls.__from_json_h5(net, h5f)
 

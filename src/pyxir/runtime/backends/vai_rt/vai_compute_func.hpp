@@ -44,10 +44,12 @@ class VaiComputeFunc {
                    const std::vector<std::string> &in_tensor_names,
                    const std::vector<std::string> &out_tensor_names,
                    const std::string &build_dir);
+    ~VaiComputeFunc();
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
 
+    /** @brief Return whether the give operation type is supported */
     bool is_op_supported(const std::string &op_type)
     {
       return supported_ops_.find(op_type) != supported_ops_.end();
@@ -79,6 +81,12 @@ class VaiComputeFunc {
     DpuFunc dpu_func_;
     /** @brief The DPU layer */
     XLayerHolder dpu_X_;
+
+    // VERBOSE
+    /** @brief Keep track of total time spent in operator() */
+    int64_t total_compute_time_ = 0;
+    /** @brief Keep track of kernel timings */
+    std::vector<int64_t> total_kernel_times_;
 };
 
 } // vai_rt

@@ -12,7 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for DPUCADX8G (former DPUv1) target registration """
+""" Module for DPUCADX8G (former DPUv1) components """
 
-from . import dpu_target
-from . import dpu_op_support

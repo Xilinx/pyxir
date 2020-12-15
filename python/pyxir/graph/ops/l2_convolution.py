@@ -24,6 +24,8 @@ import logging
 import warnings
 import numpy as np
 
+from typing import Dict, List, Any
+
 from pyxir.shapes import TensorShape
 
 from ..layer.xlayer import defaultXLayer, XLayer, BatchData, \
@@ -35,43 +37,19 @@ from ..xop_registry import xop_register_op_layout_transform,\
 logger = logging.getLogger("pyxir")
 
 
-# Flatten
+###########
+# Flatten #
+###########
 
-@xop_register_factory('Flatten')
-def batch_flatten(op_name, input_layer, **kwargs):
-    # type: (str, XLayer) -> XLayer
-    """
-    Create a batch flatten layer
-
-    Arguments
-    ---------
-    op_name: str
-        The name of this batch flatten layer operation
-    input_layer: XLayer
-        The input layer to this batch flatten layer
-    """
+@xop_register('Flatten')
+def batch_flatten(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> Dict[str, List[int]]:
+    """Return Batch Flatten registration information (shape)"""
+    assert len(in_xlayers) == 1, "Batch Flatten expects one input layer"
     flattened_shape = TensorShape(
-        [list(input_layer.shapes)[0]] +
-        [int(np.prod(list(input_layer.shapes)[1:]))]
+        [list(in_xlayers[0].shapes)[0]] +
+        [int(np.prod(list(in_xlayers[0].shapes)[1:]))]
     )
-
-    bottoms = [input_layer.name]
-    attrs = kwargs
-
-    X = XLayer()
-    X = X._replace(
-        name=op_name,
-        type=['Flatten'],
-        # TODO
-        shapes=flattened_shape,
-        sizes=flattened_shape.get_size(),
-        layer=[op_name],
-        tops=[],
-        bottoms=bottoms,
-        attrs=attrs,
-        targets=[])
-
-    return X
+    return {'shape': flattened_shape}
 
 
 #############
@@ -79,10 +57,15 @@ def batch_flatten(op_name, input_layer, **kwargs):
 #############
 
 @xop_register_factory('BatchNorm')
-def batch_norm(op_name, input_layer, mean_layer, variance_layer,
-               gamma_layer, beta_layer, axis, epsilon, **kwargs):
-    # type: (str, XLayer, XLayer, XLayer, XLayer, XLayer, int, float)
-    #   -> XLayer
+def batch_norm(op_name: str,
+               input_layer: XLayer,
+               mean_layer: XLayer,
+               variance_layer: XLayer,
+               gamma_layer: XLayer,
+               beta_layer: XLayer,
+               axis: int,
+               epsilon: float,
+               **kwargs):
     """
     Create a batch normalization parameters layer
 
@@ -125,8 +108,7 @@ def batch_norm(op_name, input_layer, mean_layer, variance_layer,
 
 
 @xop_register_op_transpose_transform('BatchNorm')
-def batchnorm_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
+def batchnorm_transpose_transform(X: XLayer, axes: List[int]) -> None:
     """ Transform batch normalization layer with transpose according to
         provided axes """
 
@@ -141,20 +123,18 @@ def batchnorm_transpose_transform(X, axes):
 ##########
 
 @xop_register_factory('Convolution')
-def conv2d(op_name,
-           input_layer,
-           weights_layer,
-           kernel_size,
-           strides,
-           padding_hw,
-           dilation,
-           groups,
-           channels,
-           data_layout,
-           kernel_layout,
+def conv2d(op_name: str,
+           input_layer: XLayer,
+           weights_layer: XLayer,
+           kernel_size: List[int],
+           strides: List[int],
+           padding_hw: List[int],
+           dilation: List[int],
+           groups: int,
+           channels: int,
+           data_layout: str,
+           kernel_layout: str,
            **kwargs):
-    # type: (str, List[int], List[int], List[int], List[int], int, int, str,
-    #   str, XLayer, XLayer) -> XLayer
     """
     Create a conv2d XLayer
 
@@ -179,7 +159,7 @@ def conv2d(op_name,
     data_layout: str
         The layout of the conv2d layer input (`NCHW` or `NHWC`)
     kernel_layout: str
-        The layout of the conv2d layer kernel (`OIHW` or `HWIO`)
+        The layout of the conv2d layer kernel (`OIHW`, `HWIO` or `OHWI`)
     input_layer: XLayer
         The input layer to this conv2d layer
     weights_layer: XLayer
@@ -192,6 +172,10 @@ def conv2d(op_name,
     assert len(dilation) == 2
     assert len(strides) == 2
     assert len(padding_hw) in [2, 4]
+
+    layout_idx = tuple([data_layout.index(e) for e in 'NCHW'])
+    layout_idx_transpose = tuple(["NCHW".index(e) for e in data_layout])
+    B_idx, C_idx, H_idx, W_idx = layout_idx
 
     bottoms = [input_layer.name]
 
@@ -217,7 +201,7 @@ def conv2d(op_name,
                          " but got: {}".format(len(padding_hw)))
 
     # W is now in OIHW shape
-    in_ch, out_ch = W.shape[1], W.shape[0]
+    in_ch, out_ch = W.shape[1] * groups, W.shape[0]
     logger.debug("-- in_ch: {}, out_ch: {}".format(in_ch, out_ch))
     logger.debug("-- channels: {}".format(channels))
 
@@ -227,10 +211,10 @@ def conv2d(op_name,
     data = ConvData(W, B)
 
     # input layer is always in NCHW by design
-    insize = [input_layer.shapes[2], input_layer.shapes[3]]
+    insize = [input_layer.shapes[H_idx], input_layer.shapes[W_idx]]
     batches = input_layer.shapes[0]
     logger.debug("-- in shape: {}".format(input_layer.shapes))
-    assert(input_layer.shapes[1] == in_ch*groups)
+    assert input_layer.shapes[C_idx] == in_ch
 
     logger.debug("-- padding (t,b,l,r): {}"
                  .format((pad_ht, pad_hb, pad_wl, pad_wr)))
@@ -241,7 +225,7 @@ def conv2d(op_name,
     out_w = \
         int((insize[1] + pad_wl + pad_wr - kernel_size[1]) / strides[1] + 1)
 
-    out_shape = TensorShape([batches, out_ch, out_h, out_w])
+    out_shape = TensorShape([[batches, out_ch, out_h, out_w][i] for i in layout_idx_transpose])
 
     padding_hh = [pad_ht, pad_hb]
     padding_ww = [pad_wl, pad_wr]
@@ -271,7 +255,7 @@ def conv2d(op_name,
         name=op_name,
         type=['Convolution'],
         shapes=out_shape,
-        sizes=out_shape.get_size(),  # [int(out_ch * out_h * out_w)],
+        sizes=out_shape.get_size(),
         data=data,
         layer=[op_name],
         tops=[],
@@ -283,12 +267,10 @@ def conv2d(op_name,
 
 
 @xop_register_op_layout_transform('Convolution')
-def conv2d_layout_transform(X, target_layout):
-    # type: (XLayer, str) -> None
+def conv2d_layout_transform(X: XLayer, target_layout: str) -> None:
     """ Transform layout of provided XLayer to target layout """
 
     layout = X.attrs['data_layout']
-
     axes_transpose = [layout.index(e) for e in target_layout]
 
     # TODO: strides, dilations
@@ -303,22 +285,20 @@ def conv2d_layout_transform(X, target_layout):
 ###################
 
 @xop_register_factory('Conv2DTranspose')
-def conv2d_transpose(op_name,
-                     input_layer,
-                     weights_layer,
-                     kernel_size,
-                     strides,
-                     padding_hw,
-                     dilation,
-                     groups,
-                     channels,
-                     data_layout,
-                     kernel_layout,
-                     **kwargs):
-    # type: (str, XLayer, XLayer, List[int], List[int], List[int],
-    #        List[int], int, int, str, str) -> XLayer
+def conv2d_transpose(op_name: str,
+                     input_layer: XLayer,
+                     weights_layer: XLayer,
+                     kernel_size: List[int],
+                     strides: List[int],
+                     padding_hw: List[int],
+                     dilation: List[int],
+                     groups: int,
+                     channels: int,
+                     data_layout: str,
+                     kernel_layout: str,
+                     **kwargs) -> XLayer:
     """
-    Create a conv2d parameters layer
+    Create a Conv2DTranspose XLayer
 
     Arguments
     ---------
@@ -341,7 +321,7 @@ def conv2d_transpose(op_name,
     data_layout: str
         The layout of the conv2d layer input (`NCHW` or `NHWC`)
     kernel_layout: str
-        The layout of the conv2d layer kernel (`OIHW` or `HWIO`)
+        The layout of the conv2d layer kernel (`OIHW`, `HWIO` or `OHWI`)
     input_layer: XLayer
         The input layer to this conv2d layer
     weights_layer: XLayer
@@ -360,10 +340,12 @@ def conv2d_transpose(op_name,
         W = np.transpose(weights_layer.data[0], (3, 2, 0, 1))
     elif kernel_layout == 'IOHW':
         W = np.transpose(weights_layer.data[0], (1, 0, 2, 3))
+    elif kernel_layout == 'OHWI':
+        W = np.transpose(weights_layer.data[0], (0, 3, 1, 2))
     else:
         raise NotImplementedError("Unsupported kernel layout: {} for"
                                   " convolution: {}, should be one of `OIHW`"
-                                  ", `HWIO` or `IOHW`."
+                                  ", `HWIO`, `IOHW` or `OHWI`."
                                   .format(kernel_layout, op_name))
 
     assert len(padding_hw) in [2, 4]
@@ -377,7 +359,7 @@ def conv2d_transpose(op_name,
                          " but got: {}".format(len(padding_hw)))
 
     # W is now in OIHW shape
-    in_ch, out_ch = W.shape[1], W.shape[0]
+    in_ch, out_ch = W.shape[1] * groups, W.shape[0]
     logger.debug("-- in_ch: {}, out_ch: {}".format(in_ch, out_ch))
     logger.debug("-- channels: {}".format(channels))
 
@@ -438,24 +420,21 @@ def conv2d_transpose(op_name,
         name=op_name,
         type=['Conv2DTranspose'],
         shapes=out_shape,
-        sizes=out_shape.get_size(),  # [int(out_ch * out_h * out_w)],
+        sizes=out_shape.get_size(),
         data=data,
         layer=[op_name],
         tops=[],
         bottoms=bottoms,
         attrs=attrs,
         targets=[])
-
     return X
 
 
 @xop_register_op_layout_transform('Conv2DTranspose')
-def conv2d_transpose_layout_transform(X, target_layout):
-    # type: (XLayer, str) -> None
-    """ Transform layout of provided XLayer to target layout """
+def conv2d_transpose_layout_transform(X: XLayer, target_layout: str) -> None:
+    """Transform layout of provided XLayer to target layout"""
 
     layout = X.attrs['data_layout']
-
     axes_transpose = [layout.index(e) for e in target_layout]
 
     # TODO: strides, dilations
@@ -470,14 +449,13 @@ def conv2d_transpose_layout_transform(X, target_layout):
 ##################
 
 @xop_register_factory('GlobalPooling')
-def global_pool2d(op_name,
-                  input_layer,
-                  pool_type,
-                  layout,
-                  **kwargs):
-    # type: (str, XLayer, str, str) -> XLayer
+def global_pool2d(op_name: str,
+                  input_layer: XLayer,
+                  pool_type: str,
+                  layout: str,
+                  **kwargs) -> XLayer:
     """
-    Create a global pooling 2dparameters layer
+    Create a global pooling XLayer
 
     Arguments
     ---------
@@ -531,7 +509,6 @@ def global_pool2d(op_name,
         tops=[],
         bottoms=[input_layer.name],
         targets=[])
-
     return X
 
 
@@ -540,15 +517,13 @@ def global_pool2d(op_name,
 #######
 
 @xop_register_factory('Pad')
-def pad(op_name,
-        input_layer,
-        padding,
-        pad_value,
-        # layout,
-        **kwargs):
-    # type: (str, List[List[int]],  float, str, XLayer) -> XLayer
+def pad(op_name: str,
+        input_layer: XLayer,
+        padding: List[int],
+        pad_value: float,
+        **kwargs) -> XLayer:
     """
-    Create a padding layer
+    Create a padding XLayer
 
     Arguments
     ---------
@@ -573,7 +548,8 @@ def pad(op_name,
                                   " with {} dims"
                                   .format(len(input_layer.shapes)))
 
-    padding = [list(pad) for pad in padding]
+    unpadded_dims = [[0, 0]] * len(input_layer.shapes[len(padding):])
+    padding = unpadded_dims + [list(pad) for pad in padding]
 
     shape = TensorShape([s + p[0] + p[1]
                          for s, p in zip(input_layer.shapes, padding)])
@@ -590,20 +566,17 @@ def pad(op_name,
         type=['Pad'],
         shapes=shape,
         sizes=shape.get_size(),
-        # data=padding,
         attrs=attrs,
         layer=[op_name],
         tops=[],
         bottoms=[input_layer.name],
         targets=[]
     )
-
     return X
 
 
 @xop_register_op_transpose_transform('Pad')
-def padding_transpose_transform(X, axes):
-    # type: (XLayer, List[int]) -> None
+def padding_transpose_transform(X: XLayer, axes: List[int]) -> None:
     """ Transform padding layer with transpose according to provided axes """
 
     new_shape = [X.shapes[i] for i in axes]
@@ -619,19 +592,18 @@ def padding_transpose_transform(X, axes):
 ###########
 
 @xop_register_factory('Pooling')
-def pool2d(op_name,
-           input_layer,
-           pool_type,
-           pool_size,
-           strides,
-           padding,
-           layout,
-           ceil_mode=False,
-           count_include_pad=False,
-           **kwargs):
-    # type: (str, XLayer, str, List[int], List[int], str, bool) -> XLayer
+def pool2d(op_name: str,
+           input_layer: XLayer,
+           pool_type: str,
+           pool_size: List[int],
+           strides: List[int],
+           padding: List[int],
+           layout: str,
+           ceil_mode: bool = False,
+           count_include_pad: bool = False,
+           **kwargs) -> XLayer:
     """
-    Create a pooling parameters layer
+    Create a pooling XLayer
 
     Arguments
     ---------
@@ -722,8 +694,7 @@ def pool2d(op_name,
         'insize': insize,  # HW
         'outsize': [outsize[1], outsize[0]],  # HW
         'data_layout': layout,
-        'pool_type': pool_type,
-        # 'channels': [channels, channels]
+        'pool_type': pool_type
     })
     if pool_type == 'Avg':
         attrs['count_include_pad'] = count_include_pad
@@ -750,16 +721,13 @@ def pool2d(op_name,
 
 
 @xop_register_op_layout_transform('Pooling')
-def pooling_layout_transform(X, target_layout):
-    # type: (XLayer, str) -> None
+def pooling_layout_transform(X: XLayer, target_layout: str) -> None:
     """ Transform layout of provided XLayer to target layout """
 
     layout = X.attrs['data_layout']
-
     axes_transpose = [layout.index(e) for e in target_layout]
 
     # TODO: strides, dilations
-
     X.attrs['padding'] = [X.attrs['padding'][i] for i in axes_transpose]
     X.attrs['data_layout'] = target_layout
     X.shapes = TensorShape([X.shapes[i] for i in axes_transpose])
@@ -770,10 +738,9 @@ def pooling_layout_transform(X, target_layout):
 ################
 
 @xop_register('Upsampling2D')
-def upsampling2d(attrs, in_xlayers):
-    # type: (str, List[XLayer]) -> XLayer
+def upsampling2d(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> Dict[str, List[int]]:
     """
-    2D Upsampling
+    Create 2D Upsampling XLayer
 
     Scale input tensor along the height and weight axes with provided
     scaling factor
@@ -816,12 +783,10 @@ def upsampling2d(attrs, in_xlayers):
 
 
 @xop_register_op_layout_transform('Upsampling2D')
-def upsampling2d_layout_transform(X, target_layout):
-    # type: (XLayer, str) -> None
+def upsampling2d_layout_transform(X: XLayer, target_layout: str) -> None:
     """ Transform layout of provided Upsampling2D XLayer to target layout """
 
     layout = X.attrs['data_layout']
-
     axes_transpose = [layout.index(e) for e in target_layout]
 
     X.attrs['data_layout'] = target_layout

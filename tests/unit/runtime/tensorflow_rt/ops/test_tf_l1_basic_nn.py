@@ -14,11 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir TF executor
-
-
-"""
+"""Module for testing the pyxir TF executor"""
 
 import unittest
 import numpy as np
@@ -256,13 +252,9 @@ class TestRuntimeTF(unittest.TestCase):
         assert (outpt.shape) == (1, 1, 1, 4)
 
     def test_relu(self):
-
         iX = px.ops.input('input', shape=[1, 1, 4, 4])
-        X = px.ops.relu('test_relu', iX)
-
-        input_shapes = {
-            'input': TensorShape([1, 1, 4, 4])
-        }
+        X = px.ops.relu('test_relu', [iX])
+        input_shapes = {'input': TensorShape([1, 1, 4, 4])}
         inputs = [np.reshape(np.array([[1, 1, 0, -4], [5, 1, 0, -8],
                                        [3, -5, 1, 0], [1, 9, 3, 4]],
                                       dtype=np.float32),
@@ -270,7 +262,7 @@ class TestRuntimeTF(unittest.TestCase):
 
         layers = X_2_TF['ReLU'](X, input_shapes, {})
 
-        assert(len(layers) == 1)
+        assert len(layers) == 1
         outpt = layers[0].forward_exec(inputs)
 
         expected_outpt = np.reshape(np.array([[1, 1, 0, 0.], [5, 1, 0, 0.],

@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "pyxir/pyxir_api.hpp"
-#include "pyxir/graph/xgraph.hpp"
-#include "pyxir/common/px_stream.hpp"
+#include "../common/px_stream.hpp"
+#include "../graph/xgraph.hpp"
+#include "../pyxir_api.hpp"
 
 namespace pyxir {
 
@@ -50,4 +50,4 @@ PX_API void read(XGraphHolder &xg, PxIStringStream &sstream);
  */
 PX_API void read(XGraphHolder &xg, std::istringstream &sstream);
 
-} // pyxir
+} // namespace pyxir

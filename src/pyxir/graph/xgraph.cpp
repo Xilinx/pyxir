@@ -14,10 +14,11 @@
  *  limitations under the License.
 */
 
+#include "pyxir/graph/xgraph.hpp"
+
 #include <functional>
 #include <cassert>
 #include <unordered_set>
-#include <pyxir/graph/xgraph.hpp>
 
 namespace pyxir {
 namespace graph {
@@ -157,5 +158,5 @@ void XGraph::remove(const std::string &xl_name)
   xidx_.erase(xl_name);
 }
 
-} // graph
-} // pyxir
+} // namespace graph
+} // namespace pyxir

@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the XOp factory and property functionality
-
-
-"""
+"""Module for testing the XOp factory and property functionality"""
 
 import unittest
 import numpy as np
+import pyxir as px
 
 from pyxir.graph.layer.xlayer import XLayer
 from pyxir.graph import ops
@@ -185,7 +182,7 @@ class TestL1BasicNN(unittest.TestCase):
             targets=[]
         )
 
-        rX = xlf.get_xop_factory_func('ReLU')('relu1', iX)
+        rX = px.ops.relu('relu1', [iX])
 
         assert rX.type[0] == 'ReLU'
         assert rX.shapes == [1, 2, 4, 4]

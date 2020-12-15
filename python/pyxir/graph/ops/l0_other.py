@@ -234,6 +234,8 @@ def relay_op(attrs, in_xlayers):
     else:
         shape = TensorShape(attrs['relay_shape'][:])
 
+    logger.debug("-- newshape: {}".format(shape))
+
     return {'shape': shape}
 
 
@@ -263,5 +265,7 @@ def any_op(attrs: Dict, in_xlayers: List[XLayer]):
         shape = TupleShape(attrs['any_shape'][:])
     else:
         shape = TensorShape(attrs['any_shape'][:])
+
+    logger.debug("--anyshape: {}".format(shape))
 
     return {'shape': shape}
