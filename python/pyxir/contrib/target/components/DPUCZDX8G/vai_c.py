@@ -44,6 +44,7 @@ class VAICompiler(XGraphBaseCompiler):
                  xgraph,
                  arch,
                  meta,
+                 dcf,
                  cpu_arch='arm64',
                  work_dir=os.path.join(os.getcwd(), 'work'),
                  build_dir=os.getcwd(),
@@ -64,8 +65,10 @@ class VAICompiler(XGraphBaseCompiler):
         assert(len(self.netcfgs) == 1)
         self.arch = arch
         self.meta = meta
+        self.dcf = dcf
         self.cpu_arch = cpu_arch
         self.work_dir = work_dir
+
         if not os.path.exists(self.work_dir):
             os.makedirs(self.work_dir)
         self.build_dir = build_dir if build_dir is not None else work_dir
@@ -73,6 +76,7 @@ class VAICompiler(XGraphBaseCompiler):
             os.makedirs(self.build_dir)
         self.mode = mode
         self.c_output = CompilerOutput(name=xgraph.get_name())
+        
 
     def compile(self) -> None:
         """ Start DPUv2 compilation """
@@ -99,14 +103,24 @@ class VAICompiler(XGraphBaseCompiler):
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
 
+        #command = """
+        #vai_c_tensorflow \
+        #    --frozen_pb {} \
+        #    --arch {} \
+        #    --output_dir {} \
+        #    --net_name {} \
+        #    --options "{}"
+        #""".format(netcfg, self.arch, self.work_dir, net_name, str(dict()))
+
         command = """
-        vai_c_tensorflow \
+        dnnc-dpuv2 --parser tensorflow\
             --frozen_pb {} \
-            --arch {} \
+            --cpu_arch {} \
             --output_dir {} \
             --net_name {} \
-            --options "{}"
-        """.format(netcfg, self.arch, self.work_dir, net_name, str(dict()))
+            --dcf {}
+        """.format(netcfg, self.cpu_arch, self.work_dir, net_name, self.dcf)
+
 
         logger.info("Command: {}".format(command))
 

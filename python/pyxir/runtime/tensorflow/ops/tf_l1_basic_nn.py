@@ -101,7 +101,7 @@ class AddLayer(rt_layer.BaseLayer, RtLayerTF):
         assert len(inpts) == 2
         left, right = inpts[0], inpts[1]
 
-        return [tf.add(left, right)]
+        return [tf.add(left, right, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         
@@ -152,7 +152,7 @@ class BiasAddLayer(rt_layer.BaseLayer, RtLayerTF):
             bias = tf.reshape(bias, tuple(shape_for_broadcast))
         # Else tf broadcasting
 
-        return [tf.add(inpt, bias)]
+        return [tf.add(inpt, bias, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         assert len(inputs) == 2, "BiasAdd layer expects two inputs"
@@ -250,20 +250,20 @@ class DenseLayer(rt_layer.DenseLayer, RtLayerTF):
 
         inpt = tf.expand_dims(inpt, 0) if len(input_shape) == 1 else inpt
 
-        res = tf.add(tf.matmul(inpt, weights), biases)
+        dense_name = self.name if not self.use_relu and len(self.shape) != 1 else self.name + "_Dense"
+        res = tf.add(tf.matmul(inpt, weights), biases, name=self.name)
 
         if self.use_relu:
-            res = tf.nn.relu(res)
+            relu_name = self.name if len(self.shape) != 1 else self.name + "_Relu"
+            res = tf.nn.relu(res, name=relu_name)
 
         if len(self.shape) == 1:
-            res = tf.squeeze(res)
+            res = tf.squeeze(res, self.name)
 
         return [res]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == len(self.input_shapes))
+        assert len(inputs) == len(self.input_shapes)
         feed_dict = {
             self.inpts[i]: inputs[i] for i in range(len(inputs))
         }
@@ -343,7 +343,6 @@ def eltwise_factory():
 class ExpLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        # type: () -> None
         """ Initialize a exponent layer on top of tf.exp operation """
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
@@ -352,13 +351,10 @@ class ExpLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
+        assert len(inpts) == 1, "Exponent layer expects one input"
         return [tf.exp(inpts[0], name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
         assert(len(inputs) == 1)
 
         with tf.compat.v1.Session() as sess:
@@ -373,7 +369,6 @@ class ExpLayer(rt_layer.BaseLayer, RtLayerTF):
 class ExpandDimsLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        # type: () -> None
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
@@ -411,17 +406,12 @@ class PadLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
-
+        assert len(inpts) == 1, "Pad layer expects one input"
         paddings = [list(pad) for pad in self.attrs['padding']]
-
         return [tf.pad(inpts[0], paddings=paddings, mode="CONSTANT", name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Pad layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -434,26 +424,18 @@ class PadLayer(rt_layer.BaseLayer, RtLayerTF):
 class Relu6Layer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        # type: () -> None
-        """
-        Initialize a relu6 layer on top of tf.nn.relu6 operation
-        """
+        """Initialize a relu6 layer on top of tf.nn.relu6 operation"""
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
-
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert len(inpts) == 1
+        assert len(inpts) == 1, "Relu6 layer expects one input"
         return [tf.nn.relu6(inpts[0], name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Relu6 layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -465,7 +447,6 @@ class Relu6Layer(rt_layer.BaseLayer, RtLayerTF):
 class ScaleLayer(rt_layer.ScaleLayer, RtLayerTF):
 
     def init(self) -> None:
-        # type: () -> None
         self.axis = self.attrs['axis']
 
         logger.info("Scale layer, axis: {}".format(self.axis))
@@ -494,8 +475,7 @@ class ScaleLayer(rt_layer.ScaleLayer, RtLayerTF):
         logger.info("Output shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 3)
+        assert len(inpts) == 3, "Scale layer expects three inputs"
 
         inpt, gamma, beta = inpts
         assert gamma.shape == beta.shape
@@ -538,9 +518,8 @@ class ScaleLayer(rt_layer.ScaleLayer, RtLayerTF):
         # )]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == len(self.input_shapes))
+        assert len(inputs) == len(self.input_shapes),\
+            "Scale layer expects {} inputs".format(len(self.input_shapes))
         feed_dict = {
             self.inpts[i]: inputs[i] for i in range(len(inputs))
         }
@@ -560,11 +539,9 @@ def dense_factory():
 
 @rt_register_xlayer_2_tf('Sigmoid')
 class SigmoidLayer(rt_layer.BaseLayer, RtLayerTF):
-
     """ Sigmoid: y = 1 / (1 + exp(-x)) """
 
     def init(self) -> None:
-        # type: () -> None
         """ Initialize a sigmoid layer on top of tf.nn.sigmoid operation
         """
         self.inpt = \
@@ -574,18 +551,12 @@ class SigmoidLayer(rt_layer.BaseLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        # type: (List[tf.Tensor]) -> List[tf.Tensor]
         """ Return Tensorflow sigmoid computation op """
-
-        assert len(inpts) == 1
-
-        return [tf.nn.sigmoid(inpts[0])]
+        assert len(inpts) == 1, "Sigmoid layer expects one input"
+        return [tf.nn.sigmoid(inpts[0], name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert len(inputs) == 1
-
+        assert len(inputs) == 1, "Sigmoid layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -598,21 +569,17 @@ class SigmoidLayer(rt_layer.BaseLayer, RtLayerTF):
 class SoftmaxLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        # type: () -> None
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
-        return [tf.nn.softmax(inpts[0])]
+        assert len(inpts) == 1, "Softmax layer expects one input"
+        return [tf.nn.softmax(inpts[0], name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Softmax layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -623,11 +590,9 @@ class SoftmaxLayer(rt_layer.BaseLayer, RtLayerTF):
 
 @rt_register_xlayer_2_tf('Sub')
 class SubLayer(rt_layer.BaseLayer, RtLayerTF):
-
-    """ Subtract layer with numpy-style broadcasting """
+    """Subtract layer with numpy-style broadcasting"""
 
     def init(self) -> None:
-        # type: () -> None
         assert len(self.inputs) == 2
         logger.debug("Tf Sub init")
 
@@ -643,16 +608,12 @@ class SubLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.debug("Sub res shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert len(inpts) == 2
+        assert len(inpts) == 2, "Subtract layer expects two inputs"
         left, right = inpts[0], inpts[1]
-
-        return [tf.subtract(left, right)]
+        return [tf.subtract(left, right, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-        assert len(inputs) == 2
-
+        assert len(inputs) == 2, "Subtract layer expects two inputs"
         with tf.compat.v1.Session() as sess:
             feed_dict = {self.inpts[0]: inputs[0], self.inpts[1]: inputs[1]}
             return sess.run(self.res, feed_dict=feed_dict)
@@ -666,26 +627,17 @@ class SubLayer(rt_layer.BaseLayer, RtLayerTF):
 class TanhLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
-        # type: () -> None
-        """
-        Initialize a tanh layer on top of tf.tanh operation
-        """
+        """Initialize a tanh layer on top of tf.tanh operation"""
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
-
         self.res = self.get_output_tensors([self.inpt])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        
-        assert(len(inpts) == 1)
-
-        return [tf.tanh(inpts[0])]
+        assert len(inpts) == 1, "Tanh layer expects one input"
+        return [tf.tanh(inpts[0], name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        
-
-        assert(len(inputs) == 1)
-
+        assert len(inputs) == 1, "Tanh layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
