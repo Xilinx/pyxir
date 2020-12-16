@@ -520,15 +520,12 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
         # TODO: hacky way to get in right layout. We possibly have transposes in the
         #   model to get the output in the right but we are retrieving just before
         #   those transposes
-        axes= None
         for idx, ot_name in enumerate(out_tensor_names):
             tXs = xgraph.get_top_layers(ot_name)
             # TODO previous: if len(tXs) == 1 and 'Transpose' in tXs[0].type:
-            if any(['Transpose' in tX.type for tX in tXs]):
-                for tX in tXs:
-                    if 'Transpose' in tX.type:
-                        axes = tX.attrs['axes']
-                outs[idx] = np.transpose(outs[idx], axes=tuple(axes))
+            tp_layers = [tX for tX in tXs if 'Transpose' in tX.type]
+            if len(tp_layers) > 0:
+                outs[idx] = np.transpose(outs[idx], axes=tuple(tp_layers[0].attrs['axes']))
 
         # TODO: output order does not match
         for out, out_tensor in zip(outs, out_tensors):
