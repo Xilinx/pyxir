@@ -56,9 +56,9 @@ def image_resize(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
 
     assert len(in_xlayers) == 1
-
+    assert expr.type_args  != [], "data shape should be populated for operation {}. Use relay.transform.InferType() to resolve".format(op_name)
+    
     layout = expr.attrs.layout
-
     if layout == 'NCHW':
         n,c,h,w = [int(d) for d in expr.type_args[0].shape]
     elif layout == 'NHWC':

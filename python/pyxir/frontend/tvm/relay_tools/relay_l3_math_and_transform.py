@@ -45,12 +45,12 @@ logger = logging.getLogger("pyxir")
 @register_relay_2_xlayer_converter_base('tile')
 def tile(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
-    TVM full to XLayer
+    TVM tile to XLayer
 
     Relay
     -----
-    Type: tvm.relay.full
-    Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.full
+    Type: tvm.relay.tile
+    Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.tile
     Parameters:
         - reps
             The number of times repeating the tensor
