@@ -145,7 +145,7 @@ class TestRelayFrontend(unittest.TestCase):
 
         assert(layers[0].tops == ['data_cvx'])
         assert(layers[1].bottoms == ['data'])
-        assert(layers[1].tops[0][:7] == 'nn_pad-')
+        assert(layers[1].tops[0][:7] == 'nn.pad-')
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_conv2d_transpose(self):

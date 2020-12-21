@@ -409,25 +409,25 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_arange_full_and_reshape(self):
-
         start = relay.expr.const(0.0)
         stop = relay.expr.const(10.0)
         step = relay.expr.const(1.0)
 
         fill_val = relay.expr.const(1.0)
-        fill_shape = [10,1]
+        fill_shape = [10, 1]
+        dtype = 'float32'
 
-        left = relay.arange(start,stop,step,dtype)
-        left = relay.reshape(left,[-1,1])
-        left = relay.reshape(left,[1,-1])
+        left = relay.arange(start, stop, step, dtype)
+        left = relay.reshape(left, [-1, 1])
+        left = relay.reshape(left, [1,-1])
         
-        right = relay.full(fill_val,fill_shape,dtype)
-        right = relay.reshape(right,[1,-1])
+        right = relay.full(fill_val, fill_shape, dtype)
+        right = relay.reshape(right, [1,-1])
 
-        net = relay.multiply(left,right)
+        net = relay.multiply(left, right)
 
         mod = tvm.IRModule.from_expr(net)
-        params={}
+        params = {}
         xgraph = xf_relay.from_relay(mod, params)
         layers = xgraph.get_layers()
 

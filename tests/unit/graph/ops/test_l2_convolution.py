@@ -41,7 +41,7 @@ class TestL2Convolution(unittest.TestCase):
             targets=[]
         )
 
-        sX = px.ops.batch_flatten('flatten1', iX)
+        sX = px.ops.batch_flatten('flatten1', [iX])
 
         assert sX.type[0] == 'Flatten'
         assert sX.shapes == [1, 4]
