@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for registering XOp properties and factories
-
-
-"""
+"""Module for registering XOp properties and factories"""
 
 from .l0_other import *
 from .l1_basic_nn import *

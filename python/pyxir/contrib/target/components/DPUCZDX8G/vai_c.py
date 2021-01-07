@@ -111,6 +111,7 @@ class VAICompiler(XGraphBaseCompiler):
         #    --net_name {} \
         #    --options "{}"
         #""".format(netcfg, self.arch, self.work_dir, net_name, str(dict()))
+        import pdb; pdb.set_trace()
 
         command = """
         dnnc-dpuv2 --parser tensorflow\

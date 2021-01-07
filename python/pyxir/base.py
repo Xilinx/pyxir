@@ -42,8 +42,6 @@ from pyxir.io.api import visualize, save, load, get_xgraph_str
 from pyxir.runtime import runtime_factory
 from pyxir.runtime.base_runtime import BaseRuntime
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
-from pyxir.graph.optimization.optimizers.basic_optimizer \
-    import XGraphBasicOptimizer
 from pyxir.graph.transformers.layout_transformation_pass \
     import XGraphLayoutTransformationPass
 
@@ -84,14 +82,14 @@ def transform_layout(xgraph: XGraph, layout: str):
     return xgraph
 
 
-def partition(xgraph: XGraph, targets: List[str], last_layer: str=None):
-    """ Partition the model for the given targets """
+def partition(xgraph: XGraph, targets: List[str], last_layer: str=None) -> XGraph:
+    """Partition the model for the given targets"""
 
     target_registry.check_targets(targets)
+    target_registry.annotate_ops(xgraph)
+    # import pdb; pdb.set_trace()
 
-    p_xgraph = xgraph_partitioner.partition(
-        xgraph, targets, last_layer
-    )
+    p_xgraph = xgraph_partitioner.partition(xgraph, targets, last_layer)
     return p_xgraph
 
 
@@ -100,8 +98,8 @@ def partition(xgraph: XGraph, targets: List[str], last_layer: str=None):
 def partition_opaque_func(xgraph: XGraph,
                           targets: List[str],
                           last_layer: str = None):
-    """ Expose the XGraph partition function an opaque function
-        so it can be called from both Python and C++ """
+    """Expose the XGraph partition function an opaque function
+       so it can be called from both Python and C++"""
 
     if last_layer == "":
         last_layer = None
@@ -115,7 +113,7 @@ def partition_opaque_func(xgraph: XGraph,
 ######################
 
 def optimize(xgraph: XGraph, target: str, **kwargs) -> XGraph:
-    """ Optimize the XGraph for the given target """
+    """Optimize the XGraph for the given target"""
 
     fancy_logger.banner("START GRAPH OPTIMIZATION FOR TARGET: {}"
                         .format(target))
