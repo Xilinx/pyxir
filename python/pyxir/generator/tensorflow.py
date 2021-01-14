@@ -28,8 +28,6 @@ from pyxir.graph.optimization.optimizers.basic_optimizer \
 from pyxir.runtime.runtime_factory import RuntimeFactory
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
-from pyxir.graph.transformers.layout_transformation_pass \
-    import XGraphLayoutTransformationPass
 
 logger = logging.getLogger('pyxir')
 

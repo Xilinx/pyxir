@@ -442,16 +442,19 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_full(self):
-
         fill_val = relay.expr.const(1.0)
-        fill_shape = [10,1]
+        fill_shape = [10, 1]
         
-        net = relay.full(fill_val,fill_shape,dtype)
-        net = relay.reshape(net,[1,-1])
+        net = relay.full(fill_val, fill_shape, 'float32')
+        net = relay.reshape(net,[1, -1])
         mod = tvm.IRModule.from_expr(net)
         params={}
         xgraph = xf_relay.from_relay(mod, params)
         layers = xgraph.get_layers()
         
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes  == [1]
         assert layers[1].type[0] == 'AnyOp'
-        assert layers[2].shapes  == [1,10]
+        assert layers[1].shapes  == [10, 1]
+        assert layers[2].type[0] == 'Reshape'
+        assert layers[2].shapes  == [1, 10]

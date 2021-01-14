@@ -304,3 +304,14 @@ def scale_op_support(X, bXs, tXs):
     channels = X.shapes[axis]
 
     return channels > 1 and channels <= 4096
+
+
+@pyxir.register_op_support_check('DPUCZDX8G-zcu102', 'Upsampling2D')
+def upsampling_op_support(X, bXs, tXs):
+    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+    """Check whether we can execute the provided Upsampling2D operator
+       on the zcu102 target"""
+
+    method = X.attrs['method']
+    # TODO
+    return method == 'nearest_neighbor'

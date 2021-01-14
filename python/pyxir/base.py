@@ -89,9 +89,7 @@ def partition(xgraph: XGraph, targets: List[str], last_layer: str=None):
 
     target_registry.check_targets(targets)
 
-    p_xgraph = xgraph_partitioner.partition(
-        xgraph, targets, last_layer
-    )
+    p_xgraph = xgraph_partitioner.partition(xgraph, targets, last_layer)
     return p_xgraph
 
 

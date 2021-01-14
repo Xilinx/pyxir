@@ -40,45 +40,7 @@ logger = logging.getLogger("pyxir")
 #####################
 # RELAY EXPRESSIONS #
 #####################
-@register_relay_2_xlayer_converter_base('image.resize')
-def image_resize(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
-    """
-    TVM full to XLayer
-    Relay
-    -----
-    Type: tvm.relay.image
-    Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.image.resize
-    Parameters:
-        - size
-            The out size to which the image will be resized
-        - layout
-            Input layout
-    """
 
-    assert len(in_xlayers) == 1
-    assert expr.type_args  != [], "data shape should be populated for operation {}. Use relay.transform.InferType() to resolve".format(op_name)
-    
-    layout = expr.attrs.layout
-    if layout == 'NCHW':
-        n,c,h,w = [int(d) for d in expr.type_args[0].shape]
-    elif layout == 'NHWC':
-        n,h,w,c = [int(d) for d in expr.type_args[0].shape]
-    else:
-        raise ValueError("The image.resize operation has an unexpected layout."
-                         "provided image layout {} is not supported".format(layout))
-
-    new_h,new_w = [int(d) for d in expr.attrs.size]
-
-    if layout == 'NCHW':
-        newshape = [n,c,new_h,new_w]
-    else:
-        newshape = [n,new_h,new_w,c]
-        
-    logger.debug("tile: {}".format(op_name))    
-    X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
-    logger.debug("-- outshape: {}".format(list(X.shapes)))
-
-    return X
 
 @register_relay_2_xlayer_converter('Function')
 def function(expr: Expr,
