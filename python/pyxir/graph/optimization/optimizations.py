@@ -15,14 +15,15 @@
 """
 Module containing XLayer optimization functions for graph optimization
 passes
-
-
 """
 
 import logging
 import numpy as np
 
-from pyxir.graph.layer import xlayer
+from typing import List
+
+from pyxir.graph import XGraph
+from pyxir.graph.layer import xlayer, XLayer
 from pyxir.graph.xop_registry import XOpRegistry
 
 logger = logging.getLogger("pyxir")

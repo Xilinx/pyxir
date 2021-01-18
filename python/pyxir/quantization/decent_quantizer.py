@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module wrapping DNNDK decent quantizer
-
-
-"""
+"""Module wrapping DNNDK decent quantizer"""
 
 import os
 import json
@@ -141,8 +137,6 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
                                out_dir=self.work_dir,
                                **self.kwargs)
 
-        warnings.warn("This quantization only works with one partition and"
-                      " only in the beginning of the graph!!")
         if len(fs) != 1:
             raise ValueError("DECENT quantization currently only supports"
                              " models with one DPU compatible partition,"

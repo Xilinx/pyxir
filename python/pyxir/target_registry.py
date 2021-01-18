@@ -89,12 +89,18 @@ class TargetRegistry(object):
             target = self.get_target(target_name)
             return target.get_supported_op_checks_names()
 
+        def annotate_ops(self, xg) -> None:
+            """Method for annotating operations in the provided XGraph with supported targets"""
+            for target in self.get_targets():
+                target.annotate_supported_ops(xg)
+
         def register_target(self,
                             target: str,
                             xgraph_optimizer: Callable,
                             xgraph_quantizer: Callable,
                             xgraph_compiler: Callable,
                             xgraph_build_func: Callable,
+                            xgraph_op_support_annotator: Callable = None,
                             skip_if_exists: bool = False):
             """
             Registration of a target and a corresponding xgraph build
@@ -118,13 +124,12 @@ class TargetRegistry(object):
                 xgraph_build_func=xgraph_build_func,
                 xgraph_optimizer=xgraph_optimizer,
                 xgraph_quantizer=xgraph_quantizer,
-                xgraph_compiler=xgraph_compiler
+                xgraph_compiler=xgraph_compiler,
+                xgraph_op_support_annotator=xgraph_op_support_annotator
             )
 
         def unregister_target(self, target: str):
-            """
-            Unregister the provided target
-            """
+            """Unregister the provided target"""
             del self.targets[target]
 
     # storage for the instance reference

@@ -14,8 +14,32 @@
 
 """
 Module for Device (e.g. CPU, DPUCADX8G, DPUCZDX8G) definition
-and functionality 
+and functionality
 """
+
+from typing import Callable
+
+from .graph import XGraph, XLayer
+from .graph.passing import XGraphVisitor, pass_factory
+
+
+class DefaultOpSupportPass(XGraphVisitor):
+    """The default operation support pass"""
+
+    def __init__(self, target: 'Target') -> None:
+        super().__init__()
+        self.target = target
+
+    def visit(self, X: XLayer) -> None:
+        bottom_Xs = self.xgraph.get_bottom_layers(X.name)
+        top_Xs = self.xgraph.get_top_layers(X.name)
+        if self.target.can_execute(X, bottom_Xs, top_Xs):
+            X.targets.append(self.target.name)
+
+
+def default_op_support_annotator(xg: XGraph, target: 'Target') -> None:
+    """Default function for annotating supported operations"""
+    DefaultOpSupportPass(target)(xg)
 
 
 class Target(object):
@@ -41,20 +65,24 @@ class Target(object):
     xgraph_build_func: function
         the build function for transforming a xgraph for target backend
         execution
+    xgraph_op_support_annotator: function
+        the function for annoating supported operations in an XGraph
     """
 
     def __init__(self,
-                 name,
-                 xgraph_optimizer,
-                 xgraph_quantizer,
-                 xgraph_compiler,
-                 xgraph_build_func):
-        #
+                 name: str,
+                 xgraph_optimizer: Callable,
+                 xgraph_quantizer: Callable,
+                 xgraph_compiler: Callable,
+                 xgraph_build_func: Callable,
+                 xgraph_op_support_annotator: Callable = None):
         self.name = name
         self.xgraph_optimizer = xgraph_optimizer
         self.xgraph_quantizer = xgraph_quantizer
         self.xgraph_compiler = xgraph_compiler
         self.xgraph_build_func = xgraph_build_func
+        self.xgraph_op_support_annotator = xgraph_op_support_annotator \
+            if xgraph_op_support_annotator is not None else default_op_support_annotator
 
         self.xop_2_check_func = {}
 
@@ -90,6 +118,10 @@ class Target(object):
         """ Return names of operations that have a registered op support check
         """
         return list(self.xop_2_check_func.keys())
+
+    def annotate_supported_ops(self, xg: XGraph) -> None:
+        """Method for annotating supported operations in an XGraph"""
+        self.xgraph_op_support_annotator(xg, self)
 
     def can_execute(self, X, bottom_Xs, top_Xs):
         # type: (XLayer, List[XLayer], List[XLayer]) -> boolean

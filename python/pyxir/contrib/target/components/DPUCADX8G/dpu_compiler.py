@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module wrapping DNNDK dnnc compiler
-
-
-"""
+"""Module wrapping DNNDK dnnc compiler"""
 
 import os
 import json

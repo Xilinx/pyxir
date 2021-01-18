@@ -163,6 +163,18 @@ def eltwise_op_support(X, bXs, tXs):
     return True
 
 
+@pyxir.register_op_support_check('DPUCADX8G', 'Maximum')
+def maximum_op_support(X, bXs, tXs):
+    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+    """Check whether we can execute the provided Maximum operator
+        on the DPUCADX8G target
+
+    Return true if part of leaky relu pattern    
+    """
+    # check whether part of leaky relu
+    return 'patterns' in X.attrs and 'LeakyReLU' in X.attrs['patterns']
+
+
 @pyxir.register_op_support_check('DPUCADX8G', 'Pad')
 def pooling_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
@@ -278,8 +290,8 @@ def scale_op_support(X, bXs, tXs):
 
     axis = X.attrs['axis']
     channels = X.shapes[axis]
-
-    return axis != -1 and channels > 1 and channels <= 4096
+    # axis != -1 and 
+    return channels > 1 and channels <= 4096
 
 
 @pyxir.register_op_support_check('DPUCADX8G', 'Upsampling2D')

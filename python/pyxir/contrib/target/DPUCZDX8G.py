@@ -17,6 +17,7 @@ import pyxir
 
 from .components.DPUCZDX8G.common import xgraph_dpu_quantizer
 from .components.DPUCZDX8G.common import xgraph_dpu_optimizer
+from .components.DPUCZDX8G.common import xgraph_dpu_op_support_annotator
 from .components.DPUCZDX8G.ultra96 import xgraph_dpu_ultra96_build_func
 from .components.DPUCZDX8G.ultra96 import xgraph_dpu_ultra96_compiler
 from .components.DPUCZDX8G.zcu102 import xgraph_dpu_zcu102_build_func
@@ -50,7 +51,8 @@ pyxir.register_target('DPUCZDX8G-zcu104',
                       xgraph_dpu_optimizer,
                       xgraph_dpu_quantizer,
                       xgraph_dpu_zcu104_compiler,
-                      xgraph_dpu_zcu104_build_func)
+                      xgraph_dpu_zcu104_build_func,
+                      xgraph_dpu_op_support_annotator)
 
 # Register op support
 from .components.DPUCZDX8G import zcu104_op_support

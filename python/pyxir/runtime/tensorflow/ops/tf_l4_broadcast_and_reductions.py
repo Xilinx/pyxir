@@ -33,6 +33,41 @@ from ... import rt_layer
 logger = logging.getLogger("pyxir")
 
 
+#######
+# Add #
+#######
+
+@rt_register_xlayer_2_tf('Maximum')
+class MaximumLayer(rt_layer.BaseLayer, RtLayerTF):
+    """Maximum layer with numpy-style broadcasting"""
+
+    def init(self) -> None:
+        assert len(self.inputs) == 2
+        logger.debug("Maximum START")
+
+        self.left = \
+            tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
+                                     shape=self.input_shapes[0])
+        self.right = \
+            tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
+                                     shape=self.input_shapes[1])
+
+        self.inpts = [self.left, self.right]
+        self.res = self.get_output_tensors(self.inpts)[0]
+        logger.debug("Maximum res shape: {}".format(self.res.shape))
+
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        assert len(inpts) == 2
+        left, right = inpts[0], inpts[1]
+        return [tf.maximum(left, right, name=self.name)]
+
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 2
+        with tf.compat.v1.Session() as sess:
+            feed_dict = {self.inpts[0]: inputs[0], self.inpts[1]: inputs[1]}
+            return sess.run(self.res, feed_dict=feed_dict)
+
+
 ########
 # Mean #
 ########
@@ -48,7 +83,6 @@ class MeanLayer(rt_layer.BaseLayer, RtLayerTF):
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
         self.res = self.get_output_tensors([self.inpt])[0]
-
         logger.info("Output shape: {}".format(self.res.shape))
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
