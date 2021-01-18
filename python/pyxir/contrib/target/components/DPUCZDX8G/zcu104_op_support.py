@@ -308,7 +308,7 @@ def scale_op_support(X, bXs, tXs):
 
 
 @pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Upsampling2D')
-def scale_op_support(X, bXs, tXs):
+def upsampling_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Upsampling2D operator
         on the zcu104 target """

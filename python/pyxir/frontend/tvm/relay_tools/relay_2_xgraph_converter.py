@@ -22,6 +22,8 @@ from pyxir.shared import fancy_logging
 from pyxir.graph.layer import xlayer_factory
 from pyxir.graph.optimization.optimizers.transposes_optimizer\
     import XGraphTransposesOptimizer
+from pyxir.graph.transformers.layout_transformation_pass \
+    import XGraphLayoutTransformationPass
 
 from .util import Schedule
 from ..base import BaseConverter
@@ -127,6 +129,10 @@ class Relay2XGraphConverter(BaseConverter):
             name='relay_xgraph',
             blobs=False
         )
+
+        # TODO remove this layout transformer
+        layout_transform_pass = XGraphLayoutTransformationPass('NCHW')
+        xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
 
         # Merge transpose layers
         t_optimizer = XGraphTransposesOptimizer(xgraph)

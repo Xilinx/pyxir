@@ -61,7 +61,7 @@ inline void pxWarningMsg(const std::string &msg, const char *fname, int lineno)
 inline bool is_verbose() {
   const char* px_verbose_flag = std::getenv("PX_VERBOSE");
   if (px_verbose_flag) {
-    std::string verbose = std::string();
+    std::string verbose = std::string(px_verbose_flag);
     return verbose == "True" || verbose == "true" || verbose == "1";
   }
   return false;

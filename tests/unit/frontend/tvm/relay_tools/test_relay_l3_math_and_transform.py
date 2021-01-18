@@ -404,3 +404,57 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         assert layers[0].type[0] == 'Constant'
         assert layers[1].type[0] == 'AnyOp'
         assert layers[1].shapes == [1, 6, 4, 4]
+
+
+        
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_arange_full_and_reshape(self):
+        start = relay.expr.const(0.0)
+        stop = relay.expr.const(10.0)
+        step = relay.expr.const(1.0)
+
+        fill_val = relay.expr.const(1.0)
+        fill_shape = [10, 1]
+        dtype = 'float32'
+
+        left = relay.arange(start, stop, step, dtype)
+        left = relay.reshape(left, [-1, 1])
+        left = relay.reshape(left, [1,-1])
+        
+        right = relay.full(fill_val, fill_shape, dtype)
+        right = relay.reshape(right, [1,-1])
+
+        net = relay.multiply(left, right)
+
+        mod = tvm.IRModule.from_expr(net)
+        params = {}
+        xgraph = xf_relay.from_relay(mod, params)
+        layers = xgraph.get_layers()
+
+        assert len(layers)       == 10
+        assert layers[0].type[0] == 'Constant'
+        assert layers[3].type[0] == 'AnyOp'
+        assert layers[7].type[0] == 'AnyOp'
+        assert layers[5].shapes  == [1,10]
+        assert layers[8].shapes  == [1,10]
+
+
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_full(self):
+        fill_val = relay.expr.const(1.0)
+        fill_shape = [10, 1]
+        
+        net = relay.full(fill_val, fill_shape, 'float32')
+        net = relay.reshape(net,[1, -1])
+        mod = tvm.IRModule.from_expr(net)
+        params={}
+        xgraph = xf_relay.from_relay(mod, params)
+        layers = xgraph.get_layers()
+        
+        assert layers[0].type[0] == 'Constant'
+        assert layers[0].shapes  == [1]
+        assert layers[1].type[0] == 'AnyOp'
+        assert layers[1].shapes  == [10, 1]
+        assert layers[2].type[0] == 'Reshape'
+        assert layers[2].shapes  == [1, 10]
