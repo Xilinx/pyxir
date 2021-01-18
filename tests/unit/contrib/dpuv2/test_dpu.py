@@ -49,6 +49,7 @@ class TestDPUContrib(unittest.TestCase):
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu102')
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
         # TestDPUContrib.target_registry.unregister_target('dpuv2-ultra96')
+        # TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
 
     def test_supported_ops(self):
         # ultra96_ops = TestDPUContrib.target_registry\

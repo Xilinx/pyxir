@@ -116,15 +116,18 @@ class TestRelayL10TemporaryOperationConversions(unittest.TestCase):
         layers = xgraph.get_layers()
 
         assert layers[0].type[0] == 'Input'
-        assert layers[1].type[0] == 'Pooling'
-        assert layers[1].shapes.tolist() == [-1, 6, 6, 4]
-        assert layers[1].attrs['padding'] == [[0, 0], [0, 0], [0, 0], [0, 0]]
-        assert layers[1].attrs['insize'] == [6, 6]
-        assert layers[1].attrs['outsize'] == [6, 6]
-        assert layers[1].attrs['data_layout'] == 'NHWC'
-        assert layers[1].attrs['strides'] == [1, 1]
-        assert layers[1].attrs['kernel_size'] == [1, 1]
-        assert layers[1].attrs['pool_type'] == 'Avg'
+        assert layers[0].shapes.tolist() == [-1, 6, 6, 4]
+        assert layers[1].type[0] == 'Transpose'
+        assert layers[1].shapes.tolist() == [-1, 4, 6, 6]
+        assert layers[2].type[0] == 'Pooling'
+        assert layers[2].shapes.tolist() == [-1, 4, 6, 6]
+        assert layers[2].attrs['padding'] == [[0, 0], [0, 0], [0, 0], [0, 0]]
+        assert layers[2].attrs['insize'] == [6, 6]
+        assert layers[2].attrs['outsize'] == [6, 6]
+        assert layers[2].attrs['data_layout'] == 'NCHW'
+        assert layers[2].attrs['strides'] == [1, 1]
+        assert layers[2].attrs['kernel_size'] == [1, 1]
+        assert layers[2].attrs['pool_type'] == 'Avg'
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_nn_adaptive_avg_pool2d_4(self):
@@ -146,15 +149,16 @@ class TestRelayL10TemporaryOperationConversions(unittest.TestCase):
         layers = xgraph.get_layers()
 
         assert layers[0].type[0] == 'Input'
-        assert layers[1].type[0] == 'Pooling'
-        assert layers[1].shapes.tolist() == [-1, 1, 1, 4]
-        assert layers[1].attrs['padding'] == [[0, 0], [0, 0], [0, 0], [0, 0]]
-        assert layers[1].attrs['insize'] == [5, 5]
-        assert layers[1].attrs['outsize'] == [1, 1]
-        assert layers[1].attrs['data_layout'] == 'NHWC'
-        assert layers[1].attrs['strides'] == [5, 5]
-        assert layers[1].attrs['kernel_size'] == [5, 5]
-        assert layers[1].attrs['pool_type'] == 'Avg'
+        assert layers[1].type[0] == 'Transpose'
+        assert layers[2].type[0] == 'Pooling'
+        assert layers[2].shapes.tolist() == [-1, 4, 1, 1]
+        assert layers[2].attrs['padding'] == [[0, 0], [0, 0], [0, 0], [0, 0]]
+        assert layers[2].attrs['insize'] == [5, 5]
+        assert layers[2].attrs['outsize'] == [1, 1]
+        assert layers[2].attrs['data_layout'] == 'NCHW'
+        assert layers[2].attrs['strides'] == [5, 5]
+        assert layers[2].attrs['kernel_size'] == [5, 5]
+        assert layers[2].attrs['pool_type'] == 'Avg'
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_slice_like(self):

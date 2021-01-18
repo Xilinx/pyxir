@@ -1,3 +1,5 @@
+
+
 # Copyright 2020 Xilinx Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -369,9 +371,7 @@ def var(expr: Expr,
     # Create XLayer
     name = expr.name_hint
     logger.debug("-- name: {}".format(name))
-    shape = list(expr.type_annotation.shape)
-
-    shape = [int(shape[i].value) for i in range(len(shape))]
+    shape = [ int(s.value) for s in list(expr.type_annotation.shape)]
     dtype = str(expr.type_annotation.dtype)
     logger.debug("-- shape: {}".format(shape))
 
@@ -432,8 +432,9 @@ def relay_op(op_name: str, expr: Expr, in_xlayers: List[XLayer]):
             ty = expr.type_args[0]
         else:
             raise e
+        
     if isinstance(ty, relay.ty.TensorType):
-        relay_shape = TensorShape([int(i) for i in list(ty.shape)])
+        relay_shape = TensorShape([int(s.value) for s in list(ty.shape)])
         dtype = str(ty.dtype)
     else:
         relay_shape = TupleShape(
