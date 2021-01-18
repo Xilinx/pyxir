@@ -107,6 +107,7 @@ class TestQuantSimPass(unittest.TestCase):
                 attrs={
                     'data_layout': 'NCHW',
                     'kernel_layout': 'OIHW',
+                    'kernel_size': [2, 2],
                     'shape': [1, 2, 3, 3],
                     'padding': [[0, 0], [0, 0], [0, 0], [0, 0]],
                     'strides': [1, 1],

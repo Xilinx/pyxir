@@ -513,19 +513,22 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
         inputs = {it_name: it.to_numpy()
                   for it_name, it in zip(in_tensor_names, in_tensors)}
 
-        outs = rt_mod.run(inputs, out_tensor_names)
 
+        outs = rt_mod.run(inputs, out_tensor_names)
         # TODO: hacky way to get in right layout. We possibly have transposes in the
         #   model to get the output in the right but we are retrieving just before
         #   those transposes
         for idx, ot_name in enumerate(out_tensor_names):
             tXs = xgraph.get_top_layers(ot_name)
             # TODO previous: if len(tXs) == 1 and 'Transpose' in tXs[0].type:
-            if any(['Transpose' in tX.type for tX in tXs]):
-                outs[idx] = np.transpose(outs[idx], axes=tuple(tXs[0].attrs['axes']))
+            tp_layers = [tX for tX in tXs if 'Transpose' in tX.type]
+            if len(tp_layers) > 0:
+                outs[idx] = np.transpose(outs[idx], axes=tuple(tp_layers[0].attrs['axes']))
 
+        # TODO: output order does not match
         for out, out_tensor in zip(outs, out_tensors):
             out_tensor.copy_from(out)
+            
 
     # Set the internal function in the rt_cpu_callback OpaqueFunc
     rt_cpu_callback.set_func(rt_func, [TypeCode.vXBuffer, TypeCode.vXBuffer])

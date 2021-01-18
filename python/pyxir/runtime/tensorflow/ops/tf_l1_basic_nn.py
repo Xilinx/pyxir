@@ -309,7 +309,7 @@ class ElementwiseLayer(rt_layer.BaseLayer, RtLayerTF):
         self.inpts = [left, right]
         self.res = self.get_output_tensors(self.inpts)[0]
 
-    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+    def get_output_tensors(self, inpts: List[tf.Tensor], override_name = None, **kwargs) -> tf.Tensor:
         
         assert len(inpts) == 2
 
@@ -317,7 +317,9 @@ class ElementwiseLayer(rt_layer.BaseLayer, RtLayerTF):
         inpt0, inpt1 = tf.cast(inpts[0], tf.float32), \
             tf.cast(inpts[1], tf.float32)
 
-        return [tf.add(inpt0, inpt1, name=self.name)]
+        name = self.name if override_name is None else override_name
+
+        return [tf.add(inpt0, inpt1, name=name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         
