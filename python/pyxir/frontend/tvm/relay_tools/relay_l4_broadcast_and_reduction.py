@@ -97,6 +97,25 @@ def mean(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     logger.debug("-- outshape: {}".format(list(X.shapes)))
     return X
 
+    
+@register_relay_2_xlayer_converter_base('maximum')
+def maximum(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+    """
+    Elementwise maximum of two input layers
+
+    Relay
+    -----
+    Type: tvm.relay.maximum
+    Ref: https://docs.tvm.ai/api/python/relay/index.html
+    Parameters:
+        - lhs (relay.Expr)
+            The left hand side input data
+        - rhs (relay.Expr)
+            The right hand side input data
+    """
+    X = px.ops.maximum(op_name, in_xlayers, relay_id=[hash(expr)])
+    return X
+
 
 @register_relay_2_xlayer_converter_base('strided_slice')
 def strided_slice(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:

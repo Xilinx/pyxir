@@ -26,7 +26,7 @@ import numpy as np
 
 from typing import Dict, List, Any
 
-from pyxir.shapes import TensorShape
+from pyxir.shapes import TensorShape, get_numpy_broadcasted_shape
 
 from ..layer.xlayer import defaultXLayer, XLayer
 from ..layer.xlayer_factory import xop_register_factory, xop_register
@@ -75,6 +75,34 @@ def greater(attrs, in_xlayers):
     shape = TensorShape(list(reversed(reversed_shape)))
 
     return {'shape': shape}
+
+
+###########
+# Maximum #
+###########
+
+@xop_register('Maximum')
+def maximum(attrs: Dict, in_xlayers: List[XLayer]):
+    """Return numpy-style division layer registration information (shape)
+       NOTE: https://docs.scipy.org/doc/numpy/user/basics.broadcasting.html"""
+
+    assert len(in_xlayers) == 2
+    lX, rX = in_xlayers
+    l_shape = lX.shapes[:]
+    r_shape = rX.shapes[:]
+
+    broadcast_shape = get_numpy_broadcasted_shape(l_shape, r_shape)
+    shape = TensorShape(broadcast_shape)
+
+    return {'shape': shape}
+
+
+@xop_register_op_transpose_transform('Maximum')
+def maximum_transpose_transform(X: XLayer, axes: List[int]):
+    """Transform maximum layer with transpose according to
+       provided axes"""
+    new_shape = TensorShape([X.shapes[i] for i in axes])
+    X.shapes[:] = new_shape
 
 
 ########

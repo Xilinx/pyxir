@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Graph level module
-
-
-"""
+"""Graph level module"""
 
 from . import ops
 from .layer import XLayer

@@ -172,6 +172,17 @@ def eltwise_op_support(X, bXs, tXs):
     return True
 
 
+@pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Maximum')
+def maximum_op_support(X, bXs, tXs):
+    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+    """Check whether we can execute the provided Maximum operator
+        on the zcu104 target
+
+    Return true if part of leaky relu pattern    
+    """
+    # check whether part of leaky relu
+    return 'patterns' in X.attrs and 'LeakyReLU' in X.attrs['patterns']
+
 @pyxir.register_op_support_check('DPUCZDX8G-zcu104', 'Pad')
 def pad_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean

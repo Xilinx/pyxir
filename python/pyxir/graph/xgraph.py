@@ -12,12 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
-"""
-Module for XGraph definition
-
-
-"""
+"""Module for XGraph data structure"""
 
 import copy
 import logging
@@ -27,7 +22,7 @@ import libpyxir as lpx
 from .layer.xlayer import XLayer
 from .layer.xattr_dict import XAttrDict
 from .schedule import Schedule
-from pyxir.target_registry import TargetRegistry
+# from pyxir.target_registry import TargetRegistry
 from pyxir.shared.vector import StrVector
 from pyxir.shared.quantizer_output import QuantizerOutput
 
@@ -36,7 +31,7 @@ logger = logging.getLogger('pyxir')
 
 class XGraph(object):
 
-    target_registry = TargetRegistry()
+    # target_registry = TargetRegistry()
 
     """
     The XGraph data structure for storing the model graph, accessing properties
@@ -194,10 +189,9 @@ class XGraph(object):
         for t_X in top_Xs:
             self.__setup_targets_for_X(t_X)
 
-    def insert(self, X):
-        # type: (XLayer) -> None
-        """ Insert the provided XLayer object in the graph between
-            two other layers """
+    def insert(self, X: XLayer) -> None:
+        """Insert the provided XLayer object in the graph between
+            two other layers"""
 
         if len(X.bottoms) != 1 or len(X.tops) != 1:
             raise ValueError("Undefined behaviour: can't insert a node if"
@@ -396,11 +390,17 @@ class XGraph(object):
     # HELPER METHODS #
     ##################
 
+    def copy_meta_attrs(self, other: 'XGraph') -> None:
+        self.meta_attrs = other.meta_attrs.to_dict()
+        self.quantizer_output = other.quantizer_output
+        self.compiler_output = other.compiler_output
+
     def copy(self):
         xg = XGraph(self.get_name())
-        xg.meta_attrs = self.meta_attrs.to_dict()
-        xg.quantizer_output = self.quantizer_output
-        xg.compiler_output = self.compiler_output
+        # xg.meta_attrs = self.meta_attrs.to_dict()
+        # xg.quantizer_output = self.quantizer_output
+        # xg.compiler_output = self.compiler_output
+        xg.copy_meta_attrs(self)
         for X in self.get_layers():
             # Make sure top are empty to be able to add layer
             # TODO: slow? how many copies are made in total?
@@ -464,22 +464,20 @@ class XGraph(object):
 
         pydot_tools.visualize(pdg, outputfile)
 
-    def __setup_targets_for_X(self, X):
-        # type: (XLayer) -> None
-        """
-        Setup the supported targets for the provided XLayer
-        """
+    def __setup_targets_for_X(self, X: XLayer) -> None:
+        """Setup the supported targets for the provided XLayer"""
         # Check with registered targets, which device can execute
         #   this XLayer and add those targets to the XLayer device
         #   attribute
-        X.targets = []
+        pass
+        # X.targets = []
 
-        bottom_Xs = self.get_bottom_layers(X.name)
-        top_Xs = self.get_top_layers(X.name)
+        # bottom_Xs = self.get_bottom_layers(X.name)
+        # top_Xs = self.get_top_layers(X.name)
 
-        for device in XGraph.target_registry.get_targets():
-            if device.can_execute(X, bottom_Xs, top_Xs):
-                X.targets.append(device.name)
+        # for device in XGraph.target_registry.get_targets():
+        #     if device.can_execute(X, bottom_Xs, top_Xs):
+        #         X.targets.append(device.name)
 
     #########################
     # __*__ IMPLEMENTATIONS #

@@ -20,6 +20,7 @@ from .components.DPUCADX8G.dpu_target import xgraph_dpu_build_func
 from .components.DPUCADX8G.dpu_target import xgraph_dpu_optimizer
 from .components.DPUCADX8G.dpu_target import xgraph_dpu_compiler
 from .components.DPUCADX8G.dpu_target import xgraph_dpu_quantizer
+from .components.DPUCADX8G.dpu_target import xgraph_dpu_op_support_annotator
 from .components.DPUCADX8G.dpu_target import DPULayer
 
 
@@ -28,7 +29,8 @@ pyxir.register_target('DPUCADX8G',
                       xgraph_dpu_optimizer,
                       xgraph_dpu_quantizer,
                       xgraph_dpu_compiler,
-                      xgraph_dpu_build_func)
+                      xgraph_dpu_build_func,
+                      xgraph_dpu_op_support_annotator)
 
 # Register layer
 pyxir.register_op('cpu-np', 'DPU', base.get_layer(DPULayer))

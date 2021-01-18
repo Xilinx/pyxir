@@ -11,12 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Module for pattern matching"""
 
-"""Module for registering XOp properties and factories"""
-
-from .l0_other import *
-from .l1_basic_nn import *
-from .l2_convolution import *
-from .l3_math_and_transformations import *
-from .l4_broadcast_and_reductions import *
-from .l5_vision import *
+from .patterns import *
