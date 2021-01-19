@@ -39,5 +39,13 @@ REGISTER_RUNTIME_FACTORY_IMPL(pyxir::runtime::pxCpuNpRuntimeModule)
   )
   .set_supported_targets(pyxir::runtime::cpuTargets);
 
+REGISTER_RUNTIME_FACTORY_IMPL(pyxir::runtime::pxDecentQSimRuntimeModule)
+  .set_impl(
+    new pyxir::runtime::DefaultRuntimeModuleFactoryImpl(
+        pyxir::runtime::pxDecentQSimRuntimeModule,
+        pyxir::runtime::cpuTargets)
+  )
+  .set_supported_targets(pyxir::runtime::cpuTargets);
+
 } // namespace runtime
 } // namespace pyxir

@@ -29,7 +29,7 @@
 #define STR_CONCAT_(__x, __y) __x##__y
 #define STR_CONCAT(__x, __y) STR_CONCAT_(__x, __y)
 
-inline void pxDebugMsg(const char * msg, const char *funcname,
+inline void pxDebugMsg(const char *msg, const char *funcname,
                        const char *fname, int lineno)
 {
   std::cout << "PYXIR(" << funcname << "): " << msg << " (" 
@@ -47,7 +47,18 @@ inline void pxWarningMsg(const std::string &msg, const char *fname, int lineno)
   pxWarningMsg(msg.c_str(), fname, lineno);
 }
 
+inline void pxInfoMsg(const char * msg)
+{
+  std::cout << "PYXIR[INFO]: " << msg << std::endl;
+}
+
+inline void pxInfoMsg(const std::string &msg)
+{
+  pxInfoMsg(msg.c_str());
+}
+
 #define pxWarning(x) pxWarningMsg(x, __FILE__, __LINE__);
+#define pxInfo(x) pxInfoMsg(x);
 
 #ifdef DEBUG
 #define pxDebug(x) pxDebugMsg(x, __FUNCTION__, __FILE__, __LINE__);

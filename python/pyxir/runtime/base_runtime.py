@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Base module for running XGraphs """
+"""Base module for executing XGraphs"""
 
 import abc
 import copy
 import logging
+
+from typing import Callable
 
 from pyxir.shared import fancy_logging
 from pyxir.shared import QuantParams
@@ -81,8 +83,7 @@ class BaseRuntime(object):
         }
 
     @abc.abstractmethod
-    def _xfdnn_op_to_exec_op(self, op_type):
-        # type: (str) -> function
+    def _xfdnn_op_to_exec_op(self, op_type: str) -> Callable:
         """
         Abstract method
 

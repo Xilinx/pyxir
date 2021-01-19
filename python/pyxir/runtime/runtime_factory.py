@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Factory module for creating Runtimes """
+"""Factory module for creating Runtimes"""
 
 import logging
 
+from typing import List
+
+from ..graph import XGraph
 from ..graph.layer import xlayer
 from ..graph.xgraph_factory import XGraphFactory
 from pyxir.runtime.base_runtime import BaseRuntime
@@ -36,11 +39,9 @@ class RuntimeFactory(object):
             self.xgraph_factory = XGraphFactory()
             self._runtimes = {}
 
-        def _get_net_and_params(self, xgraph, last_layers):
-            # type: (Xgraph, List[str]) -> List[XLayer], Dict[str, np.ndarray]
+        def _get_net_and_params(self, xgraph: XGraph, last_layers: List[str]):
             """ Return the XGraph submodel as a list of XLayers and the
-            parameters provided the given last layers of the runtime model
-            """
+                parameters provided the given last layers of the runtime model"""
 
             net = []
             params = {}
@@ -106,20 +107,21 @@ class RuntimeFactory(object):
             return net, params
 
         def build_runtime(self,
-                          xgraph,
-                          runtime='cpu-tf',
-                          target='cpu',
-                          last_layers=None,
-                          batch_size=-1,
-                          placeholder=False,
-                          out_tensor_names=None,
-                          **kwargs):
-            # type: (str, XGraph, str, str, List[str], int) -> BaseRuntime
-            """
-            Build an runtime graph based on the given target (e.g. tensorflow)
-            """
+                          xgraph: XGraph,
+                          runtime: str = 'cpu-tf',
+                          target: str = 'cpu',
+                          last_layers: List[str] = None,
+                          batch_size: int = -1,
+                          placeholder: int = False,
+                          out_tensor_names: int = None,
+                          **kwargs) -> BaseRuntime:
+            """Build an runtime graph based on the given target (e.g. tensorflow)"""
 
             net, params = self._get_net_and_params(xgraph, last_layers)
+            
+            # Add kwargs to meta attributes TODO:safe?
+            meta_attrs = xgraph.meta_attrs.to_dict()
+            meta_attrs.update(kwargs)
 
             logger.info("End building Runtime")
             logger.info("Layers: {}".format(len(net)))
@@ -132,7 +134,7 @@ class RuntimeFactory(object):
 
             return self._runtimes[runtime](xgraph.get_name(), net, params, target, batch_size,
                                            placeholder, hidden_out_tensor_names=hidden_out_tensor_names,
-                                           **kwargs)
+                                           **meta_attrs)
 
         def register_exec_graph(self, rt_name: str, runtime: BaseRuntime):
             """Register a creator for a new Runtime subclass"""
