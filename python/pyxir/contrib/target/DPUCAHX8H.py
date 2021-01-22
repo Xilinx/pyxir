@@ -19,6 +19,8 @@ from .components.DPUCAHX8H.common import xgraph_dpu_quantizer
 from .components.DPUCAHX8H.common import xgraph_dpu_optimizer
 from .components.DPUCAHX8H.u50 import xgraph_dpu_u50_build_func
 from .components.DPUCAHX8H.u50 import xgraph_dpu_u50_compiler
+from .components.DPUCAHX8H.u280 import xgraph_dpu_u280_build_func
+from .components.DPUCAHX8H.u280 import xgraph_dpu_u280_compiler
 
 
 
@@ -31,3 +33,13 @@ pyxir.register_target('DPUCAHX8H-u50',
 
 # Register op support
 from .components.DPUCAHX8H import u50_op_support
+
+# Register U280 target
+pyxir.register_target('DPUCAHX8H-u280',
+                      xgraph_dpu_optimizer,
+                      xgraph_dpu_quantizer,
+                      xgraph_dpu_u280_compiler,
+                      xgraph_dpu_u280_build_func)
+
+# Register op support
+from .components.DPUCAHX8H import u280_op_support

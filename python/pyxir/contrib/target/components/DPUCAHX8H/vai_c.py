@@ -51,6 +51,8 @@ class VAICompiler(XGraphBaseCompiler):
         if not os.path.isfile(arch):
             raise ValueError("Arch file: {} does not exist".format(arch))
 
+        self.arch = arch
+
 
         q_output = self.xgraph.get_quantizer_output()
         self.netcfgs = {q_key: q_output.get_q_file(q_key)
@@ -100,7 +102,7 @@ class VAICompiler(XGraphBaseCompiler):
             --output_dir {} \
             --net_name {} \
             --options "{}"
-        """.format(netcfg, '/opt/vitis_ai/compiler/arch/DPUCAHX8H/U50/arch.json', self.build_dir, net_name, str(dict()))
+        """.format(netcfg, self.arch, self.build_dir, net_name, str(dict()))
 
         #command = """
         #dnnc-dpuv2 --parser tensorflow\
