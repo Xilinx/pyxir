@@ -73,7 +73,10 @@ class RuntimeDecentQSim(BaseRuntime):
             target=target
         )
         self.rt_xgraph = RuntimeDecentQSim.target_registry.get_target_build_func(target)(
-            copy.deepcopy(opt_xgraph)
+            copy.deepcopy(opt_xgraph),
+            data_layout='NHWC' # NOTE XGraph's should be built in NHWC data layout, this is
+                               # important for DPUCADX8G where DPU execution happens in NCHW
+                               # but quantization simulation in NHWC
         )
 
     def _init_net(self, network: List[XLayer], params: Dict[str, np.ndarray]):
