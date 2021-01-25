@@ -23,6 +23,7 @@ import logging
 from typing import List
 
 from pyxir.shared import fancy_logging
+from pyxir.graph import XGraph
 
 from .. import base
 from ..base_runtime import BaseRuntime
@@ -37,11 +38,11 @@ class RuntimeTF(BaseRuntime):
 
     def __init__(self,
                  name: str,
-                 network: list,
-                 params: dict,
+                 xgraph: XGraph,
                  device: str = 'cpu',
                  batch_size: int = -1,
                  placeholder: bool = False,
+                 last_layers: List[str] = None,
                  hidden_out_tensor_names: List[str] = None,
                  **kwargs):
         tf.compat.v1.reset_default_graph()
@@ -50,7 +51,13 @@ class RuntimeTF(BaseRuntime):
         with self.tf_step_graph.as_default() as g:
             with g.name_scope('tf_step_graph'):
                 super(RuntimeTF, self).__init__(
-                    name, network, params, device, batch_size, placeholder)
+                    name,
+                    xgraph,
+                    device,
+                    batch_size,
+                    placeholder,
+                    last_layers
+                )
         
         # In the Tensorflow model we might need to create a dummy output layer
         # if an intermediate layer is an out as in for example: Relu -> Conv

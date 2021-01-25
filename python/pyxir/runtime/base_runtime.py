@@ -18,8 +18,10 @@ import abc
 import copy
 import logging
 
-from typing import Callable
+from typing import Callable, Dict, List
 
+from pyxir.graph import XGraph
+from pyxir.graph.layer import xlayer
 from pyxir.shared import fancy_logging
 from pyxir.shared import QuantParams
 
@@ -64,23 +66,93 @@ class BaseRuntime(object):
 
     def __init__(self,
                  name,
-                 network,
-                 params,
-                 device='cpu',
-                 batch_size=-1,
-                 placeholder=False):
-        # type: (str, List[XLayer], Dict[str,numpy.ndarray], str)
+                 xgraph: XGraph,
+                 # params,
+                 device: str = 'cpu',
+                 batch_size: int = -1,
+                 placeholder: bool = False,
+                 last_layers: List[str] = None):
         self.name = name
-        self.params = params
         self.device = device
         self.batch_size = batch_size
         self.placeholder = placeholder
+        self.xgraph = xgraph
 
+        network, params = self._get_net_and_params(xgraph, last_layers)
+        self.params = params
         self._init_net(network, self.params)
 
         self.name_to_nodes = {
             op.name: op for op in network
         }
+
+    def _get_net_and_params(self, xgraph: XGraph, last_layers: List[str]):
+        """ Return the XGraph submodel as a list of XLayers and the
+            parameters provided the given last layers of the runtime model"""
+        # TODO Remove hardcoding parameter retrieval 
+
+        net = []
+        params = {}
+        last_layer_cnt = 1
+        last_layer_tops = set([])
+
+        for X in xgraph.get_layers():
+
+            if X.name in last_layer_tops:
+                last_layer_tops = last_layer_tops.union(tuple(X.tops))
+                continue
+
+            if 'Convolution' in X.type or 'Conv2DTranspose' in X.type:
+                if not isinstance(X.data, xlayer.ConvData):
+                    raise ValueError(
+                        "Invalid convolution data type: {}, should be "
+                        " xlayer.ConvData".format(type(X.data)))
+                # OIHW
+                params[X.name + '_kernel'] = X.data.weights
+                params[X.name + '_biases'] = X.data.biases
+            elif 'Dense' in X.type:
+                if not isinstance(X.data, xlayer.ConvData):
+                    raise ValueError(
+                        "Invalid inner product data type: {}, should be "
+                        " xlayer.ConvData".format(type(X.data)))
+                # OIHW
+                params[X.name + '_weights'] = X.data.weights
+                params[X.name + '_biases'] = X.data.biases
+            elif 'BatchNorm' in X.type:
+                if not isinstance(X.data, xlayer.BatchData):
+                    raise ValueError(
+                        "Invalid batchnorm data type: {}, should be"
+                        " xlayer.BatchData".format(type(X.data)))
+                # channels
+                params[X.name + '_mu'] = X.data.mu
+                params[X.name + '_variance'] = X.data.sigma_square
+                params[X.name + '_gamma'] = X.data.gamma
+                params[X.name + '_beta'] = X.data.beta
+            elif 'Scale' in X.type:
+                if not isinstance(X.data, xlayer.ScaleData):
+                    raise ValueError(
+                        "Invalid scale data type: {}, should be"
+                        " xlayer.ScaleData".format(type(X.data)))
+                # channels
+                params[X.name + '_gamma'] = X.data.gamma
+                params[X.name + '_beta'] = X.data.beta
+            elif 'BiasAdd' in X.type:
+                assert X.data is not None
+                params[X.name + '_bias'] = X.data[0]
+            elif 'Eltwise' in X.type:
+                if X.data != []:
+                    params[X.name + '_beta'] = X.data[0]
+
+            net.append(X)
+
+            if last_layers is not None and X.name in last_layers:
+                if last_layer_cnt == len(last_layers):
+                    break
+                else:
+                    last_layer_cnt += 1
+                    last_layer_tops = last_layer_tops.union(tuple(X.tops))
+
+        return net, params
 
     @abc.abstractmethod
     def _xfdnn_op_to_exec_op(self, op_type: str) -> Callable:

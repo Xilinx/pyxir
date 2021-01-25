@@ -28,83 +28,14 @@ logger = logging.getLogger('pyxir')
 
 class RuntimeFactory(object):
 
-    """
-    The RuntimeFactory Singleton is responsible for creating
-    BaseRuntime objects
-    """
+    """ The RuntimeFactory Singleton is responsible for creating
+        BaseRuntime objects"""
 
     class __RuntimeFactory(object):
 
         def __init__(self):
             self.xgraph_factory = XGraphFactory()
             self._runtimes = {}
-
-        def _get_net_and_params(self, xgraph: XGraph, last_layers: List[str]):
-            """ Return the XGraph submodel as a list of XLayers and the
-                parameters provided the given last layers of the runtime model"""
-
-            net = []
-            params = {}
-            last_layer_cnt = 1
-            last_layer_tops = set([])
-
-            for X in xgraph.get_layers():
-
-                if X.name in last_layer_tops:
-                    last_layer_tops = last_layer_tops.union(tuple(X.tops))
-                    continue
-
-                if 'Convolution' in X.type or 'Conv2DTranspose' in X.type:
-                    if not isinstance(X.data, xlayer.ConvData):
-                        raise ValueError(
-                            "Invalid convolution data type: {}, should be "
-                            " xlayer.ConvData".format(type(X.data)))
-                    # OIHW
-                    params[X.name + '_kernel'] = X.data.weights
-                    params[X.name + '_biases'] = X.data.biases
-                elif 'Dense' in X.type:
-                    if not isinstance(X.data, xlayer.ConvData):
-                        raise ValueError(
-                            "Invalid inner product data type: {}, should be "
-                            " xlayer.ConvData".format(type(X.data)))
-                    # OIHW
-                    params[X.name + '_weights'] = X.data.weights
-                    params[X.name + '_biases'] = X.data.biases
-                elif 'BatchNorm' in X.type:
-                    if not isinstance(X.data, xlayer.BatchData):
-                        raise ValueError(
-                            "Invalid batchnorm data type: {}, should be"
-                            " xlayer.BatchData".format(type(X.data)))
-                    # channels
-                    params[X.name + '_mu'] = X.data.mu
-                    params[X.name + '_variance'] = X.data.sigma_square
-                    params[X.name + '_gamma'] = X.data.gamma
-                    params[X.name + '_beta'] = X.data.beta
-                elif 'Scale' in X.type:
-                    if not isinstance(X.data, xlayer.ScaleData):
-                        raise ValueError(
-                            "Invalid scale data type: {}, should be"
-                            " xlayer.ScaleData".format(type(X.data)))
-                    # channels
-                    params[X.name + '_gamma'] = X.data.gamma
-                    params[X.name + '_beta'] = X.data.beta
-                elif 'BiasAdd' in X.type:
-                    assert X.data is not None
-                    params[X.name + '_bias'] = X.data[0]
-                elif 'Eltwise' in X.type:
-                    if X.data != []:
-                        params[X.name + '_beta'] = X.data[0]
-
-                net.append(X)
-
-                if last_layers is not None and X.name in last_layers:
-                    if last_layer_cnt == len(last_layers):
-                        break
-                    else:
-                        last_layer_cnt += 1
-                        last_layer_tops = last_layer_tops.union(tuple(X.tops))
-
-            return net, params
 
         def build_runtime(self,
                           xgraph: XGraph,
@@ -117,24 +48,18 @@ class RuntimeFactory(object):
                           **kwargs) -> BaseRuntime:
             """Build an runtime graph based on the given target (e.g. tensorflow)"""
 
-            net, params = self._get_net_and_params(xgraph, last_layers)
-            
-            # Add kwargs to meta attributes TODO:safe?
-            meta_attrs = xgraph.meta_attrs.to_dict()
-            meta_attrs.update(kwargs)
-
-            logger.info("End building Runtime")
-            logger.info("Layers: {}".format(len(net)))
-            logger.debug([X.name for X in net])
+            # logger.info("End building Runtime")
+            # logger.info("Layers: {}".format(len(net)))
+            # logger.debug([X.name for X in net])
 
             # input_names = xgraph.get_input_names()
             output_names = set(xgraph.get_output_names())
             hidden_out_tensor_names = [otn for otn in out_tensor_names if otn not in output_names]\
                 if out_tensor_names is not None else []
 
-            return self._runtimes[runtime](xgraph.get_name(), net, params, target, batch_size,
-                                           placeholder, hidden_out_tensor_names=hidden_out_tensor_names,
-                                           **meta_attrs)
+            return self._runtimes[runtime](xgraph.get_name(), xgraph, target, batch_size,
+                                           placeholder, last_layers, hidden_out_tensor_names=hidden_out_tensor_names,
+                                           **kwargs)
 
         def register_exec_graph(self, rt_name: str, runtime: BaseRuntime):
             """Register a creator for a new Runtime subclass"""
