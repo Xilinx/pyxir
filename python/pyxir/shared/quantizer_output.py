@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Data structure for quantizer output """
+"""Data structure for quantizer output"""
 
 
 class QuantizerOutputElem(object):
 
-    def __init__(self, q_key, q_file, q_info, orig_pb):
+    def __init__(self, q_key: str, q_file: str, q_info: str, orig_pb: str, q_eval: str = ''):
         self.q_key = q_key
         self.q_file = q_file
         self.q_info = q_info
         self.orig_pb = orig_pb
+        self.q_eval = q_eval
 
     def set_q_file(self, q_file):
         self.q_file = q_file
@@ -41,6 +42,12 @@ class QuantizerOutputElem(object):
     def get_q_info(self):
         return self.q_info
 
+    def set_q_eval(self, q_eval):
+        self.q_eval = q_eval
+
+    def get_q_eval(self):
+        return self.q_eval
+
 
 class QuantizerOutput(object):
 
@@ -48,20 +55,23 @@ class QuantizerOutput(object):
         self.name = name
         self.data = {}
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
     def keys(self):
         return self.data.keys()
 
-    def add(self, q_key, q_file, q_info, orig_pb):
-        self.data[q_key] = QuantizerOutputElem(q_key, q_file, q_info, orig_pb)
+    def add(self, q_key: str, q_file: str, q_info: str, orig_pb: str, q_eval: str = '') -> None:
+        self.data[q_key] = QuantizerOutputElem(q_key, q_file, q_info, orig_pb, q_eval)
 
-    def get_q_file(self, q_key):
+    def get_q_file(self, q_key: str) -> str:
         return self.data[q_key].get_q_file()
 
-    def get_q_info(self, q_key):
+    def get_q_info(self, q_key: str) -> str:
         return self.data[q_key].get_q_info()
 
-    def get_orig_pb(self, q_key):
+    def get_orig_pb(self, q_key: str) -> str:
         return self.data[q_key].get_orig_pb()
+
+    def get_q_eval(self, q_key: str) -> str:
+        return self.data[q_key].get_q_eval()

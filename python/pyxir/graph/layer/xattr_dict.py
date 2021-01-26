@@ -12,11 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XAttrs wrapper definition
+"""Module for XAttrs wrapper definition"""
 
-
-"""
+import json
 
 import libpyxir as lpx
 
@@ -219,3 +217,10 @@ class XAttrDict(object):
             else:
                 d[k] = v
         return d
+
+    def __str__(self):
+        return str(json.dumps(self.to_dict()))
+
+    def __repr__(self):
+        return str(json.dumps(self.to_dict()))
+
