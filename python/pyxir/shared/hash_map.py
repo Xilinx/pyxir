@@ -51,6 +51,8 @@ class HashMap(object):
             return None
 
     def __getitem__(self, key):
+        if key not in self._map:
+            raise ValueError("Could not retrieve key: `{}`".format(key))
         return self._map[key]
 
     def _get_copy(self, key):
