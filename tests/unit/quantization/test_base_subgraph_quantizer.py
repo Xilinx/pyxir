@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the subgraph quantization flow
-
-
-"""
+"""Module for testing the subgraph quantization flow"""
 
 import os
 import sys
@@ -25,6 +21,7 @@ import unittest
 import numpy as np
 import logging
 
+from pyxir import partition
 from pyxir.target_registry import TargetRegistry, register_op_support_check
 from pyxir.graph.layer.xlayer import XLayer, ConvData, BatchData, ScaleData
 from pyxir.graph.xgraph_factory import XGraphFactory
@@ -51,7 +48,6 @@ class BaseSubgraphQuantizerTest(XGraphBaseSubgraphQuantizer):
 class TestBaseSubgraphQuantizer(unittest.TestCase):
 
     xgraph_factory = XGraphFactory()
-    xgraph_partitioner = XGraphPartitioner()
 
     @classmethod
     def setUpClass(cls):
@@ -174,18 +170,16 @@ class TestBaseSubgraphQuantizer(unittest.TestCase):
         ]
         xgraph = TestBaseSubgraphQuantizer.xgraph_factory\
             .build_from_xlayer(net)
-        p_xgraph = TestBaseSubgraphQuantizer.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
+        p_xgraph = partition(xgraph, ['test'])
 
-        assert(len(p_xgraph.get_layer_names()) == 4)
-        assert(p_xgraph.get_subgraph_names() == ['xp0'])
+        assert len(p_xgraph.get_layer_names()) == 4
+        assert p_xgraph.get_subgraph_names() == ['xp0']
 
         p_xlayers = p_xgraph.get_layers()
-        assert(p_xlayers[0].type[0] in ['Input'])
-        assert(p_xlayers[1].type[0] in ['Convolution'])
-        assert(p_xlayers[2].type[0] in ['Pooling'])
-        assert(p_xlayers[3].type[0] in ['Pooling'])
+        assert p_xlayers[0].type[0] in ['Input']
+        assert p_xlayers[1].type[0] in ['Convolution']
+        assert p_xlayers[2].type[0] in ['Pooling']
+        assert p_xlayers[3].type[0] in ['Pooling']
 
         inputs = np.reshape(np.array([
             [1, 1, 1, 1],
@@ -203,8 +197,8 @@ class TestBaseSubgraphQuantizer(unittest.TestCase):
         )
         quantizer.quantize()
 
-        assert('xp0' in quantizer.test_inputs)
-        assert('xinput0' in quantizer.test_inputs['xp0'])
+        assert 'xp0' in quantizer.test_inputs
+        assert 'xinput0' in quantizer.test_inputs['xp0']
 
         expected = np.reshape(np.array([
             [[4, 4, 4],
@@ -331,9 +325,7 @@ class TestBaseSubgraphQuantizer(unittest.TestCase):
         ]
         xgraph = TestBaseSubgraphQuantizer.xgraph_factory\
             .build_from_xlayer(net)
-        p_xgraph = TestBaseSubgraphQuantizer.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
+        p_xgraph = partition(xgraph, ['test'])
 
         assert(len(p_xgraph.get_layer_names()) == 5)
         assert(set(p_xgraph.get_subgraph_names()) == set(['xp0']))
