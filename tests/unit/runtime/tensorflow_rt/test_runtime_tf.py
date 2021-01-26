@@ -14,11 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir TF executor
-
-
-"""
+"""Module for testing the pyxir TF executor"""
 
 import unittest
 import numpy as np
@@ -26,7 +22,7 @@ import numpy as np
 from pyxir.runtime import base
 from pyxir.runtime.tensorflow.runtime_tf import *
 from pyxir.runtime.tensorflow import rt_layer_tf
-
+from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.layer import xlayer
 
 
@@ -76,9 +72,9 @@ class TestRuntimeTF(unittest.TestCase):
                 attrs={'index': 2}
             )
         ]
-
-        params = {}
-        runtime_tf = RuntimeTF('test', xlayers, params)
+        
+        xgraph = XGraphFactory().build_from_xlayer(xlayers)
+        runtime_tf = RuntimeTF('test', xgraph)
 
         inputs = {
             'in1': np.array([1, 2, 3, 4, 5], dtype=np.float32)
@@ -124,13 +120,8 @@ class TestRuntimeTF(unittest.TestCase):
                 targets=[]
             )]
 
-        params = {
-            'bn_mu': M,
-            'bn_variance': V,
-            'bn_gamma': G,
-            'bn_beta': B
-        }
-        runtime_tf = RuntimeTF('test', xlayers, params)
+        xgraph = XGraphFactory().build_from_xlayer(xlayers)
+        runtime_tf = RuntimeTF('test', xgraph)
 
         inputs = {
             'input': np.array([1, 1], dtype=np.float32).reshape(1, 2, 1, 1)

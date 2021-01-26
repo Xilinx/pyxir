@@ -12,31 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the runtime factory
-
-
-"""
+"""Module for testing the runtime factory"""
 
 import unittest
 
 import numpy as np
 
+from typing import List, Dict
+
 # ! Important for device registration
 import pyxir
 
+from pyxir.graph import XGraph
 from pyxir.graph.layer.xlayer import XLayer, ConvData
 from pyxir.graph.xgraph_factory import XGraphFactory
-from pyxir.runtime.runtime_factory import RuntimeFactory
+from pyxir.runtime.base_runtime import BaseRuntime
 
 
-class TestRuntimeFactory(unittest.TestCase):
+class BaseRuntimeSubTest(BaseRuntime):
+
+    def __init__(self, name, xgraph: XGraph):
+        super(BaseRuntimeSubTest, self).__init__(name, xgraph)
+
+    def _init_net(self, network: List[XLayer], params: Dict[str, np.ndarray]):
+        # Do nothing
+        pass
+
+
+class TestBaseRuntime(unittest.TestCase):
 
     xgraph_factory = XGraphFactory()
-    runtime_factory = RuntimeFactory()
 
-    def test_runtime_factory_net_params(self):
-
+    def test_base_runtime_net_params(self):
         xlayers = [
             XLayer(
                 name='in1',
@@ -110,11 +117,11 @@ class TestRuntimeFactory(unittest.TestCase):
                 targets=[]
             )
         ]
-        xgraph = TestRuntimeFactory.xgraph_factory.build_from_xlayer(xlayers)
+        xgraph = TestBaseRuntime.xgraph_factory.build_from_xlayer(xlayers)
+        base_runtime = BaseRuntimeSubTest('test', xgraph)
 
         # 1.
-        net, params = TestRuntimeFactory.runtime_factory\
-            ._get_net_and_params(xgraph, ['add1'])
+        net, params = base_runtime._get_net_and_params(xgraph, ['add1'])
 
         assert len(net) == 4
         np.testing.assert_array_equal(
@@ -125,8 +132,7 @@ class TestRuntimeFactory(unittest.TestCase):
             np.array([0., 1.], dtype=np.float32))
 
         # 2.
-        net, params = TestRuntimeFactory.runtime_factory\
-            ._get_net_and_params(xgraph, ['conv1'])
+        net, params = base_runtime._get_net_and_params(xgraph, ['conv1'])
 
         assert len(net) == 2
         assert net[0].name == 'in1'
@@ -139,8 +145,7 @@ class TestRuntimeFactory(unittest.TestCase):
             np.array([0., 1.], dtype=np.float32))
 
         # 3.
-        net, params = TestRuntimeFactory.runtime_factory\
-            ._get_net_and_params(xgraph, ['pool1', 'pool2'])
+        net, params = base_runtime._get_net_and_params(xgraph, ['pool1', 'pool2'])
 
         assert len(net) == 7
         np.testing.assert_array_equal(

@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for generic subgraph build function
-
-
-"""
+"""Module for generic subgraph build function"""
 
 import os
 import numpy as np
@@ -51,7 +47,7 @@ def xgraph_build_func(xgraph,
 
     fancy_logger.banner("Subgraph build func, target: {}, layout: {}"
                         .format(target, layout))
-     
+
     compiler_output = xgraph.get_compiler_output() if xgraph.is_compiled() \
         else None
     compiler_output_keys = list(compiler_output.keys()) \

@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the xgraph partitioning functionality
-
-
-"""
+"""Module for testing the xgraph partitioning functionality"""
 
 import os
 import unittest
@@ -132,10 +128,8 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
+        TargetRegistry().annotate_ops(xgraph)
+        p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(xgraph, ['test'])
 
         assert len(p_xgraph.get_layer_names()) == 5
         assert p_xgraph.get_subgraph_names() == ['xp0']
@@ -224,7 +218,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
+        TargetRegistry().annotate_ops(xgraph)
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
         )
@@ -350,7 +344,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
+        TargetRegistry().annotate_ops(xgraph)
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
         )
@@ -508,7 +502,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
+        TargetRegistry().annotate_ops(xgraph)
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
         )
@@ -638,7 +632,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
+        TargetRegistry().annotate_ops(xgraph)
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
         )
@@ -773,7 +767,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
+        TargetRegistry().annotate_ops(xgraph)
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
         )
@@ -926,6 +920,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
+        TargetRegistry().annotate_ops(xgraph)
 
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
@@ -1055,7 +1050,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
+        TargetRegistry().annotate_ops(xgraph)
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
         )
@@ -1216,7 +1211,7 @@ class TestXGraphPartitioner(unittest.TestCase):
             )
         ]
         xgraph = TestXGraphPartitioner.xgraph_factory.build_from_xlayer(net)
-
+        TargetRegistry().annotate_ops(xgraph)
         p_xgraph = TestXGraphPartitioner.xgraph_partitioner.partition(
             xgraph, ['test']
         )

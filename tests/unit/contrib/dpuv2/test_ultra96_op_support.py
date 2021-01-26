@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the dpuv2-ultra96 supported operations
-
-
-"""
+"""Module for testing the dpuv2-ultra96 supported operations"""
 
 import os
 import unittest
@@ -43,7 +39,7 @@ class TestUltra96OpSupport(unittest.TestCase):
     def tearDownClass(cls):
         # Unregister dpu for other tests
         TestUltra96OpSupport.target_registry.unregister_target('dpuv2-ultra96')
-        TestUltra96OpSupport.target_registry.unregister_target('DPUCZDX8G-ultra96')
+        # TestUltra96OpSupport.target_registry.unregister_target('DPUCZDX8G-ultra96')
 
     def test_batchnorm_support(self):
         from pyxir.contrib.dpuv2.ultra96_op_support import \

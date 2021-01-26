@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the dpuv1 supported operations
-"""
+"""Module for testing the dpuv1 supported operations"""
 
 import os
 import unittest
