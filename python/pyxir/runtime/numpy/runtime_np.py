@@ -12,15 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for running neural network models on top of numpy
-
-
-"""
+"""Module for running neural network models on top of numpy"""
 
 import logging
+import numpy as np
+
+from typing import Dict, List
 
 from pyxir.shared import fancy_logging
+from pyxir.graph import XGraph
 
 from . import rt_layer_np
 from .. import base
@@ -83,15 +83,13 @@ class RuntimeNP(BaseRuntime):
 
     def __init__(self,
                  name,
-                 network,
-                 params,
-                 device='cpu',
-                 batch_size=-1,
+                 xgraph: XGraph,
+                 device: str = 'cpu',
+                 batch_size: str = -1,
                  placeholder: bool = False,
+                 last_layers: List[str] = None,
                  **kwargs):
-        # type: (str, List[XLayer], Dict[str,numpy.ndarray], str, int)
-        super(RuntimeNP, self).__init__(
-            name, network, params, device, batch_size, placeholder)
+        super(RuntimeNP, self).__init__(name, xgraph, device, batch_size, placeholder, last_layers)
 
     def _xfdnn_op_to_exec_op(self, op_type):
         # type: (str) -> function
@@ -110,7 +108,5 @@ class RuntimeNP(BaseRuntime):
                                       " on RuntimeNP".format(op_type))
         return X_2_NP[op_type]
 
-    def optimize(self, inputs, debug=False):
-        # (Dict[str, numpy.ndarray], bool) -> 
-        #    Tuple(dict, List[numpy.ndarray]/numpy.ndarray)
+    def optimize(self, inputs: Dict[str, np.ndarray], debug: bool = False):
         raise NotImplementedError("")

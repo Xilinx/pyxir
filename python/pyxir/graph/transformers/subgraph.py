@@ -22,6 +22,7 @@ from pyxir.graph.algorithms.topological_sorting import sort_topologically
 from pyxir.shared import fancy_logging
 from pyxir.shapes import TensorShape, TupleShape
 
+from pyxir.graph import XGraph
 from pyxir.graph.layer.xlayer import XLayer, defaultXLayer
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
@@ -39,11 +40,11 @@ def find_indices(lst, condition):
     return [(i, elem) for i, elem in enumerate(lst) if condition(elem)]
 
 
-def xgraph_build_func(xgraph,
-                      target,
+def xgraph_build_func(xgraph: XGraph,
+                      target: str,
                       xtype,
                       layout='NCHW',
-                      **kwargs):
+                      **kwargs) -> XGraph:
 
     fancy_logger.banner("Subgraph build func, target: {}, layout: {}"
                         .format(target, layout))

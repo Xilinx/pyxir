@@ -12,12 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XLayer definition
+"""Module for XLayer definition"""
 
-
-"""
-
+import json
 import numpy as np
 import libpyxir as lpx
 
@@ -295,10 +292,10 @@ class XLayer(object):
         self._xlayer.attrs = _xattr_dict._get_xattr_map()
 
     def __repr__(self):
-        return str(self.to_dict())
+        return str(json.dumps(self.to_dict(), indent=2))
 
     def __str__(self):
-        return str(self.to_dict())
+        return str(json.dumps(self.to_dict(), indent=2))
 
     def to_dict(self, data=False):
         return {

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for generating a tensorflow graph from an XGraph """
+"""Module for generating a tensorflow graph from an XGraph"""
 
 import os
 import logging
