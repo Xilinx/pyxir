@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the quantization simulation pass
-
-
-"""
+"""Module for testing the quantization simulation pass"""
 
 import os
 import sys
@@ -24,12 +20,11 @@ import logging
 import unittest
 import numpy as np
 
+from pyxir import partition
 from pyxir.graph.layer.xlayer import XLayer, ConvData
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.runtime.runtime_factory import RuntimeFactory
 from pyxir.quantization.simulation.quant_sim_pass import XGraphQuantSimPass
-
-from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.target_registry import TargetRegistry, register_op_support_check
 
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
@@ -41,7 +36,6 @@ FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class TestQuantSimPass(unittest.TestCase):
 
-    xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
     xf_exec_graph_factory = RuntimeFactory()
 
@@ -220,18 +214,15 @@ class TestQuantSimPass(unittest.TestCase):
         xgraph = TestQuantSimPass.xgraph_factory.build_from_xlayer(
             net, name='testtest'
         )
+        p_xgraph = partition(xgraph, ['npu_test'])
 
-        p_xgraph = TestQuantSimPass.xgraph_partitioner.partition(
-            xgraph, ['npu_test']
-        )
+        assert p_xgraph.get_layers()[0].target == 'cpu'
+        assert p_xgraph.get_layers()[1].target == 'npu_test'
+        assert p_xgraph.get_layers()[2].target == 'cpu'
 
-        assert(p_xgraph.get_layers()[0].target == 'cpu')
-        assert(p_xgraph.get_layers()[1].target == 'npu_test')
-        assert(p_xgraph.get_layers()[2].target == 'cpu')
-
-        assert(p_xgraph.get_layers()[0].subgraph is None)
-        assert(p_xgraph.get_layers()[1].subgraph == 'xp0')
-        assert(p_xgraph.get_layers()[2].subgraph is None)
+        assert p_xgraph.get_layers()[0].subgraph is None
+        assert p_xgraph.get_layers()[1].subgraph == 'xp0'
+        assert p_xgraph.get_layers()[2].subgraph is None
 
         quant_sim_pass = XGraphQuantSimPass(
             fdir=FILE_PATH,
