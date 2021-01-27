@@ -12,6 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.1.5 ////////////////
+NEW FEATURES:
+    - Add TVM Relay tile, full ops to XLayer translation
+    - Add TVM Relay image.resize to XLayer translation and to Upsampling2D if applicable
+    - Add pattern annotator for discovering and annotating patterns, e.g. mul + max = leaky relu
+    - Add Decent quantizer simulation support on x86
+    - Add full TVM ResNet 18 example
+BUG FIXES:
+    - Fix bug in reading PX_VERBOSE environment veriable
+UNFIXED ISSUES:
+    - Importing tvm before pyxir results in segfault for DPUCADX8G env due to 
+      protobuf mismatch between DPUCADX8G tools and tensorflow
+
 //////////////// VERSION 0.1.4 ////////////////
 NEW FEATURES:
     - Extend model coverage to SSD type networks
