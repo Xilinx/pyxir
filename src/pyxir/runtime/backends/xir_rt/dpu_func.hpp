@@ -45,9 +45,9 @@ class DpuFunc : public KernelFunc {
     /** @brief The names of the output tensor in the order that they will be provided */
     std::vector<std::string> out_tensor_names_;
     /** @brief The DPU input tensors */
-    std::vector<vitis::ai::Tensor*> dpu_runner_in_tensors_;
+   std::vector<const xir::Tensor*> dpu_runner_in_tensors_;
     /** @brief The DPU output tensors */
-    std::vector<vitis::ai::Tensor*> dpu_runner_out_tensors_;
+   std::vector<const xir::Tensor*> dpu_runner_out_tensors_;
     /** @brief Vector to match the order in which input tensors will be provided with
         the order in which the DPU expects them */
     std::vector<int> in_tensor_order_;

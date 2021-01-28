@@ -25,6 +25,7 @@
 #include "dpu_func.hpp"
 GraphInfo shapes;
 
+
 namespace pyxir {
 namespace runtime {
 namespace vai_rt {
@@ -70,21 +71,36 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
     pxDebug("Invalid tensor format NHWC");
   }
   pxDebug("After DpuRunner init");
-  
-  dpu_runner_in_tensors_ = dpu_runner_->get_input_tensors();
-  dpu_runner_out_tensors_ = dpu_runner_->get_output_tensors();
+ */
+  dpu_runner_in_tensors_ = runner->get_input_tensors();
+  dpu_runner_out_tensors_ = runner->get_output_tensors();
   assert(dpu_runner_in_tensors_.size() == dpu_in_tensor_names.size());
   assert(dpu_runner_out_tensors_.size() == dpu_out_tensor_names.size());
 
   std::vector<std::string> dpu_runner_in_tensor_names;
   std::transform(dpu_runner_in_tensors_.begin(), dpu_runner_in_tensors_.end(),
     std::back_inserter(dpu_runner_in_tensor_names),
-    [](vitis::ai::Tensor* t) -> const std::string { return t->get_name(); });
-
+    [](const xir::Tensor* t) -> const std::string { return t->get_name(); });
+ // dpu_runner_in_tensor_names[0]="xinput0";
   std::vector<std::string> dpu_runner_out_tensor_names;
+
   std::transform(dpu_runner_out_tensors_.begin(), dpu_runner_out_tensors_.end(),
    std::back_inserter(dpu_runner_out_tensor_names),
-   [](vitis::ai::Tensor* t) -> const std::string { return t->get_name(); });
+   [](const xir::Tensor* t) -> const std::string { return t->get_name(); });
+
+
+  string name= "/aquant";
+  for(int i=0;i< dpu_runner_in_tensor_names.size();i++)
+  {
+	  size_t pos = dpu_runner_in_tensor_names[i].find(name);
+	  dpu_runner_in_tensor_names[i].replace(pos,name.length(),"");
+  }
+  for(int i=0;i< dpu_runner_out_tensor_names.size();i++)
+  {
+	  size_t pos = dpu_runner_out_tensor_names[i].find(name);
+	  dpu_runner_out_tensor_names[i].replace(pos,name.length(),"");
+  }
+
 
   std::vector<std::string> rt_in_names;
   std::transform(in_tensor_names_.begin(), in_tensor_names_.end(),
@@ -136,7 +152,6 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
       out_tensor_order_.push_back(index);
     }
   }
-*/
   pxDebug("Inside Initialize print in/out maps");
 }
 
@@ -155,63 +170,36 @@ void DpuFunc::operator()(
   std::vector<XBufferHolder> &in_tensors,
   std::vector<XBufferHolder> &out_tensors)
 {
-/*
-  graph = xir::Graph::deserialize("/workspace/models/DPUCADX8G_build_bkp/compiler.xmodel");
-  subgraph = get_dpu_subgraph(graph.get());
-  CHECK_EQ(subgraph.size(), 1u)
-      << "resnet50 should have one and only one dpu subgraph.";
-  LOG(INFO) << "create running for subgraph: " << subgraph[0]->get_name();
-  /*create runner*/
-/*
-  runner = vart::Runner::create_runner(subgraph[0], "run");
-*/
-  /*get in/out tensor*/
+ /*get in/out tensor*/
   auto inputTensors = runner->get_input_tensors();
   auto outputTensors = runner->get_output_tensors();
-
-  /*get in/out tensor shape*/
-  int inputCnt = inputTensors.size();
-  int outputCnt = outputTensors.size();
-  TensorShape inshapes[inputCnt];
-  TensorShape outshapes[outputCnt];
-  shapes.inTensorList = inshapes;
-  shapes.outTensorList = outshapes;
-  getTensorShape(runner.get(), &shapes, inputCnt, outputCnt);
-  /* get in/out tensors and dims*/
-  //auto outputTensors = runner->get_output_tensors();
-  //auto inputTensors = runner->get_input_tensors();
-  auto out_dims = outputTensors[0]->get_shape();
-  auto in_dims = inputTensors[0]->get_shape();
-  /*get shape info*/
-  int outSize = shapes.outTensorList[0].size;
-  int inSize = shapes.inTensorList[0].size;
-  int inHeight = shapes.inTensorList[0].height;
-  int inWidth = shapes.inTensorList[0].width;
-
-  int batchSize = in_dims[0];
 
   std::vector<std::unique_ptr<vart::TensorBuffer>> inputs, outputs;
   std::vector<vart::TensorBuffer*> inputsPtr, outputsPtr;
   std::vector<std::shared_ptr<xir::Tensor>> batchTensors;
   int in_idx = 0;
   for(const auto& iTensor: inputTensors) {
-	const auto& in_dims = iTensor->get_shape();
-	//std::vector<int> iddShape = in[in_idx]->getShape();
-
-   batchTensors.push_back(std::shared_ptr<xir::Tensor>(xir::Tensor::create(
-       iTensor->get_name(), in_dims,
-        xir::DataType{xir::DataType::FLOAT, sizeof(float) * 8u})));
+	  const auto& in_dims = iTensor->get_shape();
+	  batchTensors.push_back(std::shared_ptr<xir::Tensor>(xir::Tensor::create(iTensor->get_name(), in_dims, xir::DataType{xir::DataType::FLOAT, sizeof(float) * 8u})));
     inputsPtr.push_back(new CpuFlatTensorBuffer(in_tensors[in_idx]->data, batchTensors.back().get()));
     in_idx++;
   }
-int out_idx;
+
+  if (out_tensors.empty()) {
+    for (const auto &shape : xl_->shapes) {
+      std::vector<ssize_t> buffer_shape = shape;
+      buffer_shape[0] = inputTensors[0]->get_shape()[0];
+      //buffer_shape[0] = in_tensors[0]->shape[0];
+      out_tensors.push_back(create_buffer(buffer_shape));
+    }
+  }
+  
+ int out_idx=0;
  for(const auto& oTensor: outputTensors) {
     const auto& out_dims = oTensor->get_shape();
-    batchTensors.push_back(std::shared_ptr<xir::Tensor>(xir::Tensor::create(
-        outputTensors[0]->get_name(), out_dims,
-        xir::DataType{xir::DataType::FLOAT, sizeof(float) * 8u})));
-    outputsPtr.push_back(new CpuFlatTensorBuffer(
-        out_tensors[out_idx]->data, batchTensors.back().get()));
+    batchTensors.push_back(std::shared_ptr<xir::Tensor>(xir::Tensor::create(oTensor->get_name(), out_dims, xir::DataType{xir::DataType::FLOAT, sizeof(float) * 8u})));
+    outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors[out_tensor_order_[out_idx]]->data, batchTensors.back().get()));
+    //outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors[out_idx]->data, batchTensors.back().get()));
      out_idx++;
 
 }
@@ -232,3 +220,4 @@ int out_idx;
 } // vai_rt
 } // namespace runtime
 } // namespace pyxir
+
