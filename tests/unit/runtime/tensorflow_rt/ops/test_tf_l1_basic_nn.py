@@ -25,9 +25,14 @@ from pyxir.runtime import base
 from pyxir.graph.layer import xlayer
 from pyxir.graph.io import xlayer_io
 
-from pyxir.runtime.tensorflow.x_2_tf_registry import X_2_TF
-from pyxir.runtime.tensorflow.ops.tf_l0_input_and_other import *
-from pyxir.runtime.tensorflow.ops.tf_l1_basic_nn import *
+try:
+    from pyxir.runtime.tensorflow.x_2_tf_registry import X_2_TF
+    from pyxir.runtime.tensorflow.ops.tf_l0_input_and_other import *
+    from pyxir.runtime.tensorflow.ops.tf_l1_basic_nn import *
+    skip_tf = False
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Tensorflow related test because Tensorflow is not available")
+
 
 
 class TestRuntimeTF(unittest.TestCase):

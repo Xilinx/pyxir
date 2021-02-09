@@ -27,6 +27,12 @@ from pyxir.runtime.runtime_factory import RuntimeFactory
 from pyxir.quantization.simulation.quant_sim_pass import XGraphQuantSimPass
 from pyxir.target_registry import TargetRegistry, register_op_support_check
 
+try:
+    import tensorflow as tf
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Quantization Tensorflow related test because Tensorflow"
+                            " is not available")
+
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 # logger = logging.getLogger('pyxir')

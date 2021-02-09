@@ -16,10 +16,10 @@ import pyxir
 from pyxir.runtime import base
 
 from .components.DPUCADX8G.dpu_target import xgraph_dpu_build_func
-from .components.DPUCADX8G.dpu_target import xgraph_dpu_external_quantizer_optimizer
 from .components.DPUCADX8G.dpu_target import xgraph_dpu_compiler
-from .components.DPUCADX8G.dpu_target import xgraph_dpu_external_quantizer
 from .components.DPUCADX8G.dpu_target import DPULayer
+from .components.DPUCADX8G.external_quantizer_tools import xgraph_dpu_external_quantizer
+from .components.DPUCADX8G.external_quantizer_tools import xgraph_dpu_external_quantizer_optimizer
 
 
 # Register target

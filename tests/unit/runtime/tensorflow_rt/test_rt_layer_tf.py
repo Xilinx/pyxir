@@ -14,26 +14,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir TF executor
+"""Module for testing the pyxir TF executor"""
 
-
-"""
-
+import os
 import unittest
 import numpy as np
-import tensorflow as tf
 
-from pyxir.shapes import TensorShape, TupleShape
-from pyxir.runtime.tensorflow.rt_layer_tf import *
-from pyxir.runtime.tensorflow.x_2_tf_registry import *
-from pyxir.runtime.tensorflow.ops.tf_l0_input_and_other import *
-from pyxir.runtime.tensorflow.ops.tf_l1_basic_nn import *
-from pyxir.runtime.tensorflow.ops.tf_l2_convolutions import *
-from pyxir.runtime.tensorflow.ops.tf_l3_math_and_transform import *
-from pyxir.runtime.tensorflow.ops.tf_l4_broadcast_and_reductions import *
-from pyxir.runtime.tensorflow.ops.tf_l5_vision import *
-from pyxir.runtime.tensorflow.ops.tf_l11_quant import *
+try:
+    import tensorflow as tf
+    from pyxir.shapes import TensorShape, TupleShape
+    from pyxir.runtime.tensorflow.rt_layer_tf import *
+    from pyxir.runtime.tensorflow.x_2_tf_registry import *
+    from pyxir.runtime.tensorflow.ops.tf_l0_input_and_other import *
+    from pyxir.runtime.tensorflow.ops.tf_l1_basic_nn import *
+    from pyxir.runtime.tensorflow.ops.tf_l2_convolutions import *
+    from pyxir.runtime.tensorflow.ops.tf_l3_math_and_transform import *
+    from pyxir.runtime.tensorflow.ops.tf_l4_broadcast_and_reductions import *
+    from pyxir.runtime.tensorflow.ops.tf_l5_vision import *
+    from pyxir.runtime.tensorflow.ops.tf_l11_quant import *
+    skip_tf = False
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Tensorflow related test because Tensorflow is not available")
+    skip_tf = True
+
 
 try:
     from pyxir.io.cvx import ImgLoader
@@ -53,6 +56,7 @@ def softmax(x):
 
 class TestRtLayerTF(unittest.TestCase):
 
+    
     def test_batch_norm(self):
         M = np.array([0.5, 1.2], dtype=np.float32)
         V = np.array([0.1, 0.05], dtype=np.float32)
@@ -144,6 +148,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_bias_add(self):
         B = np.array([0.1, 0.05], dtype=np.float32)
 
@@ -196,6 +201,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_concat_layer(self):
         layers = [
             InputLayer(
@@ -238,6 +244,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_conv2d_nchw(self):
         layers = [
             InputLayer(
@@ -285,6 +292,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_conv2d_nhwc(self):
         layers = [
             InputLayer(
@@ -334,6 +342,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_depthwise_conv2d_nchw(self):
         W = np.reshape(
             np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype=np.float32),
@@ -382,6 +391,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_depthwise_conv2d_nhwc(self):
         W = np.reshape(
             np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype=np.float32),
@@ -432,8 +442,8 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
-    @unittest.skipIf(skip_cvx, "Skipping Cvx related test because cvx is"
-                               "not available")
+    @unittest.skipIf(skip_cvx or skip_tf, "Skipping Cvx related test because cvx or tensorflow is"
+                    "not available")
     def test_cvx_layer_nchw(self):
         layers = [
             CvxLayer(
@@ -466,8 +476,8 @@ class TestRtLayerTF(unittest.TestCase):
 
         assert(outpt.shape == (1, 3, 225, 225))
 
-    @unittest.skipIf(skip_cvx, "Skipping Cvx related test because cvx is"
-                               "not available")
+    @unittest.skipIf(skip_cvx or skip_tf, "Skipping Cvx related test because cvx or tensorflow is"
+                    "not available")
     def test_cvx_layer_nhwc(self):
         layers = [
             CvxLayer(
@@ -501,6 +511,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         assert(outpt.shape == (1, 225, 225, 3))
 
+    
     def test_dense_layer(self):
 
         W = np.array([[1., 3., 0., -7.], [2., -4., 6., 8.]], dtype=np.float32)
@@ -575,6 +586,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_leaky_relu(self):
         layers = [
             InputLayer(
@@ -614,6 +626,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_maxpool_layer(self):
         layers = [
             InputLayer(
@@ -653,6 +666,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_mean(self):
         layers = [
             InputLayer(
@@ -693,6 +707,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_pad(self):
         padding = ((0, 0), (0, 0), (0, 1), (0, 1))
 
@@ -734,6 +749,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_pool_no_division_layer(self):
         layers = [
             InputLayer(
@@ -774,6 +790,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_relu(self):
         layers = [
             InputLayer(
@@ -811,6 +828,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_relu6(self):
         layers = [
             InputLayer(
@@ -848,6 +866,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_scale(self):
         G = np.array([0.5, 1.2], dtype=np.float32)
         B = np.array([0.1, 0.05], dtype=np.float32)
@@ -912,6 +931,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_softmax_layer(self):
         layers = [
             InputLayer(
@@ -947,6 +967,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_squeeze(self):
         layers = [
             InputLayer(
@@ -983,6 +1004,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_tanh(self):
         layers = [
             InputLayer(
@@ -1020,6 +1042,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_transpose(self):
         layers = [
             InputLayer(
@@ -1058,6 +1081,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_conv2d_transpose(self):
         layers = [
             InputLayer(
@@ -1114,6 +1138,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_tuple(self):
         layers = [
             InputLayer(
@@ -1170,6 +1195,7 @@ class TestRtLayerTF(unittest.TestCase):
         np.testing.assert_array_equal(inputs['tuple'][0], in1)
         np.testing.assert_array_equal(inputs['tuple'][1], in2)
 
+    
     def test_variable(self):
         tf.compat.v1.reset_default_graph()
         data = np.reshape(np.array([[1, -1, 0, 4, -5, 1, 0, 8, 3,
@@ -1196,7 +1222,7 @@ class TestRtLayerTF(unittest.TestCase):
         np.testing.assert_array_equal(outpt, data)
 
     # Quantization layer
-
+    
     def test_quantize_layer(self):
         layers = [
             InputLayer(
@@ -1232,6 +1258,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    
     def test_unquantize_layer(self):
         layers = [
             InputLayer(
@@ -1268,6 +1295,7 @@ class TestRtLayerTF(unittest.TestCase):
 
         np.testing.assert_array_almost_equal(outpt, expected_outpt)
 
+    
     def test_quantized_conv_layer(self):
         quant_params = {
             "bw_layer_in": 8,

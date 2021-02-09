@@ -20,16 +20,21 @@ import unittest
 import numpy as np
 
 from pyxir.runtime import base
-from pyxir.runtime.tensorflow.runtime_tf import *
-from pyxir.runtime.tensorflow import rt_layer_tf
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.layer import xlayer
+
+try:
+    from pyxir.runtime.tensorflow.runtime_tf import *
+    from pyxir.runtime.tensorflow import rt_layer_tf
+    skip_tf = False
+except ModuleNotFoundError:
+    skip_tf = True
 
 
 class TestRuntimeTF(unittest.TestCase):
 
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because Tensorflow is not available")
     def test_split_tuple_get_item(self):
-
         xlayers = [
             xlayer.XLayer(
                 name='in1',
@@ -89,6 +94,7 @@ class TestRuntimeTF(unittest.TestCase):
         np.testing.assert_array_almost_equal(outpt_1, expected_outpt_1)
         np.testing.assert_array_almost_equal(outpt_2, expected_outpt_2)
 
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because Tensorflow is not available")
     def test_batch_norm(self):
         M = np.array([0.5, 1.2], dtype=np.float32)
         V = np.array([0.1, 0.05], dtype=np.float32)
