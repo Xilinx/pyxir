@@ -13,15 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir TF executor
-
-
-"""
+"""Module for testing the pyxir TF executor"""
 
 import unittest
 import numpy as np
-import tensorflow as tf
 import pyxir as px
 
 from pyxir.shapes import TensorShape
@@ -29,9 +24,13 @@ from pyxir.runtime import base
 from pyxir.graph.layer import xlayer
 from pyxir.graph.io import xlayer_io
 
-from pyxir.runtime.tensorflow.x_2_tf_registry import *
-from pyxir.runtime.tensorflow.ops.tf_l0_input_and_other import *
-from pyxir.runtime.tensorflow.ops.tf_l2_convolutions import *
+try:
+    import tensorflow as tf
+    from pyxir.runtime.tensorflow.x_2_tf_registry import *
+    from pyxir.runtime.tensorflow.ops.tf_l0_input_and_other import *
+    from pyxir.runtime.tensorflow.ops.tf_l2_convolutions import *
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Tensorflow related test because Tensorflow is not available")
 
 
 class TestTfL2Convolutions(unittest.TestCase):

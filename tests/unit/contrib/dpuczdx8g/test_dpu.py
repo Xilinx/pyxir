@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module for testing the DPU build functionality"""
+"""Module for testing the DPUCZDX8G build functionality"""
 
 import os
 import unittest
@@ -24,6 +24,13 @@ from pyxir.graph.layer.xlayer import XLayer, ConvData
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.target_registry import TargetRegistry
+
+try:
+    import tensorflow as tf
+    skip_tf = False
+except ModuleNotFoundError:
+    skip_tf = True
+
 
 
 class TestDPUContrib(unittest.TestCase):
@@ -47,6 +54,11 @@ class TestDPUContrib(unittest.TestCase):
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
         TestDPUContrib.target_registry.unregister_target('dpuv2-ultra96')
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
+
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because tensorflow is"
+                    "not available")
+    def test_import_ext_quantizer(self):
+        from pyxir.contrib.target import DPUCZDX8G_external_quantizer
         
 
     def test_supported_ops(self):

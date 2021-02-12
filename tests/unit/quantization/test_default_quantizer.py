@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the default quantization flow
-
-
-"""
+"""Module for testing the default quantization flow"""
 
 import os
 import json
@@ -26,6 +22,11 @@ import numpy as np
 from pyxir.quantization.default_quantizer import XGraphDefaultQuantizer
 from pyxir.graph.layer.xlayer import XLayer, ConvData, BatchData, ScaleData
 from pyxir.graph.xgraph_factory import XGraphFactory
+
+try:
+    import tensorflow as tf
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Tensorflow related test because Tensorflow is not available")
 
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 

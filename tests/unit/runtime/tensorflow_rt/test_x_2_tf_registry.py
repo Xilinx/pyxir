@@ -14,21 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir TF executor
-
-
-"""
+"""Module for testing the pyxir TF executor"""
 
 import unittest
 import numpy as np
 
-from pyxir.runtime.tensorflow.x_2_tf_registry import \
-    X_2_TF, rt_register_xlayer_2_tf
+try:
+    from pyxir.runtime.tensorflow.x_2_tf_registry import \
+        X_2_TF, rt_register_xlayer_2_tf
+    skip_tf = False
+except ModuleNotFoundError:
+    skip_tf = True
 
 
 class TestX2TfRegistry(unittest.TestCase):
 
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because Tensorflow is not available")
     def test_x_2_tf(self):
         # L0: Inputs & Other
         assert 'Constant' in X_2_TF
@@ -77,6 +78,7 @@ class TestX2TfRegistry(unittest.TestCase):
         assert 'QuantizeScaleBias' in X_2_TF
         assert 'QuantizeInter' in X_2_TF
 
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because Tensorflow is not available")
     def test_register_xlayer_2_tf(self):
 
         with self.assertRaises(ValueError):
