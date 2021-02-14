@@ -36,6 +36,13 @@ FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 # logger.setLevel(logging.DEBUG)
 
 
+try:
+    import tensorflow as tf
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Quantization Tensorflow related test because Tensorflow"
+                            " is not available")
+
+
 class BaseSubgraphQuantizerTest(XGraphBaseSubgraphQuantizer):
 
     def quantize_subgraph(self, xgraph, inputs, input_names, output_names):

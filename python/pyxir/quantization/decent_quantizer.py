@@ -19,7 +19,6 @@ import json
 import logging
 import warnings
 import subprocess
-from progressbar import ProgressBar
 # import tensorflow as tf
 
 from pyxir.contrib.tools import classification
@@ -272,6 +271,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         #
         """
         """
+        from progressbar import ProgressBar
 
         input_fn_data = {
             "prep_key": self.data_prep_key,

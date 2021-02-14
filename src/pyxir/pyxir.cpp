@@ -96,10 +96,13 @@ struct PyInitializer
     //  initialized yet
     if (!py_is_initialized()) {
       py::initialize_interpreter();
-      auto pyxir = py::module::import("pyxir");
       // auto pyxir_onnx = py::module::import("pyxir.frontend.onnx");
       // pyxir::contrib::import_dpuv1_target();
     }
+    py::list sys_modules = py::module::import("sys").attr("modules");
+    bool px_imported = sys_modules.attr("__contains__")("pyxir").cast<bool>();
+    if (!px_imported)
+      auto pyxir = py::module::import("pyxir");
   }
 
   void finalize_py()
