@@ -67,6 +67,23 @@ class RtManager(object):
             # Add operation type to runtime operations
             rt_ops[op_type] = setup_func
 
+        def exists_op(self, rt_name: str, op_type: str) -> bool:
+            return rt_name in self.runtimes and op_type in self.runtimes[rt_name]
+
+        def unregister_op(self, rt_name: str, op_type: str) -> None:
+            if rt_name not in self.runtimes:
+                raise NotImplementedError("The provided runtime: {} is not"
+                                          " registered. Please register a"
+                                          " runtime with the 'register_rt'"
+                                          " method before removing operations."
+                                          .format(rt_name))
+
+            rt_ops = self.runtimes[rt_name]
+            if op_type not in rt_ops:
+                raise ValueError("Trying to unregister non existing operation: "
+                                 .format(op_type))
+            del rt_ops[op_type]
+
     # storage for the instance reference
     __instance = None
 

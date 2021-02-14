@@ -24,6 +24,7 @@ from pyxir.graph.layer.xlayer import XLayer, ConvData
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.target_registry import TargetRegistry
+from pyxir.runtime.rt_manager import RtManager
 
 try:
     import tensorflow as tf
@@ -38,6 +39,7 @@ class TestDPUContrib(unittest.TestCase):
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
     target_registry = TargetRegistry()
+    rt_manager = RtManager()
 
     @classmethod
     def setUpClass(cls):
@@ -58,6 +60,12 @@ class TestDPUContrib(unittest.TestCase):
     @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because tensorflow is"
                     "not available")
     def test_import_ext_quantizer(self):
+        if TestDPUContrib.target_registry.is_target('DPUCZDX8G-ultra96'):
+            TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
+            TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
+            TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu102')
+        if TestDPUContrib.rt_manager.exists_op('cpu-np', 'DPU'):
+            TestDPUContrib.rt_manager.unregister_op('cpu-np', 'DPU')
         from pyxir.contrib.target import DPUCZDX8G_external_quantizer
         
 
