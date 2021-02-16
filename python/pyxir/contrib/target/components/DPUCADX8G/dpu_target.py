@@ -46,22 +46,6 @@ logger = logging.getLogger('pyxir')
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class OpSupportPass(DefaultOpSupportPass):
-<<<<<<< HEAD
-
-    def __init__(self, target: Target):
-        super().__init__(target)
-
-    def __call__(self, xg: XGraph) -> None:
-        """Call Pattern Annotator pass on XGraph before calling default op support functionality"""
-        XGraphPatternAnnotator()(xg)
-        super(OpSupportPass, self).__call__(xg)
-
-
-def xgraph_dpu_op_support_annotator(xg: XGraph, target: Target, **kwargs) -> None:
-    OpSupportPass(target)(xg)
-
-=======
->>>>>>> a93b785a04b6602418c4f07a0f29c809202d35bd
 
     def __init__(self, target: Target):
         super().__init__(target)

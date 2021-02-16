@@ -79,7 +79,7 @@ def xgraph_dpu_zcu102_compiler(xgraph, **kwargs):
     #else:
     #    arch = old_arch
 
-    compiler = VAICompiler(xgraph, arch=arcarch_path, meta=meta, dcf=dcf_path, **kwargs)
+    compiler = VAICompiler(xgraph, arch=arch_path, meta=meta, dcf=dcf_path, **kwargs)
     c_xgraph = compiler.compile()
 
     return c_xgraph
