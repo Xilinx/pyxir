@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for generic subgraph build function
-
-
-"""
+"""Module for generic subgraph build function"""
 
 import os
 import numpy as np
@@ -26,6 +22,7 @@ from pyxir.graph.algorithms.topological_sorting import sort_topologically
 from pyxir.shared import fancy_logging
 from pyxir.shapes import TensorShape, TupleShape
 
+from pyxir.graph import XGraph
 from pyxir.graph.layer.xlayer import XLayer, defaultXLayer
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
@@ -43,15 +40,15 @@ def find_indices(lst, condition):
     return [(i, elem) for i, elem in enumerate(lst) if condition(elem)]
 
 
-def xgraph_build_func(xgraph,
-                      target,
+def xgraph_build_func(xgraph: XGraph,
+                      target: str,
                       xtype,
                       layout='NCHW',
-                      **kwargs):
+                      **kwargs) -> XGraph:
 
     fancy_logger.banner("Subgraph build func, target: {}, layout: {}"
                         .format(target, layout))
-     
+
     compiler_output = xgraph.get_compiler_output() if xgraph.is_compiled() \
         else None
     compiler_output_keys = list(compiler_output.keys()) \

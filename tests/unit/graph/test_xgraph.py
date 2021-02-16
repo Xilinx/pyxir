@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the xgraph functionality
-
-
-"""
+"""Module for testing the xgraph functionality"""
 
 import os
 import unittest
@@ -25,6 +21,13 @@ import numpy as np
 # ! Important for device registration
 import pyxir
 
+try:
+    import tensorflow as tf
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Quantization Tensorflow related test because Tensorflow"
+                            " is not available")
+
+from pyxir import partition
 from pyxir.targets import qsim
 from pyxir.target_registry import TargetRegistry, register_op_support_check
 from pyxir.graph.layer.xlayer import XLayer, ConvData
@@ -377,7 +380,7 @@ class TestXGraph(unittest.TestCase):
             tops=[],
             targets=[]
         ))
-
+        xgraph = partition(xgraph, ['cpu'])
         assert len(xgraph) == 6
         xlayers = xgraph.get_layers()
         assert xgraph.get_layer_names() == \

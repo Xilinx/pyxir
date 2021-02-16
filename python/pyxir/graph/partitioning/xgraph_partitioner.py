@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for partitioning XGraph objects
-
-
-"""
+"""Module for partitioning XGraph objects"""
 
 import copy
 import logging
 
+from typing import List
+
+from pyxir.graph import XGraph
 from pyxir.shapes import TupleShape, TensorShape
 from pyxir.shared.vector import StrVector
 
@@ -39,8 +38,7 @@ class XGraphPartitioner(object):
     def __init__(self):
         pass
 
-    def partition(self, xgraph, targets, last_layer=None):
-        # type: (XGraph, List[str], str) -> XGraph
+    def partition(self, xgraph: XGraph, targets: List[str], last_layer: str = None) -> XGraph:
         """
         Partition the provided XGraph according to the provided targets
 

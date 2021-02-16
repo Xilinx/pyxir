@@ -12,21 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the DPU build functionality
-
-
-"""
+"""Module for testing the DPUCZDX8G build functionality"""
 
 import os
 import unittest
 
 import numpy as np
 
+from pyxir import partition
 from pyxir.graph.layer.xlayer import XLayer, ConvData
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.target_registry import TargetRegistry
+from pyxir.runtime.rt_manager import RtManager
+
+try:
+    import tensorflow as tf
+    skip_tf = False
+except ModuleNotFoundError:
+    skip_tf = True
+
 
 
 class TestDPUContrib(unittest.TestCase):
@@ -34,6 +39,7 @@ class TestDPUContrib(unittest.TestCase):
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
     target_registry = TargetRegistry()
+    rt_manager = RtManager()
 
     @classmethod
     def setUpClass(cls):
@@ -48,27 +54,39 @@ class TestDPUContrib(unittest.TestCase):
         TestDPUContrib.target_registry.unregister_target('dpuv2-zcu102')
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu102')
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
-        # TestDPUContrib.target_registry.unregister_target('dpuv2-ultra96')
-        # TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
+        TestDPUContrib.target_registry.unregister_target('dpuv2-ultra96')
+        TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
+
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because tensorflow is"
+                    "not available")
+    def test_import_ext_quantizer(self):
+        if TestDPUContrib.target_registry.is_target('DPUCZDX8G-ultra96'):
+            TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
+            TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
+            TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu102')
+        if TestDPUContrib.rt_manager.exists_op('cpu-np', 'DPU'):
+            TestDPUContrib.rt_manager.unregister_op('cpu-np', 'DPU')
+        from pyxir.contrib.target import DPUCZDX8G_external_quantizer
+        
 
     def test_supported_ops(self):
-        # ultra96_ops = TestDPUContrib.target_registry\
-        #     .get_supported_op_check_names('dpuv2-ultra96')
+        ultra96_ops = TestDPUContrib.target_registry\
+            .get_supported_op_check_names('dpuv2-ultra96')
 
-        # assert 'BatchNorm' in ultra96_ops
-        # assert 'BiasAdd' in ultra96_ops
-        # assert 'Concat' in ultra96_ops
-        # assert 'Convolution' in ultra96_ops
-        # assert 'Conv2DTranspose' in ultra96_ops
-        # assert 'DPU' in ultra96_ops
-        # assert 'Eltwise' in ultra96_ops
-        # assert 'Pad' in ultra96_ops
-        # assert 'Pooling' in ultra96_ops
-        # assert 'Mean' in ultra96_ops
-        # assert 'pReLU' in ultra96_ops
-        # assert 'ReLU' in ultra96_ops
-        # assert 'ReLU6' in ultra96_ops
-        # assert 'Scale' in ultra96_ops
+        assert 'BatchNorm' in ultra96_ops
+        assert 'BiasAdd' in ultra96_ops
+        assert 'Concat' in ultra96_ops
+        assert 'Convolution' in ultra96_ops
+        assert 'Conv2DTranspose' in ultra96_ops
+        assert 'DPU' in ultra96_ops
+        assert 'Eltwise' in ultra96_ops
+        assert 'Pad' in ultra96_ops
+        assert 'Pooling' in ultra96_ops
+        assert 'Mean' in ultra96_ops
+        assert 'pReLU' in ultra96_ops
+        assert 'ReLU' in ultra96_ops
+        assert 'ReLU6' in ultra96_ops
+        assert 'Scale' in ultra96_ops
 
         zcu102_ops = TestDPUContrib.target_registry\
             .get_supported_op_check_names('dpuv2-zcu102')
@@ -177,15 +195,11 @@ class TestDPUContrib(unittest.TestCase):
             )
         ]
         xgraph = TestDPUContrib.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestDPUContrib.xgraph_partitioner.partition(
-            xgraph, ['dpuv2-zcu104']
-        )
-
+        p_xgraph = partition(xgraph, ['dpuv2-zcu104'])
         dpu_xgraph = TestDPUContrib.target_registry\
             .get_target_build_func('dpuv2-zcu104')(p_xgraph)
 
-        assert(len(dpu_xgraph) == 6)
+        assert len(dpu_xgraph) == 6
         layers = dpu_xgraph.get_layers()
 
         assert layers[0].type[0] == 'Input'
@@ -195,14 +209,14 @@ class TestDPUContrib(unittest.TestCase):
         assert layers[1].tops == ['xp0']
 
         assert layers[2].type[0] == 'DPU'
-        assert(layers[2].bottoms == ['conv1_bottom_NCHW>NHWC'])
-        assert(layers[2].tops == ['pool1'])
+        assert layers[2].bottoms == ['conv1_bottom_NCHW>NHWC']
+        assert layers[2].tops == ['pool1']
         assert layers[2].shapes == [[1, 2, 2, 2]]
-        assert(layers[2].attrs['target'] == 'dpuv2-zcu104')
-        assert(layers[2].attrs['input_names'] == ['xinput0'])
-        assert(layers[2].attrs['output_names'] == ['pool1'])
-        assert(layers[2].attrs['input_layers']['xinput0'] == ['conv1'])
-        assert(layers[2].attrs['output_layers']['pool1'] == ['pool1'])
+        assert layers[2].attrs['target'] == 'dpuv2-zcu104'
+        assert layers[2].attrs['input_names'] == ['xinput0']
+        assert layers[2].attrs['output_names'] == ['pool1']
+        assert layers[2].attrs['input_layers']['xinput0'] == ['conv1']
+        assert layers[2].attrs['output_layers']['pool1'] == ['pool1']
         assert layers[2].attrs['__top_tensors'] ==\
             {'pool1': ['pool1_top_NHWC>NCHW']}
         assert layers[2].attrs['orig_top_tensors'] ==\
@@ -219,12 +233,6 @@ class TestDPUContrib(unittest.TestCase):
         assert layers[3].bottoms == ['xp0']
         assert layers[3].tops == ['dense1']
         assert layers[3].attrs['transpose'] is True
-
-        # assert layers[4].type[0] == 'Transpose'
-        # assert layers[4].name == 'pool1_top_NHWC>NCHW'
-        # assert layers[4].shapes == [1, 2, 2, 2]
-        # assert layers[4].bottoms == ['pool1']
-        # assert layers[4].tops == ['dense1']
 
         assert layers[4].type[0] == 'Input'
         assert layers[4].name == 'in2'

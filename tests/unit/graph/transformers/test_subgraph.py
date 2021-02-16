@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the xgraph partitioning functionality
-
-
-"""
+"""Module for testing the xgraph partitioning functionality"""
 
 import os
 import sys
@@ -28,6 +24,7 @@ import numpy as np
 # ! Important for device registration
 import pyxir
 
+from pyxir import partition
 from pyxir.graph.layer.xlayer import XLayer, ConvData, BatchData
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.graph.xgraph_factory import XGraphFactory
@@ -179,11 +176,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             )
         ]
         xgraph = TestSubgraphBuildFunc.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestSubgraphBuildFunc.xgraph_partitioner.partition(
-            xgraph, ['test_simple']
-        )
-
+        p_xgraph = partition(xgraph, ['test_simple'])
         dpu_xgraph = TestSubgraphBuildFunc.target_registry\
             .get_target_build_func('test_simple')(p_xgraph)
 
@@ -301,8 +294,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         xgraph = TestSubgraphBuildFunc.xgraph_factory\
             .build_from_xlayer(net)
 
-        p_xgraph = TestSubgraphBuildFunc.xgraph_partitioner\
-            .partition(xgraph, ['test_simple'])
+        p_xgraph = partition(xgraph, ['test_simple'])
 
         dpu_xgraph = TestSubgraphBuildFunc.target_registry\
             .get_target_build_func('test_simple')(p_xgraph)
@@ -423,11 +415,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             )
         ]
         xgraph = TestSubgraphBuildFunc.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestSubgraphBuildFunc.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
-
+        p_xgraph = partition(xgraph, ['test'])
         dpu_xgraph = TestSubgraphBuildFunc.target_registry\
             .get_target_build_func('test')(p_xgraph)
 
@@ -574,13 +562,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             )
         ]
         xgraph = TestSubgraphBuildFunc.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestSubgraphBuildFunc.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
-
-        # print("p_xgraph", p_xgraph.get_layers())
-
+        p_xgraph = partition(xgraph, ['test'])
         dpu_xgraph = TestSubgraphBuildFunc.target_registry\
             .get_target_build_func('test')(p_xgraph)
 
@@ -779,10 +761,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             )
         ]
         xgraph = TestSubgraphBuildFunc.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestSubgraphBuildFunc.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
+        p_xgraph = partition(xgraph, ['test'])
         p_xlayers = p_xgraph.get_layers()
 
         dpu_xgraph = TestSubgraphBuildFunc.target_registry\
@@ -945,11 +924,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             )
         ]
         xgraph = TestSubgraphBuildFunc.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestSubgraphBuildFunc.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
-
+        p_xgraph = partition(xgraph, ['test'])
         dpu_xgraph = TestSubgraphBuildFunc.target_registry\
             .get_target_build_func('test')(p_xgraph)
 
@@ -1141,11 +1116,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
             )
         ]
         xgraph = TestSubgraphBuildFunc.xgraph_factory.build_from_xlayer(net)
-
-        p_xgraph = TestSubgraphBuildFunc.xgraph_partitioner.partition(
-            xgraph, ['test']
-        )
-
+        p_xgraph = partition(xgraph, ['test'])
         dpu_xgraph = TestSubgraphBuildFunc.target_registry\
             .get_target_build_func('test')(p_xgraph)
 

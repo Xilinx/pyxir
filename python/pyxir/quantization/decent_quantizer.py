@@ -19,7 +19,6 @@ import json
 import logging
 import warnings
 import subprocess
-from progressbar import ProgressBar
 # import tensorflow as tf
 
 from pyxir.contrib.tools import classification
@@ -87,8 +86,6 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         with tf.io.gfile.GFile(frozen_graph, "rb") as f:
             input_graph_def.ParseFromString(f.read())
 
-        # input_names = xgraph.get_input_names()
-        # output_names = xgraph.get_output_names()
         logger.info("Quantization input: {} and output names: {}"
                      .format(input_names, output_names))
         input_shapes = [X.shapes.tolist() for X in xgraph.get_input_layers()]
@@ -110,20 +107,19 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         self.decent_q.quantize_frozen(input_graph_def, inputs_func, q_config)
 
         netcfg = os.path.join(self.work_dir, "deploy_model.pb")
-
+        q_eval_file = os.path.join(self.work_dir, "quantize_eval_model.pb")
         quant_info_file = os.path.join(self.work_dir,
                                        'quant_info_{}.txt'.format(xgraph.get_name()))
         self._save_quant_info(netcfg, quant_info_file)
 
-        self.q_output.add(xgraph.get_name(), netcfg, quant_info_file, frozen_graph)
+        self.q_output.add(xgraph.get_name(), netcfg, quant_info_file, frozen_graph, q_eval_file)
 
         # TODO
         # Add quantization info to corresponding XLayers
         self._add_quant_info_to_xgraph(netcfg)
 
-    def quantize(self):
-        # type: () -> None
-        """ Quantize the provided xfgrapg model using the decent_q quantizer"""
+    def quantize(self) -> None:
+        """Quantize the XGraph model using the decent_q quantizer"""
 
         # NOTE For Conv2Dtranspose layers we need the specific batch size in
         #   tensorflow 1.13
@@ -158,10 +154,12 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
            quant_file = self.q_output.get_q_file(qkey)
            quant_info_file = self.q_output.get_q_info(qkey)
            quant_orig_pb = self.q_output.get_orig_pb(qkey)
+           quant_eval_file = self.q_output.get_q_eval(qkey)
            self.xgraph.meta_attrs[qkey] = {
                'q_file': quant_file,
                'q_info': quant_info_file,
-               'orig_pb': quant_orig_pb
+               'orig_pb': quant_orig_pb,
+               'q_eval': quant_eval_file
            }
 
         self.xgraph.set_quantizer_output(self.q_output)
@@ -273,6 +271,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         #
         """
         """
+        from progressbar import ProgressBar
 
         input_fn_data = {
             "prep_key": self.data_prep_key,

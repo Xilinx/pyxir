@@ -87,7 +87,6 @@ def partition(xgraph: XGraph, targets: List[str], last_layer: str=None) -> XGrap
 
     target_registry.check_targets(targets)
     target_registry.annotate_ops(xgraph)
-    # import pdb; pdb.set_trace()
 
     p_xgraph = xgraph_partitioner.partition(xgraph, targets, last_layer)
     return p_xgraph

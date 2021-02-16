@@ -14,26 +14,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir TF executor
-
-
-"""
+"""Module for testing the pyxir TF executor"""
 
 import unittest
 import numpy as np
 
 from pyxir.runtime import base
-from pyxir.runtime.tensorflow.runtime_tf import *
-from pyxir.runtime.tensorflow import rt_layer_tf
-
+from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.layer import xlayer
+
+try:
+    from pyxir.runtime.tensorflow.runtime_tf import *
+    from pyxir.runtime.tensorflow import rt_layer_tf
+    skip_tf = False
+except ModuleNotFoundError:
+    skip_tf = True
 
 
 class TestRuntimeTF(unittest.TestCase):
 
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because Tensorflow is not available")
     def test_split_tuple_get_item(self):
-
         xlayers = [
             xlayer.XLayer(
                 name='in1',
@@ -76,9 +77,9 @@ class TestRuntimeTF(unittest.TestCase):
                 attrs={'index': 2}
             )
         ]
-
-        params = {}
-        runtime_tf = RuntimeTF('test', xlayers, params)
+        
+        xgraph = XGraphFactory().build_from_xlayer(xlayers)
+        runtime_tf = RuntimeTF('test', xgraph)
 
         inputs = {
             'in1': np.array([1, 2, 3, 4, 5], dtype=np.float32)
@@ -93,6 +94,7 @@ class TestRuntimeTF(unittest.TestCase):
         np.testing.assert_array_almost_equal(outpt_1, expected_outpt_1)
         np.testing.assert_array_almost_equal(outpt_2, expected_outpt_2)
 
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because Tensorflow is not available")
     def test_batch_norm(self):
         M = np.array([0.5, 1.2], dtype=np.float32)
         V = np.array([0.1, 0.05], dtype=np.float32)
@@ -124,13 +126,8 @@ class TestRuntimeTF(unittest.TestCase):
                 targets=[]
             )]
 
-        params = {
-            'bn_mu': M,
-            'bn_variance': V,
-            'bn_gamma': G,
-            'bn_beta': B
-        }
-        runtime_tf = RuntimeTF('test', xlayers, params)
+        xgraph = XGraphFactory().build_from_xlayer(xlayers)
+        runtime_tf = RuntimeTF('test', xgraph)
 
         inputs = {
             'input': np.array([1, 1], dtype=np.float32).reshape(1, 2, 1, 1)

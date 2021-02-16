@@ -14,11 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir TF executor
-
-
-"""
+"""Module for testing the pyxir TF executor"""
 
 import unittest
 import numpy as np
@@ -28,8 +24,10 @@ from pyxir.runtime import base
 from pyxir.graph.layer import xlayer
 from pyxir.graph.io import xlayer_io
 
-from pyxir.runtime.tensorflow.x_2_tf_registry import X_2_TF
-
+try:
+    from pyxir.runtime.tensorflow.x_2_tf_registry import X_2_TF
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Tensorflow related test because Tensorflow is not available")
 
 class TestTfL4BroadcastAndReduce(unittest.TestCase):
 

@@ -41,3 +41,11 @@ try:
 except Exception as e:
     warnings.warn("Could not load `cpu-np` runtime because of error: {}"
                   .format(e))
+
+try:
+    from .decentq_sim.runtime_decentq_sim import RuntimeDecentQSim
+
+    rt_manager.register_rt('decentq-sim', RuntimeDecentQSim, {})
+except Exception as e:
+    warnings.warn("Could not load `decentq-sim` runtime because of error: {}"
+                  .format(e))

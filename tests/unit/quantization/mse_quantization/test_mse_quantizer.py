@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the default quantization flow
-
-
-"""
+"""Module for testing the default quantization flow"""
 
 import os
 import sys
@@ -26,13 +22,18 @@ import logging
 import unittest
 import numpy as np
 
+try:
+    import tensorflow as tf
+except ModuleNotFoundError:
+    raise unittest.SkipTest("Skipping Quantization Tensorflow related test because Tensorflow"
+                            " is not available")
+
 from pyxir.quantization.mse_quantization.mse_threshold_quantizer import \
     XGraphMSEThresholdQuantizer
 from pyxir.graph.layer.xlayer import XLayer, ConvData, BatchData, ScaleData
 from pyxir.graph.xgraph_factory import XGraphFactory
 
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
-
 
 # logger = logging.getLogger('pyxir')
 # logger.addHandler(logging.StreamHandler(sys.stdout))
