@@ -39,6 +39,8 @@ if (USE_VAI_RT)
   # Remove VAI_DEFAULT backend source files
   file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_default/*.cpp")
   list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/xir_rt/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
 
 elseif (USE_VAI_RT_DPUCZDX8G)
   set(vitisai_INCLUDE_DIRS /usr/include/vai)
@@ -52,6 +54,8 @@ elseif (USE_VAI_RT_DPUCZDX8G)
 
   # Remove VAI_DEFAULT backend source files
   file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_default/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/xir_rt/*.cpp")
   list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
 
 elseif (USE_VAI_RT_DPUCAHX8H)
@@ -78,6 +82,8 @@ else()
   # Remove VAI_RT backend source files
   file(GLOB_RECURSE vitisai_rt_SOURCES "src/pyxir/runtime/backends/vai_rt/*.cpp")
   list(REMOVE_ITEM SOURCES ${vitisai_rt_SOURCES})
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/xir_rt/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
 endif()
 
 add_library(${TARGET} SHARED ${SOURCES})
