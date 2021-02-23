@@ -33,45 +33,38 @@ namespace vai_rt {
 DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl)
 {
   std::vector<std::string> dpu_in_tensor_names = xl->bottoms;
-  std::vector<std::string> dpu_internal_in_tensor_names
-    = xl->get_attr("input_names").get_strings();
-  
+  std::vector<std::string> dpu_internal_in_tensor_names = xl->get_attr("input_names").get_strings();
+
   in_tensor_names_ = dpu_internal_in_tensor_names;
 
   std::vector<std::string> dpu_out_tensor_names = xl->get_attr("output_names").get_strings(); // xl->tops;
   out_tensor_names_ = dpu_out_tensor_names;
-  
-  std::unordered_map<std::string, std::string> rt_in_map = 
-    xl->get_attr("rt_in_map").get_map_str_str();
-  std::unordered_map<std::string, std::string> rt_out_map = 
-    xl->get_attr("rt_out_map").get_map_str_str();
-  
+
+  std::unordered_map<std::string, std::string> rt_in_map =
+      xl->get_attr("rt_in_map").get_map_str_str();
+  std::unordered_map<std::string, std::string> rt_out_map =
+      xl->get_attr("rt_out_map").get_map_str_str();
+
   pxDebug("Before DpuRunner init");
   // Setup DPU runner
   std::string model_path;
-  if (!build_dir.empty()) {
+  if (!build_dir.empty())
+  {
     model_path = build_dir;
-  } else {
+  }
+  else
+  {
     model_path = xl->get_attr("work_dir").get_string();
   }
-  graph = xir::Graph::deserialize(model_path+"/xp0.xmodel");
-  
-  //graph = xir::Graph::deserialize(build_dir+"/xp0.xmodel");
+  graph = xir::Graph::deserialize(model_path + "/xp0.xmodel");
   subgraph = get_dpu_subgraph(graph.get());
   CHECK_EQ(subgraph.size(), 1u)
-      << "resnet50 should have one and only one dpu subgraph.";
+      << "model should have one and only one dpu subgraph.";
+
   LOG(INFO) << "create running for subgraph: " << subgraph[0]->get_name();
   /*create runner*/
   runner = vart::Runner::create_runner(subgraph[0], "run");
-/*
-  auto dpu_runners = vitis::ai::DpuRunner::create_dpu_runner(model_path);
-  dpu_runner_ = std::move(dpu_runners[0]);
 
-  if(dpu_runner_->get_tensor_format() != vitis::ai::DpuRunner::TensorFormat::NCHW) {
-    pxDebug("Invalid tensor format NHWC");
-  }
-  pxDebug("After DpuRunner init");
- */
   dpu_runner_in_tensors_ = runner->get_input_tensors();
   dpu_runner_out_tensors_ = runner->get_output_tensors();
   assert(dpu_runner_in_tensors_.size() == dpu_in_tensor_names.size());
@@ -79,49 +72,46 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
 
   std::vector<std::string> dpu_runner_in_tensor_names;
   std::transform(dpu_runner_in_tensors_.begin(), dpu_runner_in_tensors_.end(),
-    std::back_inserter(dpu_runner_in_tensor_names),
-    [](const xir::Tensor* t) -> const std::string { return t->get_name(); });
- // dpu_runner_in_tensor_names[0]="xinput0";
+                 std::back_inserter(dpu_runner_in_tensor_names),
+                 [](const xir::Tensor *t) -> const std::string { return t->get_name(); });
+  // dpu_runner_in_tensor_names[0]="xinput0";
   std::vector<std::string> dpu_runner_out_tensor_names;
 
   std::transform(dpu_runner_out_tensors_.begin(), dpu_runner_out_tensors_.end(),
-   std::back_inserter(dpu_runner_out_tensor_names),
-   [](const xir::Tensor* t) -> const std::string { return t->get_name(); });
+                 std::back_inserter(dpu_runner_out_tensor_names),
+                 [](const xir::Tensor *t) -> const std::string { return t->get_name(); });
 
-
-  string name= "/aquant";
-  for(int i=0;i< dpu_runner_in_tensor_names.size();i++)
+  string name = "/aquant";
+  for (int i = 0; i < dpu_runner_in_tensor_names.size(); i++)
   {
-	  size_t pos = dpu_runner_in_tensor_names[i].find(name);
-	  dpu_runner_in_tensor_names[i].replace(pos,name.length(),"");
+    size_t pos = dpu_runner_in_tensor_names[i].find(name);
+    dpu_runner_in_tensor_names[i].replace(pos, name.length(), "");
   }
-  for(int i=0;i< dpu_runner_out_tensor_names.size();i++)
+  for (int i = 0; i < dpu_runner_out_tensor_names.size(); i++)
   {
-	  size_t pos = dpu_runner_out_tensor_names[i].find(name);
-	  dpu_runner_out_tensor_names[i].replace(pos,name.length(),"");
+    size_t pos = dpu_runner_out_tensor_names[i].find(name);
+    dpu_runner_out_tensor_names[i].replace(pos, name.length(), "");
   }
-
 
   std::vector<std::string> rt_in_names;
   std::transform(in_tensor_names_.begin(), in_tensor_names_.end(),
-   std::back_inserter(rt_in_names),
-   [&rt_in_map](const std::string &elem)
-   -> const std::string & { return rt_in_map[elem]; });
+                 std::back_inserter(rt_in_names),
+                 [&rt_in_map](const std::string &elem)
+                     -> const std::string & { return rt_in_map[elem]; });
 
   for (int i = 0; i < in_tensor_names_.size(); ++i)
   {
     std::string dpu_in_name = dpu_runner_in_tensor_names[i];
 
     std::vector<std::string>::iterator iter = std::find_if(
-      rt_in_names.begin(), rt_in_names.end(),
-      [dpu_in_name](const std::string &elem) { return elem == dpu_in_name; });
+        rt_in_names.begin(), rt_in_names.end(),
+        [dpu_in_name](const std::string &elem) { return elem == dpu_in_name; });
     size_t index = std::distance(rt_in_names.begin(), iter);
     if (index == rt_in_names.size())
     {
-      throw std::runtime_error("DPU in tensor: " + dpu_in_name 
-        + " not found in model runtime naming map.");
+      throw std::runtime_error("DPU in tensor: " + dpu_in_name + " not found in model runtime naming map.");
     }
-    else 
+    else
     {
       in_tensor_order_.push_back(index);
     }
@@ -156,7 +146,8 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
 }
 
 DpuFunc::~DpuFunc() {
-  if (is_verbose()) {
+  if (is_verbose())
+  {
     std::cout << "---------------------" << std::endl;
     std::cout << "PX DPU FUNC TIMINGS: " << std::endl;
     std::cout << "Total DPU time: " << std::to_string(total_dpu_time_) << std::endl;
@@ -184,37 +175,51 @@ void DpuFunc::operator()(
     inputsPtr.push_back(new CpuFlatTensorBuffer(in_tensors[in_idx]->data, batchTensors.back().get()));
     in_idx++;
   }
-
-  if (out_tensors.empty()) {
-    for (const auto &shape : xl_->shapes) {
+  std::vector<XBufferHolder> out_tensors_local;
+  if (out_tensors_local.empty())
+  {
+    for (const auto &shape : xl_->shapes)
+    {
       std::vector<ssize_t> buffer_shape = shape;
       buffer_shape[0] = inputTensors[0]->get_shape()[0];
       //buffer_shape[0] = in_tensors[0]->shape[0];
-      out_tensors.push_back(create_buffer(buffer_shape));
+      out_tensors_local.push_back(create_buffer(buffer_shape));
     }
   }
-  
- int out_idx=0;
- for(const auto& oTensor: outputTensors) {
-    const auto& out_dims = oTensor->get_shape();
+
+  int out_idx = 0;
+  for (const auto &oTensor : outputTensors)
+  {
+    const auto &out_dims = oTensor->get_shape();
     batchTensors.push_back(std::shared_ptr<xir::Tensor>(xir::Tensor::create(oTensor->get_name(), out_dims, xir::DataType{xir::DataType::FLOAT, sizeof(float) * 8u})));
-    outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors[out_tensor_order_[out_idx]]->data, batchTensors.back().get()));
+    outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors_local[out_tensor_order_[out_idx]]->data, batchTensors.back().get()));
     //outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors[out_idx]->data, batchTensors.back().get()));
-     out_idx++;
-
-}
-  LOG(INFO) << "Executing       ";
-    auto job_id = runner->execute_async(inputsPtr, outputsPtr);
-    runner->wait(job_id.first, -1);
-
-  for(int i = 0; i<inputsPtr.size(); ++i) {
+    out_idx++;
+  }
+  //LOG(INFO) << "Executing ";
+  auto job_id = runner->execute_async(inputsPtr, outputsPtr);
+  runner->wait(job_id.first, -1);
+  out_idx = 0;
+  if (out_tensors.empty())
+  {
+    for (const auto &shape : xl_->shapes)
+    {
+      std::vector<ssize_t> buffer_shape = shape;
+      buffer_shape[0] = in_tensors[0]->shape[0];
+      pyxir::XBufferHolder xb_out = std::shared_ptr<pyxir::XBuffer>(new pyxir::XBuffer((void *)out_tensors_local[out_idx]->data, 4, "f", buffer_shape.size(), buffer_shape, true, true));
+      out_tensors.push_back(xb_out);
+      out_idx++;
+    }
+  }
+  for (int i = 0; i < inputsPtr.size(); ++i)
+  {
     delete inputsPtr[i];
   }
 
-  for(int i = 0; i<outputsPtr.size(); ++i) {
-    delete outputsPtr[i];  
-}        
-
+  for (int i = 0; i < outputsPtr.size(); ++i)
+  {
+    delete outputsPtr[i];
+  }
 }
 
 } // vai_rt
