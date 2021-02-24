@@ -29,7 +29,7 @@ const std::string pxDecentQSimRuntimeModule = "decentq-sim";
 const std::string pxVaiRuntimeModule = "vai";
 const std::vector<std::string> cpuTargets {"cpu"};
 
-#ifdef USE_VAI_RT
+#ifdef USE_VAI_RT_DPUCADX8G
 const std::vector<std::string> vaiTargets {"DPUCADX8G", "dpuv1"};
 #elif defined(USE_VAI_RT_DPUCZDX8G)
 const std::vector<std::string> vaiTargets {"DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102", "DPUCZDX8G-ultra96",
