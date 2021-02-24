@@ -171,7 +171,7 @@ class CMakeBuild(build_ext):
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
 
         if use_vai_rt_dpucadx8g:
-            cmake_args.append('-DUSE_VAI_RT=ON')
+            cmake_args.append('-DUSE_VAI_RT_DPUCADX8G=ON')
         if use_vai_rt_dpuczdx8g:
             cmake_args.append('-DUSE_VAI_RT_DPUCZDX8G=ON')
         if use_vai_rt_dpucahx8h:

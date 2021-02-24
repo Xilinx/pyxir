@@ -20,11 +20,7 @@
 #include <chrono>
 
 #include "pyxir/common/util.hpp"
-#include "common.h"
-
 #include "dpu_func.hpp"
-GraphInfo shapes;
-
 
 namespace pyxir {
 namespace runtime {
@@ -182,7 +178,6 @@ void DpuFunc::operator()(
     {
       std::vector<ssize_t> buffer_shape = shape;
       buffer_shape[0] = inputTensors[0]->get_shape()[0];
-      //buffer_shape[0] = in_tensors[0]->shape[0];
       out_tensors_local.push_back(create_buffer(buffer_shape));
     }
   }
@@ -193,10 +188,8 @@ void DpuFunc::operator()(
     const auto &out_dims = oTensor->get_shape();
     batchTensors.push_back(std::shared_ptr<xir::Tensor>(xir::Tensor::create(oTensor->get_name(), out_dims, xir::DataType{xir::DataType::FLOAT, sizeof(float) * 8u})));
     outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors_local[out_tensor_order_[out_idx]]->data, batchTensors.back().get()));
-    //outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors[out_idx]->data, batchTensors.back().get()));
     out_idx++;
   }
-  //LOG(INFO) << "Executing ";
   auto job_id = runner->execute_async(inputsPtr, outputsPtr);
   runner->wait(job_id.first, -1);
   out_idx = 0;

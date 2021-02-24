@@ -22,7 +22,8 @@
 #include "pyxir/graph/xlayer.hpp"
 #include "pyxir/common/xbuffer.hpp"
 #include "pyxir/runtime/kernel_func.hpp"
-#include "common.h"
+#include "common.hpp"
+
 namespace pyxir {
 namespace runtime {
 namespace vai_rt {
@@ -44,19 +45,20 @@ class DpuFunc : public KernelFunc {
     /** @brief The names of the output tensor in the order that they will be provided */
     std::vector<std::string> out_tensor_names_;
     /** @brief The DPU input tensors */
-   std::vector<const xir::Tensor*> dpu_runner_in_tensors_;
+    std::vector<const xir::Tensor*> dpu_runner_in_tensors_;
     /** @brief The DPU output tensors */
-   std::vector<const xir::Tensor*> dpu_runner_out_tensors_;
+    std::vector<const xir::Tensor*> dpu_runner_out_tensors_;
     /** @brief Vector to match the order in which input tensors will be provided with
         the order in which the DPU expects them */
     std::vector<int> in_tensor_order_;
     /** @brief Vector to match the order in which output tensors will be provided with
         the order in which the DPU expects them */
     std::vector<int> out_tensor_order_;
-    /** @brief Holder for the DPU runner that will be created using Vitis AI API's */
-    //std::unique_ptr<vitis::ai::DpuRunner> dpu_runner_;
+    /** @brief Holder for XIR model*/
     std::unique_ptr<xir::Graph> graph;
+    /** @brief Holder for Subgraph. This will be extracted from XIR graph*/
     std::vector<const xir::Subgraph*> subgraph;
+    /** @brief Holder for the DPU runner that will be created using Vitis AI API's */
     std::unique_ptr<vart::Runner> runner;
 
     // VERBOSE

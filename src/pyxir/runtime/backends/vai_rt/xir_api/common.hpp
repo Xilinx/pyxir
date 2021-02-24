@@ -21,9 +21,7 @@
 
 #include <iostream>
 #include <mutex>
-//#include <opencv2/opencv.hpp>
 #include <string>
-#include <thread>
 #include <vector>
 #include <cmath>
 /* header file for Vitis AI unified API */

@@ -34,7 +34,7 @@ FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 class VAICompiler(XGraphBaseCompiler):
 
-    """ Vitis-AI compiler wrapper for DPUCZDX8G """
+    """ Vitis-AI compiler wrapper for DPUCAHX8H """
 
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
@@ -70,7 +70,7 @@ class VAICompiler(XGraphBaseCompiler):
         
 
     def compile(self) -> None:
-        """ Start DPUv2 compilation """
+        """ Start DPUCAHX8H compilation """
 
         net_name = list(self.netcfgs.keys())[0]
         netcfg = list(self.netcfgs.values())[0]
@@ -103,16 +103,6 @@ class VAICompiler(XGraphBaseCompiler):
             --net_name {} \
             --options "{}"
         """.format(netcfg, self.arch, self.build_dir, net_name, str(dict()))
-
-        #command = """
-        #dnnc-dpuv2 --parser tensorflow\
-        #    --frozen_pb {} \
-        #    --cpu_arch {} \
-        #    --output_dir {} \
-        #    --net_name {} \
-        #    --dcf {}
-        #""".format(netcfg, self.arch, self.work_dir, net_name, self.dcf)
-
 
         logger.info("Command: {}".format(command))
 

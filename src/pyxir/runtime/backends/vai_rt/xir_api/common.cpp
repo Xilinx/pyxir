@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "common.h"
+#include "common.hpp"
 
 #include <cassert>
 #include <numeric>

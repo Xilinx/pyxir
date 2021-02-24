@@ -27,8 +27,6 @@ const std::string pxCpuNpRuntimeModule = "cpu-np";
 const std::string pxCpuRuntimeModule = "cpu";
 const std::string pxDecentQSimRuntimeModule = "decentq-sim";
 const std::string pxVaiRuntimeModule = "vai";
-const std::string pxXirRuntimeModule = "vai";
-
 const std::vector<std::string> cpuTargets {"cpu"};
 
 #ifdef USE_VAI_RT
