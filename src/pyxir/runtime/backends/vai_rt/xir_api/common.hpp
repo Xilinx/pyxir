@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#pragma once
 
 #include <glog/logging.h>
 
@@ -110,4 +108,3 @@ class CpuFlatTensorBuffer : public vart::TensorBuffer {
   void* data_;
 };
 
-#endif
