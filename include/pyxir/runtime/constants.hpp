@@ -33,8 +33,8 @@ const std::vector<std::string> cpuTargets {"cpu"};
 #ifdef USE_VAI_RT
 const std::vector<std::string> vaiTargets {"DPUCADX8G", "dpuv1"};
 #elif defined(USE_VAI_RT_DPUCZDX8G)
-const std::vector<std::string> vaiTargets {"DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102", "DPUCZDX8G-ultra96",
-                                           "dpuv2-zcu104", "dpuv2-zcu102", "dpuv2-ultra96"};
+const std::vector<std::string> vaiTargets {"DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102", "DPUCZDX8G-ultra96", "DPUCZDX8G-som",
+                                           "dpuv2-zcu104", "dpuv2-zcu102", "dpuv2-ultra96", "dpuv2-som"};
 #else
 const std::vector<std::string> vaiTargets {};
 #endif

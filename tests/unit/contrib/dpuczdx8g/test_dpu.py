@@ -56,6 +56,8 @@ class TestDPUContrib(unittest.TestCase):
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
         TestDPUContrib.target_registry.unregister_target('dpuv2-ultra96')
         TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
+        TestDPUContrib.target_registry.unregister_target('dpuv2-som')
+        TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-som')
 
     @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because tensorflow is"
                     "not available")
@@ -64,6 +66,7 @@ class TestDPUContrib(unittest.TestCase):
             TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-ultra96')
             TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu104')
             TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-zcu102')
+            TestDPUContrib.target_registry.unregister_target('DPUCZDX8G-som')
         if TestDPUContrib.rt_manager.exists_op('cpu-np', 'DPU'):
             TestDPUContrib.rt_manager.unregister_op('cpu-np', 'DPU')
         from pyxir.contrib.target import DPUCZDX8G_external_quantizer
@@ -123,6 +126,25 @@ class TestDPUContrib(unittest.TestCase):
         assert 'ReLU' in zcu104_ops
         assert 'ReLU6' in zcu104_ops
         assert 'Scale' in zcu104_ops
+
+        som_ops = TestDPUContrib.target_registry\
+            .get_supported_op_check_names('dpuv2-som')
+
+        assert 'BatchNorm' in som_ops
+        assert 'BiasAdd' in som_ops
+        assert 'Concat' in som_ops
+        assert 'Convolution' in som_ops
+        assert 'Conv2DTranspose' in som_ops
+        assert 'DPU' in som_ops
+        assert 'Eltwise' in som_ops
+        assert 'Pad' in som_ops
+        assert 'Pooling' in som_ops
+        assert 'Mean' in som_ops
+        assert 'pReLU' in som_ops
+        assert 'ReLU' in som_ops
+        assert 'ReLU6' in som_ops
+        assert 'Scale' in som_ops
+        assert 'Upsampling2D' in som_ops
 
     def test_small(self):
         net = [
