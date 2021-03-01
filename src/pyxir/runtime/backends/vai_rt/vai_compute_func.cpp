@@ -21,7 +21,6 @@
 #include <chrono>
 
 #include "vai_compute_func.hpp"
-#include "dpu_func.hpp"
 
 #include "pyxir/common/util.hpp"
 #include "../cpu/input.hpp"

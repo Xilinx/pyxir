@@ -70,6 +70,13 @@ elif '--use_vai_rt_dpuv2' in sys.argv:
 else:
     use_vai_rt_dpuczdx8g = False
 
+# DPUCAHX8H/DPUv3e build
+if '--use_vai_rt_dpucahx8h' in sys.argv:
+    use_vai_rt_dpucahx8h = True
+    sys.argv.remove('--use_vai_rt_dpucahx8h')
+else:
+    use_vai_rt_dpucahx8h = False
+
 ###############
 # STATIC DATA #
 ###############
@@ -164,9 +171,11 @@ class CMakeBuild(build_ext):
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
 
         if use_vai_rt_dpucadx8g:
-            cmake_args.append('-DUSE_VAI_RT=ON')
+            cmake_args.append('-DUSE_VAI_RT_DPUCADX8G=ON')
         if use_vai_rt_dpuczdx8g:
             cmake_args.append('-DUSE_VAI_RT_DPUCZDX8G=ON')
+        if use_vai_rt_dpucahx8h:
+            cmake_args.append('-DUSE_VAI_RT_DPUCAHX8H=ON')
         if self.debug:
             cmake_args.append('-DDEBUG=ON')
             # cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON')

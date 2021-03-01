@@ -18,12 +18,16 @@
 
 #include <memory>
 #include <unordered_set>
+
+#if defined(USE_VAI_RT_DPUCADX8G) || defined(USE_VAI_RT_DPUCZDX8G)
 #include <dpu_runner.hpp>
+#include "vai_api/dpu_func.hpp"
+#elif defined(USE_VAI_RT_DPUCAHX8H)
+#include "xir_api/dpu_func.hpp"
+#endif
 
 #include "pyxir/graph/xgraph.hpp"
 #include "pyxir/common/xbuffer.hpp"
-
-#include "dpu_func.hpp"
 
 void vaiDebugMsg(const char *, const char *, const char *, int);
 #ifdef DEBUG

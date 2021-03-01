@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(pyxir)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 set(TARGET pyxir)
 set(pyxir_EXT_LIBRARIES "")
@@ -23,7 +23,7 @@ if (DEBUG)
   add_definitions(-DDEBUG=1)
 endif()
 
-if (USE_VAI_RT)
+if (USE_VAI_RT_DPUCADX8G)
   set(vitisai_ROOT_DIR $ENV{CONDA_PREFIX})
   set(vitisai_INCLUDE_DIRS ${vitisai_ROOT_DIR}/lib/python3.6/site-packages/vai/dpuv1/rt/vitis/include/dpu)
   set(vitisai_LIBRARIES ${vitisai_ROOT_DIR}/lib)
@@ -33,10 +33,12 @@ if (USE_VAI_RT)
   set_property(TARGET vitisai_rt PROPERTY IMPORTED_LOCATION ${vitisai_LIBRARIES}/${VITISAI_SHARED_LIB})
   list(APPEND pyxir_EXT_LIBRARIES vitisai_rt)
   # list(APPEND pyxir_EXT_DEPENDENCIES vitisai_rt)
-  add_definitions(-DUSE_VAI_RT=1)
+  add_definitions(-DUSE_VAI_RT_DPUCADX8G=1)
 
   # Remove VAI_DEFAULT backend source files
   file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_default/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_rt/xir_api/*.cpp")
   list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
 
 elseif (USE_VAI_RT_DPUCZDX8G)
@@ -51,6 +53,22 @@ elseif (USE_VAI_RT_DPUCZDX8G)
 
   # Remove VAI_DEFAULT backend source files
   file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_default/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_rt/xir_api/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+
+elseif (USE_VAI_RT_DPUCAHX8H)
+  set(vitisai_LIBRARIES /usr/lib)
+  set(VITISAI_SHARED_LIB libvart-runner.so)  
+  add_library(vitisai_rt SHARED IMPORTED)
+  set_property(TARGET vitisai_rt PROPERTY IMPORTED_LOCATION ${vitisai_LIBRARIES}/${VITISAI_SHARED_LIB})
+  list(APPEND pyxir_EXT_LIBRARIES vitisai_rt)
+  add_definitions(-DUSE_VAI_RT_DPUCAHX8H=1)
+
+  # Remove VAI_DEFAULT backend source files
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_default/*.cpp")
+  list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
+  file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_rt/vai_api/*.cpp")
   list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
 
 else()
