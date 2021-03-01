@@ -55,11 +55,11 @@ class DpuFunc : public KernelFunc {
         the order in which the DPU expects them */
     std::vector<int> out_tensor_order_;
     /** @brief Holder for XIR model*/
-    std::unique_ptr<xir::Graph> graph;
+    std::unique_ptr<xir::Graph> graph_;
     /** @brief Holder for Subgraph. This will be extracted from XIR graph*/
-    std::vector<const xir::Subgraph*> subgraph;
+    std::vector<const xir::Subgraph*> subgraph_;
     /** @brief Holder for the DPU runner that will be created using Vitis AI API's */
-    std::unique_ptr<vart::Runner> runner;
+    std::unique_ptr<vart::Runner> runner_;
 
     // VERBOSE
     /** @brief The total time spent in async DPU call */
