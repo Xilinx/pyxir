@@ -52,17 +52,17 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
   {
     model_path = xl->get_attr("work_dir").get_string();
   }
-  graph = xir::Graph::deserialize(model_path + "/xp0.xmodel");
-  subgraph = get_dpu_subgraph(graph.get());
-  CHECK_EQ(subgraph.size(), 1u)
+  graph_ = xir::Graph::deserialize(model_path +"/" + xl->name +".xmodel");
+  subgraph_ = get_dpu_subgraph(graph_.get());
+  CHECK_EQ(subgraph_.size(), 1u)
       << "model should have one and only one dpu subgraph.";
 
-  LOG(INFO) << "create running for subgraph: " << subgraph[0]->get_name();
+  LOG(INFO) << "create running for subgraph: " << subgraph_[0]->get_name();
   /*create runner*/
-  runner = vart::Runner::create_runner(subgraph[0], "run");
+  runner_ = vart::Runner::create_runner(subgraph_[0], "run");
 
-  dpu_runner_in_tensors_ = runner->get_input_tensors();
-  dpu_runner_out_tensors_ = runner->get_output_tensors();
+  dpu_runner_in_tensors_ = runner_->get_input_tensors();
+  dpu_runner_out_tensors_ = runner_->get_output_tensors();
   assert(dpu_runner_in_tensors_.size() == dpu_in_tensor_names.size());
   assert(dpu_runner_out_tensors_.size() == dpu_out_tensor_names.size());
 
@@ -70,14 +70,13 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
   std::transform(dpu_runner_in_tensors_.begin(), dpu_runner_in_tensors_.end(),
                  std::back_inserter(dpu_runner_in_tensor_names),
                  [](const xir::Tensor *t) -> const std::string { return t->get_name(); });
-  // dpu_runner_in_tensor_names[0]="xinput0";
-  std::vector<std::string> dpu_runner_out_tensor_names;
 
+  std::vector<std::string> dpu_runner_out_tensor_names;
   std::transform(dpu_runner_out_tensors_.begin(), dpu_runner_out_tensors_.end(),
                  std::back_inserter(dpu_runner_out_tensor_names),
                  [](const xir::Tensor *t) -> const std::string { return t->get_name(); });
 
-  string name = "/aquant";
+  std::string name = "/aquant";
   for (int i = 0; i < dpu_runner_in_tensor_names.size(); i++)
   {
     size_t pos = dpu_runner_in_tensor_names[i].find(name);
@@ -157,9 +156,8 @@ void DpuFunc::operator()(
   std::vector<XBufferHolder> &in_tensors,
   std::vector<XBufferHolder> &out_tensors)
 {
- /*get in/out tensor*/
-  auto inputTensors = runner->get_input_tensors();
-  auto outputTensors = runner->get_output_tensors();
+  auto inputTensors = runner_->get_input_tensors();
+  auto outputTensors = runner_->get_output_tensors();
 
   std::vector<std::unique_ptr<vart::TensorBuffer>> inputs, outputs;
   std::vector<vart::TensorBuffer*> inputsPtr, outputsPtr;
@@ -190,8 +188,8 @@ void DpuFunc::operator()(
     outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors_local[out_tensor_order_[out_idx]]->data, batchTensors.back().get()));
     out_idx++;
   }
-  auto job_id = runner->execute_async(inputsPtr, outputsPtr);
-  runner->wait(job_id.first, -1);
+  auto job_id = runner_->execute_async(inputsPtr, outputsPtr);
+  runner_->wait(job_id.first, -1);
   out_idx = 0;
   if (out_tensors.empty())
   {
