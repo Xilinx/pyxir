@@ -23,4 +23,7 @@ from . import zcu102_op_support
 from . import zcu104
 from . import zcu104_op_support
 
+from . import som
+from . import som_op_support
+
 from ..target import DPUCZDX8G
