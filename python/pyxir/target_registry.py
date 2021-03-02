@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for managing target backends """
+"""Module for managing target backends"""
+
+import importlib
 
 from typing import List, Callable
 
@@ -56,6 +58,9 @@ class TargetRegistry(object):
 
         def check_target(self, target: str):
             """ Check whether the target exists """
+            if not self.is_target(target):
+                # Try importing it on the fly
+                importlib.import_module("pyxir.contrib.target." + target.split("-")[0])
             if not self.is_target(target):
                 raise ValueError("Unknown target: {}, registered targets"
                                  " are: {}"
