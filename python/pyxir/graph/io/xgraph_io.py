@@ -109,7 +109,6 @@ class XGraphIO(object):
     @classmethod
     def to_string(cls, xgraph: XGraph):
         """Return the XGraph in string format"""
-        import pdb; pdb.set_trace()
         if version.parse(h5py.__version__) >= version.parse("2.10.0"):
             bio = io.BytesIO()
             h5f = h5py.File(bio, 'w')
