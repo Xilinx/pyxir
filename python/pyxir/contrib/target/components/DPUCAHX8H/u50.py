@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for registering DPUCZDX8G zcu102 target """
+""" Module for registering DPUCZDX8G u50 target """
 
 import os
 import json
@@ -27,9 +27,7 @@ from .vai_c import VAICompiler
 logger = logging.getLogger('pyxir')
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-def xgraph_dpu_zcu102_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
+def xgraph_dpu_u50_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     # TODO here or in optimizer, both?
     # DPU layers are in NHWC format because of the tensorflow
@@ -38,49 +36,24 @@ def xgraph_dpu_zcu102_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
     return subgraph.xgraph_build_func(
         xgraph=xgraph,
-        target='DPUCZDX8G-zcu102',
+        target='DPUCAHX8H-u50',
         xtype='DPU',
         layout='NHWC',
         work_dir=work_dir
     )
 
 
-def xgraph_dpu_zcu102_compiler(xgraph, **kwargs):
+def xgraph_dpu_u50_compiler(xgraph, **kwargs):
 
-    meta = {
-        "lib": "/usr/local/lib/libn2cube.so",
-        # "vitis_dpu_kernel": "tf_resnet50_0",
-        "pre_processing_pool": 4,
-        "post_processing_pool": 4,
-        "dpu_thread_pool": 3,
-        "dpu_task_pool": 16
-    }
+    # Vitis-AI 1.3 - ...
+    new_arch = "/opt/vitis_ai/compiler/arch/DPUCAHX8H/U50/arch.json"
 
-    dcf_path = os.path.join(FILE_DIR, "./ZCU102.dcf")
-    arch_path = "/tmp/ZCU102.json"
-    if not os.path.exists(arch_path):
-        # Write arch json 
-        arch = {   
-            "target"   : "DPUCZDX8G",
-            "dcf"      : dcf_path,
-            "cpu_arch" : "arm64"
-        }
+    if os.path.exists(new_arch):
+        arch_path = new_arch
+    else:
+        arch_path = None
 
-        with open(arch_path, 'w') as f:
-            json.dump(arch, f, indent=4, sort_keys=True)
-
-    # Vitis-AI 1.1
-    #old_arch = "/opt/vitis_ai/compiler/arch/dpuv2/ZCU102/ZCU102.json"
-    # Vitis-AI 1.2 - ...
-    #new_arch = "/opt/vitis_ai/compiler/arch/DPUCZDX8G/ZCU102/arch.json"
-
-    #if os.path.exists(new_arch):
-    #    arch = new_arch
-    #else:
-    #    arch = old_arch
-
-    compiler = VAICompiler(xgraph, arch=arch_path, meta=meta, dcf=dcf_path, **kwargs)
+    compiler = VAICompiler(xgraph, arch=arch_path, **kwargs)
     c_xgraph = compiler.compile()
 
     return c_xgraph
-

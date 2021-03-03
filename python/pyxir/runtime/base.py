@@ -18,6 +18,7 @@ import abc
 import copy
 import logging
 import numpy as np
+import warnings
 
 from pyxir.shapes import TupleShape, TensorShape
 from pyxir.shared import fancy_logging

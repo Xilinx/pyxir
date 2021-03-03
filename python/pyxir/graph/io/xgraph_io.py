@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for doing IO on XGraph objects
-
-
-"""
+"""Module for doing IO on XGraph objects"""
 
 import io
 import os
@@ -26,7 +22,7 @@ import logging
 import tempfile
 import numpy as np
 
-import libpyxir as lpx
+from packaging import version
 
 from .json_io import XGraphJSONEncoder
 from ..xgraph_factory import XGraphFactory
@@ -113,17 +109,22 @@ class XGraphIO(object):
     @classmethod
     def to_string(cls, xgraph: XGraph):
         """Return the XGraph in string format"""
-        bio = tempfile.NamedTemporaryFile() # io.BytesIO()
-        h5f = h5py.File(bio.name, 'w')
+        if version.parse(h5py.__version__) >= version.parse("2.10.0"):
+            bio = io.BytesIO()
+            h5f = h5py.File(bio, 'w')
+        else:
+            bio = tempfile.NamedTemporaryFile() # io.BytesIO()
+            h5f = h5py.File(bio.name, 'w')
 
         d = {}
         cls.__to_json_h5(xgraph, d, h5f)
         h5f.close()
 
         graph_str = json.dumps(d).encode('utf-8')
-        # data_str = bio.getvalue() # .decode('latin1') # .encode('utf-8')
-
-        data_str = bio.read()
+        if version.parse(h5py.__version__) >= version.parse("2.10.0"):
+            data_str = bio.getvalue()
+        else:
+            data_str = bio.read()
 
         return graph_str, data_str
 
@@ -314,10 +315,16 @@ class XGraphIO(object):
     @classmethod
     def from_string(cls, graph_str, data_str):
         """Read  serialized XGraph from graph and data string"""
-        ds = data_str # .decode('utf-8').encode('latin1')
-        bio = tempfile.NamedTemporaryFile()
-        bio.write(ds) # io.BytesIO(ds) # bytes.fromhex(data_str))
-        h5f = h5py.File(bio.name, 'r')
+        ds = data_str
+        
+        if version.parse(h5py.__version__) >= version.parse("2.10.0"):
+            bio = io.BytesIO(ds)
+            h5f = h5py.File(bio, 'r')
+        else:
+            bio = tempfile.NamedTemporaryFile()
+            bio.write(ds)
+            h5f = h5py.File(bio.name, 'r')
+        
         json_str = graph_str
         
         net = json.loads(json_str)
