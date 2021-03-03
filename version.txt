@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.1.6 ////////////////
+NEW FEATURES:
+    - Add DPUCZDX8G SOM target
+    - Enable DPUCAHX8H (U50, U280) targets
+    - Try importing DPU targets in TargetRegistry if not found
+BUG FIXES:
+    - Fix for TVM RPC flow
+    - Fix for ONNX Runtime edge flow
+UNFIXED ISSUES:
+    - Importing tvm before pyxir results in segfault for DPUCADX8G env due to 
+      protobuf mismatch between DPUCADX8G tools and tensorflow
+
 //////////////// VERSION 0.1.5 ////////////////
 NEW FEATURES:
     - Add TVM Relay tile, full ops to XLayer translation
