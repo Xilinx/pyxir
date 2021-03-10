@@ -22,7 +22,7 @@ import logging
 from pyxir.graph.transformers import subgraph
 
 from .common import xgraph_dpu_optimizer, xgraph_dpu_quantizer
-from .vai_c import VAICompiler
+from .vai_c_depr import VAICompiler
 
 logger = logging.getLogger('pyxir')
 
