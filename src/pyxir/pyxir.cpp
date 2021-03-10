@@ -19,6 +19,7 @@
 #include <pybind11/embed.h>
 
 #include "pyxir/pyxir.hpp"
+#include "pyxir/ffi/str_container.hpp"
 #include "pyxir/opaque_func_registry.hpp"
 #include "pyxir/contrib/dpuv1.hpp"
 #include "pyxir/runtime/runtime_module_factory.hpp"
@@ -75,6 +76,19 @@ PX_API std::shared_ptr<graph::XGraph> load(
 
   return xg;
 }
+
+// Global variables
+
+REGISTER_OPAQUE_FUNC("pyxir.use_dpuczdx8g_vart")
+    ->set_func([](pyxir::OpaqueArgs &args) 
+    {
+      #ifdef USE_DPUCZDX8G_VART
+        args[0]->get_str_container()->set_string("True");
+      #else
+        args[0]->get_str_container()->set_string("False");
+      #endif
+    }, std::vector<pxTypeCode>{pxStrContainerHandle});
+
 
 // INITIALIZATION RELATED CODE
 

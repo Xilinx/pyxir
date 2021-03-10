@@ -164,14 +164,12 @@ def serialize_dir(dir_path, serial_str_cb):
 
         s = bio.getvalue() # .hex()
         serial_str_cb.set_bytes(s)
-        # import pdb; pdb.set_trace()
 
 
 @register_opaque_func('pyxir.io.deserialize_dir',
                       [TypeCode.Str, TypeCode.Byte])
 def deserialize_dir(dir_path, serial_str):
-    # import pdb; pdb.set_trace()
-    if serial_str != b"":
+    if serial_str != b"" and not os.path.exists(dir_path):
         bio = io.BytesIO(serial_str) # .encode('latin1') bytes.fromhex(serial_str))
         with zipfile.ZipFile(bio, 'r') as zip_f:
             zip_f.extractall(dir_path)
@@ -179,4 +177,3 @@ def deserialize_dir(dir_path, serial_str):
         # If empty directory got zipped, recreate empty directory
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        # import pdb; pdb.set_trace()

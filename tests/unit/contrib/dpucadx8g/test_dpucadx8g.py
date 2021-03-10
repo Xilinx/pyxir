@@ -27,6 +27,7 @@ from pyxir.runtime.rt_manager import RtManager
 
 try:
     import tensorflow as tf
+
     skip_tf = False
 except ModuleNotFoundError:
     skip_tf = True
@@ -43,6 +44,7 @@ class TestDPUContrib(unittest.TestCase):
     def setUpClass(cls):
         # Import DPU module
         from pyxir.contrib.dpuv1 import dpuv1
+
         # from pyxir.contrib.dpuv1.dpuv1_target import\
         #     xgraph_dpu_v1_optimizer,\
         #     xgraph_dpu_v1_quantizer,\
@@ -60,32 +62,33 @@ class TestDPUContrib(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         # Unregister dpu for other tests
-        TestDPUContrib.target_registry.unregister_target('dpuv1')
-        TestDPUContrib.target_registry.unregister_target('DPUCADX8G')
+        TestDPUContrib.target_registry.unregister_target("dpuv1")
+        TestDPUContrib.target_registry.unregister_target("DPUCADX8G")
 
     def test_supported_ops(self):
-        dpuv1_ops = TestDPUContrib.target_registry\
-            .get_supported_op_check_names('dpuv1')
+        dpuv1_ops = TestDPUContrib.target_registry.get_supported_op_check_names("dpuv1")
 
-        assert 'BatchNorm' in dpuv1_ops
-        assert 'BiasAdd' in dpuv1_ops
-        assert 'Concat' in dpuv1_ops
-        assert 'Convolution' in dpuv1_ops
-        assert 'Conv2DTranspose' in dpuv1_ops
-        assert 'DPU' in dpuv1_ops
-        assert 'Eltwise' in dpuv1_ops
-        assert 'Pad' in dpuv1_ops
-        assert 'Pooling' in dpuv1_ops
-        assert 'Mean' in dpuv1_ops
-        assert 'pReLU' in dpuv1_ops
-        assert 'ReLU' in dpuv1_ops
-        assert 'Scale' in dpuv1_ops
+        assert "BatchNorm" in dpuv1_ops
+        assert "BiasAdd" in dpuv1_ops
+        assert "Concat" in dpuv1_ops
+        assert "Convolution" in dpuv1_ops
+        assert "Conv2DTranspose" in dpuv1_ops
+        assert "DPU" in dpuv1_ops
+        assert "Eltwise" in dpuv1_ops
+        assert "Pad" in dpuv1_ops
+        assert "Pooling" in dpuv1_ops
+        assert "Mean" in dpuv1_ops
+        assert "pReLU" in dpuv1_ops
+        assert "ReLU" in dpuv1_ops
+        assert "Scale" in dpuv1_ops
 
-    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because tensorflow is"
-                    "not available")
+    @unittest.skipIf(
+        skip_tf,
+        "Skipping Tensorflow related test because tensorflow is" "not available",
+    )
     def test_import_ext_quantizer(self):
-        if TestDPUContrib.target_registry.is_target('DPUCADX8G'):
-            TestDPUContrib.target_registry.unregister_target('DPUCADX8G')
-        if TestDPUContrib.rt_manager.exists_op('cpu-np', 'DPU'):
-            TestDPUContrib.rt_manager.unregister_op('cpu-np', 'DPU')
+        if TestDPUContrib.target_registry.is_target("DPUCADX8G"):
+            TestDPUContrib.target_registry.unregister_target("DPUCADX8G")
+        if TestDPUContrib.rt_manager.exists_op("cpu-np", "DPU"):
+            TestDPUContrib.rt_manager.unregister_op("cpu-np", "DPU")
         from pyxir.contrib.target import DPUCADX8G_external_quantizer

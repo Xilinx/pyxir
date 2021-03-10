@@ -33,9 +33,9 @@ logger = logging.getLogger('pyxir')
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
-class VAICompiler(XGraphBaseCompiler):
+class VAICompilerDNNC(XGraphBaseCompiler):
 
-    """ Vitis-AI compiler wrapper for DPUCZDX8G """
+    """ Vitis-AI compiler wrapper for DPUCZDX8G DNNC compiler"""
 
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
@@ -50,7 +50,7 @@ class VAICompiler(XGraphBaseCompiler):
                  build_dir=os.getcwd(),
                  mode='debug'):
 
-        super(VAICompiler, self).__init__(xgraph)
+        super(VAICompilerDNNC, self).__init__(xgraph)
 
         if not os.path.isfile(arch):
             raise ValueError("Arch file: {} does not exist".format(arch))
@@ -85,10 +85,10 @@ class VAICompiler(XGraphBaseCompiler):
         netcfg = list(self.netcfgs.values())[0]
 
         # We only handle one partition at the moment
-        Xp = VAICompiler.xgraph_partitioner\
+        Xp = VAICompilerDNNC.xgraph_partitioner\
             .get_subgraphs(self.xgraph)[0]
         subxg_layers = Xp.subgraph_data
-        xgraph = VAICompiler.xgraph_factory.build_from_xlayer(subxg_layers)
+        xgraph = VAICompilerDNNC.xgraph_factory.build_from_xlayer(subxg_layers)
         # assert xgraph.get_name() == net_name
 
         input_names = xgraph.get_input_names()
@@ -99,7 +99,7 @@ class VAICompiler(XGraphBaseCompiler):
                          for out_name in output_names]
 
         if len(input_names) > 1:
-            raise NotImplementedError("VAICompiler only handles models with"
+            raise NotImplementedError("VAICompilerDNNC only handles models with"
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
 

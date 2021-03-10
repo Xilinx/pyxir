@@ -24,6 +24,7 @@ from pyxir.generator.tensorflow import XGraphTfGeneratorOptimizer
 from pyxir.graph.optimization.optimizers import ExternalQOptimizer
 from pyxir.graph.transformers.layout_transformation_pass import XGraphLayoutTransformationPass
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
+from pyxir.contrib.target.components.common import is_dpuczdx8g_vart_flow_enabled
 
 logger = logging.getLogger('pyxir')
 
@@ -56,6 +57,8 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
 
 
 def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
-    quantizer = DECENTQuantizer(xgraph, inputs_func, **kwargs)
+    quantizer = DECENTQuantizer(xgraph, inputs_func, compiler_target="xcompiler", **kwargs) \
+        if is_dpuczdx8g_vart_flow_enabled() \
+        else DECENTQuantizer(xgraph, inputs_func, **kwargs)
     q_xgraph = quantizer.quantize()
     return q_xgraph
