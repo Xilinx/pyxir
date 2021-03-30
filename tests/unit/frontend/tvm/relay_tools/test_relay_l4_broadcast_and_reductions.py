@@ -35,7 +35,6 @@ if not skip:
 
 
 class TestRelayL4BroadcastAndReductions(unittest.TestCase):
-
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_greater(self):
         left = relay.var("left", relay.TensorType((-1, 4, 2, 2), "float32"))
@@ -48,9 +47,9 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
         xgraph = xf_relay.from_relay(mod, {})
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == 'Input'
-        assert layers[1].type[0] == 'Input'
-        assert layers[2].type[0] == 'Greater'
+        assert layers[0].type[0] == "Input"
+        assert layers[1].type[0] == "Input"
+        assert layers[2].type[0] == "Greater"
         assert layers[2].shapes == [-1, 4, 2, 2]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
@@ -65,9 +64,9 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
         xgraph = xf_relay.from_relay(mod, {})
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == 'Input'
-        assert layers[1].type[0] == 'Constant'
-        assert layers[2].type[0] == 'Greater'
+        assert layers[0].type[0] == "Input"
+        assert layers[1].type[0] == "Constant"
+        assert layers[2].type[0] == "Greater"
         assert layers[2].shapes == [-1, 2, 2, 4]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
@@ -80,8 +79,8 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
 
         xgraph = xf_relay.from_relay(mod, {})
         layers = xgraph.get_layers()
-        assert layers[0].type[0] == 'Input'
-        assert layers[1].type[0] == 'Mean'
+        assert layers[0].type[0] == "Input"
+        assert layers[1].type[0] == "Mean"
         assert layers[1].shapes == [-1, 1, 1]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
@@ -95,8 +94,8 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
         xgraph = xf_relay.from_relay(mod, {})
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == 'Constant'
-        assert layers[1].type[0] == 'StridedSlice'
+        assert layers[0].type[0] == "Constant"
+        assert layers[1].type[0] == "StridedSlice"
         assert layers[1].shapes == [2, 3, 3]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
@@ -112,8 +111,8 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
         xgraph = xf_relay.from_relay(mod, {})
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == 'Constant'
-        assert layers[1].type[0] == 'Input'
-        assert layers[2].type[0] == 'Input'
-        assert layers[3].type[0] == 'AnyOp'
+        assert layers[0].type[0] == "Constant"
+        assert layers[1].type[0] == "Input"
+        assert layers[2].type[0] == "Input"
+        assert layers[3].type[0] == "AnyOp"
         assert layers[3].shapes == [-1, 2, 2, 4]

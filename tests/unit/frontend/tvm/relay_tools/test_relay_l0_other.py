@@ -34,16 +34,13 @@ if not skip:
 
 from pyxir.shapes import TupleShape, TensorShape
 
-class TestRelayL0Other(unittest.TestCase):
 
+class TestRelayL0Other(unittest.TestCase):
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_var_constant(self):
-        var = relay.var(
-            "var",
-            relay.TensorType((-1, 4, 2, 2), "int64")
-        )
+        var = relay.var("var", relay.TensorType((-1, 4, 2, 2), "int64"))
 
-        const = relay.expr.const(np.array([1, -1], dtype=np.int64), 'int64')
+        const = relay.expr.const(np.array([1, -1], dtype=np.int64), "int64")
 
         net = relay.add(var, const)
 
@@ -56,14 +53,14 @@ class TestRelayL0Other(unittest.TestCase):
 
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == 'Input'
-        assert isinstance(layers[0].attrs['dtype'], str)
-        assert layers[0].attrs['dtype'] == 'int64'
-        assert 'relay_id' in layers[0].attrs
+        assert layers[0].type[0] == "Input"
+        assert isinstance(layers[0].attrs["dtype"], str)
+        assert layers[0].attrs["dtype"] == "int64"
+        assert "relay_id" in layers[0].attrs
 
-        assert layers[1].type[0] == 'BiasAdd'
+        assert layers[1].type[0] == "BiasAdd"
         assert layers[1].shapes == [-1, 4, 2, 2]
-        assert 'relay_id' in layers[1].attrs
+        assert "relay_id" in layers[1].attrs
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_tuple(self):
@@ -79,17 +76,17 @@ class TestRelayL0Other(unittest.TestCase):
         xg = xf_relay.from_relay(mod, {})
         layers = xg.get_layers()
 
-        assert layers[0].type[0] == 'Input'
-        assert isinstance(layers[0].attrs['dtype'], str)
-        assert layers[0].attrs['dtype'] == 'int64'
-        assert 'relay_id' in layers[0].attrs
+        assert layers[0].type[0] == "Input"
+        assert isinstance(layers[0].attrs["dtype"], str)
+        assert layers[0].attrs["dtype"] == "int64"
+        assert "relay_id" in layers[0].attrs
 
-        assert layers[1].type[0] == 'Input'
-        assert isinstance(layers[0].attrs['dtype'], str)
-        assert layers[0].attrs['dtype'] == 'int64'
-        assert 'relay_id' in layers[0].attrs
+        assert layers[1].type[0] == "Input"
+        assert isinstance(layers[0].attrs["dtype"], str)
+        assert layers[0].attrs["dtype"] == "int64"
+        assert "relay_id" in layers[0].attrs
 
-        assert layers[2].type[0] == 'Tuple'
+        assert layers[2].type[0] == "Tuple"
         assert layers[2].shapes == TupleShape([[-1, 4, 2, 2], [-1, 3, 2, 2]])
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
@@ -109,29 +106,26 @@ class TestRelayL0Other(unittest.TestCase):
 
         assert len(layers) == 4
 
-        assert layers[0].type[0] == 'Input'
-        assert isinstance(layers[0].attrs['dtype'], str)
-        assert layers[0].attrs['dtype'] == 'int64'
-        assert 'relay_id' in layers[0].attrs
+        assert layers[0].type[0] == "Input"
+        assert isinstance(layers[0].attrs["dtype"], str)
+        assert layers[0].attrs["dtype"] == "int64"
+        assert "relay_id" in layers[0].attrs
 
-        assert layers[1].type[0] == 'Input'
-        assert isinstance(layers[0].attrs['dtype'], str)
-        assert layers[0].attrs['dtype'] == 'int64'
-        assert 'relay_id' in layers[0].attrs
+        assert layers[1].type[0] == "Input"
+        assert isinstance(layers[0].attrs["dtype"], str)
+        assert layers[0].attrs["dtype"] == "int64"
+        assert "relay_id" in layers[0].attrs
 
-        assert layers[2].type[0] == 'Tuple'
+        assert layers[2].type[0] == "Tuple"
         assert layers[2].shapes == TupleShape([[-1, 4, 2, 2], [-1, 3, 2, 2]])
 
-        assert layers[3].type[0] == 'TupleGetItem'
-        assert layers[3].attrs['index'] == 0
+        assert layers[3].type[0] == "TupleGetItem"
+        assert layers[3].attrs["index"] == 0
         assert layers[3].shapes == TensorShape([-1, 4, 2, 2])
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_relay_op(self):
-        data = relay.var(
-            "data",
-            relay.TensorType((-1, 4, 2, 2), "float32")
-        )
+        data = relay.var("data", relay.TensorType((-1, 4, 2, 2), "float32"))
 
         net = relay.std(data, axis=1, keepdims=False, exclude=False)
 
@@ -144,23 +138,23 @@ class TestRelayL0Other(unittest.TestCase):
 
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == 'Input'
+        assert layers[0].type[0] == "Input"
 
-        assert layers[1].type[0] == 'Mean'
+        assert layers[1].type[0] == "Mean"
         assert layers[1].shapes == [-1, 1, 2, 2]
         # assert isinstance(layers[1].attrs['relay_id'], list)
-        assert layers[1].attrs['axes'] == [1]
-        assert layers[1].attrs['keepdims'] is True
+        assert layers[1].attrs["axes"] == [1]
+        assert layers[1].attrs["keepdims"] is True
 
-        assert layers[2].type[0] == 'RelayOp'
+        assert layers[2].type[0] == "RelayOp"
         assert layers[2].shapes == [-1, 2, 2]
         # assert isinstance(layers[2].attrs['relay_id'], list)
-        assert layers[2].attrs['relay_shape'] == [-1, 2, 2]
-        assert layers[2].attrs['dtype'] == 'float32'
-        assert layers[2].attrs['axis'] == '[1]'
-        assert layers[2].attrs['keepdims'] == '0'
-        assert layers[2].attrs['exclude'] == '0'
+        assert layers[2].attrs["relay_shape"] == [-1, 2, 2]
+        assert layers[2].attrs["dtype"] == "float32"
+        assert layers[2].attrs["axis"] == "[1]"
+        assert layers[2].attrs["keepdims"] == "0"
+        assert layers[2].attrs["exclude"] == "0"
 
-        assert layers[3].type[0] == 'Sqrt'
+        assert layers[3].type[0] == "Sqrt"
         assert layers[3].shapes == [-1, 2, 2]
         # assert isinstance(layers[3].attrs['relay_id'], list)
