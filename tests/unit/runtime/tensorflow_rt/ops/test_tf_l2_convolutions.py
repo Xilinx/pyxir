@@ -35,64 +35,54 @@ except ModuleNotFoundError:
 
 class TestTfL2Convolutions(unittest.TestCase):
 
-    def test_conv2d(self):
+    def create_conv2d_layers(self, in_name, in_shape, weights, strides, padding, dilation,
+                             groups, data_layout="NCHW", kernel_layout="OIHW",
+                             target_kernel_layout="OIHW"):
         tf.compat.v1.reset_default_graph()
+        in_layer = px.ops.input("in", shape=in_shape[:])
+        weights_layer = px.ops.constant("w", weights)
+        kernel_size = [weights_layer.shapes[kernel_layout.index("H")],
+                       weights_layer.shapes[kernel_layout.index("W")]]
+        channels = weights_layer.shapes[kernel_layout.index("O")]
+        X = px.ops.conv2d("conv", in_layer, weights_layer, kernel_size, strides,
+                          padding, dilation, groups, channels, data_layout, kernel_layout,
+                          target_kernel_layout)
+        
+        input_shapes = {in_name: TensorShape(in_shape)}
+        params = {
+            'conv_kernel': weights,
+            'conv_biases': np.array([0, 0], dtype=np.float32)
+        }
+        layers = base.get_conv2d_layer(ConvLayer, ConstantLayer)(X, input_shapes, params)
+        return layers
+
+    def execute_layers(self, layers, inputs):
+        for layer in layers:
+            inpts = [inputs[name] for name in layer.inputs]
+            out = layer.forward_exec(inpts)
+            inputs[layer.name] = out
+        return out
+
+    def test_conv2d_basic(self):
         K = np.reshape(np.array([[[1, 2], [3, 4]],
                                  [[5, 6], [7, 8]]],
                                 dtype=np.float32),
                        (2, 1, 2, 2))
-        B = np.array([0, 0], dtype=np.float32)
-
-        X = xlayer.XLayer(
-            name='test_conv2d',
-            type=['Convolution'],
-            shapes=[1, 2, 3, 3],
-            sizes=[18],
-            bottoms=['input'],
-            tops=[],
-            data=xlayer.ConvData(K, B),
-            attrs={
-                'data_layout': 'NCHW',
-                'kernel_layout': 'OIHW',
-                'padding': [[0, 0], [0, 0], [0, 0], [0, 0]],
-                'strides': [1, 1],
-                'dilation': [1, 1],
-                'groups': 1
-            },
-            targets=[]
+        
+        in_shape = [1, 1, 4, 4]
+        layers = self.create_conv2d_layers(
+            in_name="in",
+            in_shape=in_shape,
+            weights=K,
+            strides=[1, 1],
+            padding=[0, 0, 0, 0],
+            dilation=[1, 1],
+            groups=1
         )
-
-        input_shapes = {
-            'input': TensorShape([1, 1, 4, 4])
-        }
-        inputs = {
-            'input': np.ones((1, 1, 4, 4), dtype=np.float32)
-        }
-        params = {
-            'test_conv2d_kernel': np.reshape(np.array([[[1, 2], [3, 4]],
-                                                       [[5, 6], [7, 8]]],
-                                                      dtype=np.float32),
-                                             (2, 1, 2, 2)),
-            'test_conv2d_biases': np.array([0, 0], dtype=np.float32)
-        }
-        layers = base.get_conv2d_layer(ConvLayer,
-                                       ConstantLayer)(
-                                            X, input_shapes, params)
-        assert(len(layers) == 3)
-
-        inputs.update(params)
-        for layer in layers:
-
-            # print("-----------------------")
-            # print("Run layer: {}".format(layer.name))
-
-            inpts = [inputs[name] for name in layer.inputs]
-            outpt = layer.forward_exec(inpts)
-
-            # print("Output:", outpt.shape, outpt)
-
-            inputs[layer.name] = outpt
-
+        assert len(layers) == 3
+        inputs = {"in": np.ones(in_shape, dtype=np.float32)}
+        
+        out = self.execute_layers(layers, inputs)
         expected_outpt = np.array([[[[10., 10., 10.],
                                      [10., 10., 10.],
                                      [10., 10., 10.]],
@@ -100,7 +90,34 @@ class TestTfL2Convolutions(unittest.TestCase):
                                      [26., 26., 26.],
                                      [26., 26., 26.]]]])
 
-        np.testing.assert_array_equal(outpt, expected_outpt)
+        np.testing.assert_array_equal(out, expected_outpt)
+
+    def test_conv2d_dilation(self):
+        K = np.reshape(np.array([[[1, 2], [3, 4]],
+                                 [[5, 6], [7, 8]]],
+                                dtype=np.float32),
+                       (2, 1, 2, 2))
+        
+        in_shape = [1, 1, 4, 4]
+        layers = self.create_conv2d_layers(
+            in_name="in",
+            in_shape=in_shape,
+            weights=K,
+            strides=[1, 1],
+            padding=[0, 0, 0, 0],
+            dilation=[2, 2],
+            groups=1
+        )
+        assert len(layers) == 3
+        inputs = {"in": np.ones(in_shape, dtype=np.float32)}
+        
+        out = self.execute_layers(layers, inputs)
+        expected_outpt = np.array([[[[10., 10.],
+                                     [10., 10.]],
+                                    [[26., 26.],
+                                     [26., 26.]]]])
+
+        np.testing.assert_array_equal(out, expected_outpt)
 
     def test_conv2d_tfl(self):
         tf.compat.v1.reset_default_graph()
@@ -109,58 +126,24 @@ class TestTfL2Convolutions(unittest.TestCase):
                                              dtype=np.float32),
                                     (2, 1, 2, 2)),
                          (0, 2, 3, 1))
-        B = np.array([0, 0], dtype=np.float32)
 
-        X = xlayer.XLayer(
-            name='test_conv2d_tfl',
-            type=['Convolution'],
-            shapes=[1, 3, 3, 2],
-            sizes=[18],
-            bottoms=['input'],
-            tops=[],
-            data=xlayer.ConvData(K, B),
-            attrs={
-                'data_layout': 'NHWC',
-                'kernel_layout': 'OHWI',
-                'padding': [[0, 0], [0, 0], [0, 0], [0, 0]],
-                'strides': [1, 1],
-                'dilation': [1, 1],
-                'groups': 1
-            },
-            targets=[]
+        in_shape = [1, 4, 4, 1]
+        layers = self.create_conv2d_layers(
+            in_name="in",
+            in_shape=in_shape,
+            weights=K,
+            strides=[1, 1],
+            padding=[0, 0, 0, 0],
+            dilation=[1, 1],
+            groups=1,
+            data_layout="NHWC",
+            kernel_layout="OHWI",
+            target_kernel_layout="OHWI"
         )
-
-        input_shapes = {
-            'input': TensorShape([1, 4, 4, 1])
-        }
-        inputs = {
-            'input': np.transpose(np.ones((1, 1, 4, 4), dtype=np.float32), (0, 2, 3, 1))
-        }
-        params = {
-            'test_conv2d_tfl_kernel': np.transpose(np.reshape(np.array([[[1, 2], [3, 4]],
-                                                                        [[5, 6], [7, 8]]],
-                                                                       dtype=np.float32),
-                                                              (2, 1, 2, 2)),
-                                                   (0, 2, 3, 1)),
-            'test_conv2d_tfl_biases': np.array([0, 0], dtype=np.float32)
-        }
-        layers = base.get_conv2d_layer(ConvLayer,
-                                       ConstantLayer)(
-                                            X, input_shapes, params)
-        assert(len(layers) == 3)
-
-        inputs.update(params)
-        for layer in layers:
-
-            # print("-----------------------")
-            # print("Run layer: {}".format(layer.name))
-
-            inpts = [inputs[name] for name in layer.inputs]
-            outpt = layer.forward_exec(inpts)
-
-            # print("Output:", outpt.shape, outpt)
-
-            inputs[layer.name] = outpt
+        assert len(layers) == 3
+        inputs = {"in": np.ones(in_shape, dtype=np.float32)}
+        
+        out = self.execute_layers(layers, inputs)
 
         expected_outpt = np.transpose(np.array([[[[10., 10., 10.],
                                                   [10., 10., 10.],
@@ -170,7 +153,7 @@ class TestTfL2Convolutions(unittest.TestCase):
                                                   [26., 26., 26.]]]]),
                                       (0, 2, 3, 1))
 
-        np.testing.assert_array_equal(outpt, expected_outpt)
+        np.testing.assert_array_equal(out, expected_outpt)
 
     def test_conv2d_transpose(self):
         tf.compat.v1.reset_default_graph()

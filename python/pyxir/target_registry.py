@@ -60,7 +60,10 @@ class TargetRegistry(object):
             """ Check whether the target exists """
             if not self.is_target(target):
                 # Try importing it on the fly
-                importlib.import_module("pyxir.contrib.target." + target.split("-")[0])
+                try:
+                    importlib.import_module("pyxir.contrib.target." + target.split("-")[0])
+                except ModuleNotFoundError:
+                    pass
             if not self.is_target(target):
                 raise ValueError("Unknown target: {}, registered targets"
                                  " are: {}"
