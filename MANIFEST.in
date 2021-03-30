@@ -1,2 +1,11 @@
 recursive-include include *.hpp
+recursive-include src *.cpp
+recursive-include src *.hpp
+recursive-include python *.json
+recursive-include python *.dcf
+
+include CMakeLists.txt
 include python/pyxir/contrib/dpuv1/dpuv1_arch.json
+
+include lib/pybind11/LICENSE lib/pybind11/README.md lib/pybind11/CONTRIBUTING.md lib/pybind11/CMakeLists.txt
+recursive-include lib/pybind11/include/pybind11 *.h
