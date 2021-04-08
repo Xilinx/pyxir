@@ -90,20 +90,25 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
                      .format(input_names, output_names))
         input_shapes = [X.shapes.tolist() for X in xgraph.get_input_layers()]
 
+        in_batch_size = inputs[input_names[0]].shape[0]
+        quant_batch_size = min(32, in_batch_size)
+        nb_quant_iters = in_batch_size // quant_batch_size
+
         def inputs_func(iter):
             import numpy as np
             nonlocal inputs
+            nonlocal quant_batch_size
+            return {in_name: inputs[in_name][iter*quant_batch_size:(iter+1)*quant_batch_size]
+                    for in_name in inputs.keys()}
 
-            return inputs
-
-        logger.info("START decent quantization for graph partition: {}"
-                    .format(xgraph.get_name()))
+        logger.info("START decent quantization for graph partition: {}, nb_iters: {}, batch_size: {}"
+                    .format(xgraph.get_name(), nb_quant_iters, quant_batch_size))
         q_config = self.decent_q.QuantizeConfig(input_nodes=input_names,
                                                 output_nodes=output_names,
                                                 input_shapes=input_shapes,
                                                 output_dir=self.work_dir,
                                                 method='1',
-                                                calib_iter=self.quant_iter)
+                                                calib_iter=nb_quant_iters)
         self.decent_q.quantize_frozen(input_graph_def, inputs_func, q_config)
 
         netcfg = os.path.join(self.work_dir, "deploy_model.pb")
