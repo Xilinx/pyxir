@@ -12,15 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the libpyxir XGraph data structure
-
-
-"""
+"""Module for testing the libpyxir XGraph data structure"""
 
 import unittest
 import numpy as np
-import libpyxir as lpx
+import pyxir._libpyxir as lpx
 
 
 class TestXGraph(unittest.TestCase):

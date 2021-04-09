@@ -419,7 +419,7 @@ def take(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> Dict[str, List[int]
 #############
 
 @xop_register_factory('Transpose')
-def transpose(op_name: str, input_layer: XLayer, axes: List[int], **kwargs):
+def transpose(op_name: str, input_layer: XLayer, axes: List[int], internal=0, **kwargs):
     """
     Create a Transpose XLayer
 
@@ -432,31 +432,26 @@ def transpose(op_name: str, input_layer: XLayer, axes: List[int], **kwargs):
     input_layer: XLayer
         The input layer to this scaling layer
     """
-    if 'Constant' in input_layer.type:
-        # precompute
-        X = input_layer._replace(
-            data=np.transpose(input_layer.data, tuple(axes))
-        )
-    else:
-        bottoms = [input_layer.name]
+    bottoms = [input_layer.name]
 
-        new_shape = TensorShape([input_layer.shapes[i] for i in axes])
+    new_shape = TensorShape([input_layer.shapes[i] for i in axes])
 
-        attrs = kwargs
-        attrs.update({
-            'axes': axes
-        })
+    attrs = kwargs
+    attrs.update({
+        'axes': axes
+    })
 
-        X = XLayer()
-        X = X._replace(
-            name=op_name,
-            type=['Transpose'],
-            shapes=new_shape,
-            sizes=new_shape.get_size(),
-            layer=[op_name],
-            tops=[],
-            bottoms=bottoms,
-            attrs=attrs,
-            targets=[]
-        )
+    X = XLayer()
+    X = X._replace(
+        name=op_name,
+        type=['Transpose'],
+        shapes=new_shape,
+        sizes=new_shape.get_size(),
+        layer=[op_name],
+        tops=[],
+        bottoms=bottoms,
+        attrs=attrs,
+        internal=internal,
+        targets=[]
+    )
     return X
