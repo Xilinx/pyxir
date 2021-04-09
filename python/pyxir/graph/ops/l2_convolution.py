@@ -69,7 +69,7 @@ def batch_norm(
     gamma_layer: XLayer,
     beta_layer: XLayer,
     axis: int,
-    epsilon: float,
+    epsilon: float = 1e-5,
     **kwargs
 ) -> XLayer:
     """
@@ -136,13 +136,13 @@ def conv2d(
     input_layer: XLayer,
     weights_layer: XLayer,
     kernel_size: List[int],
-    strides: List[int],
-    padding_hw: List[int],
-    dilation: List[int],
-    groups: int,
-    channels: int,
-    data_layout: str,
-    kernel_layout: str,
+    strides: List[int] = [1, 1],
+    padding_hw: List[int] = [0, 0, 0, 0],
+    dilation: List[int] = [1, 1],
+    groups: int = 1,
+    channels: int = None,
+    data_layout: str = "NCHW",
+    kernel_layout: str = "OIHW",
     target_kernel_layout: str = "OIHW",
     **kwargs
 ) -> XLayer:
@@ -222,6 +222,7 @@ def conv2d(
     logger.debug("-- channels: {}".format(channels))
 
     assert channels is None or out_ch == channels
+    channels = out_ch if channels is None else channels
 
     B = np.zeros([out_ch], dtype=np.float32)
     data = ConvData(W, B)
@@ -230,7 +231,11 @@ def conv2d(
     insize = [input_layer.shapes[H_idx], input_layer.shapes[W_idx]]
     batches = input_layer.shapes[0]
     logger.debug("-- in shape: {}".format(input_layer.shapes))
-    assert input_layer.shapes[C_idx] == in_ch
+    # assert (
+    #     input_layer.shapes[C_idx] == in_ch,
+    #     "Expected number of input channels (in_ch) was {0} but got {1}"\
+    #     .format(in_ch, input_layer.shapes[C_idx])
+    # )
 
     logger.debug("-- padding (t,b,l,r): {}".format((pad_ht, pad_hb, pad_wl, pad_wr)))
 
@@ -316,13 +321,13 @@ def conv2d_transpose(
     input_layer: XLayer,
     weights_layer: XLayer,
     kernel_size: List[int],
-    strides: List[int],
-    padding_hw: List[int],
-    dilation: List[int],
-    groups: int,
-    channels: int,
-    data_layout: str,
-    kernel_layout: str,
+    strides: List[int] = [1, 1],
+    padding_hw: List[int] = [0, 0, 0, 0],
+    dilation: List[int] = [1, 1],
+    groups: int = 1,
+    channels: int = None,
+    data_layout: str = "NCHW",
+    kernel_layout: str = "OIHW",
     target_kernel_layout: str = "OIHW",
     **kwargs
 ) -> XLayer:
@@ -391,6 +396,7 @@ def conv2d_transpose(
     logger.debug("-- channels: {}".format(channels))
 
     assert channels is None or out_ch == channels
+    channels = out_ch if channels is None else channels
 
     B = np.zeros([out_ch], dtype=np.float32)
     data = ConvData(W, B)
@@ -638,9 +644,9 @@ def pool2d(
     input_layer: XLayer,
     pool_type: str,
     pool_size: List[int],
-    strides: List[int],
-    padding: List[int],
-    layout: str,
+    strides: List[int] = [1, 1],
+    padding: List[int] = [0, 0, 0, 0],
+    layout: str = "NCHW",
     ceil_mode: bool = False,
     count_include_pad: bool = False,
     **kwargs

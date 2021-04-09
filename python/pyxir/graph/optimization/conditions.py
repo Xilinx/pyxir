@@ -15,8 +15,6 @@
 """
 Module containing XLayer condition functions for graph optimization
 passes
-
-
 """
 
 import numpy as np

@@ -164,7 +164,7 @@ def concat(op_name: str, input_layers: List[XLayer], axis: int, **kwargs):
         # TODO workaround for concatenating when batch is -1 and some other constant
         if len(check) > 1 and -1 in check:
             check.remove(-1)
-        assert i == axis or len(check) == 1
+        assert i == axis or len(check) == 1, "i: {0}, axis: {1}, check: {2}".format(i, axis, check)
 
     shape = input_layers[0].shapes[:]
     shape[axis] = sum([il.shapes[axis] for il in input_layers])
