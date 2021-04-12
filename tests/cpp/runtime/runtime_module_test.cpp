@@ -46,10 +46,28 @@ TEST_CASE("Test RuntimeModule serialization")
   pyxir::RtModHolder rt_mod_2(new RuntimeModule());
   rt_mod_2->deserialize(isstream);
 
-  // REQUIRE(xg->get_name() == "test-model");
-  // REQUIRE(xg->len() == 4);
-  // REQUIRE(xg->contains("x"));
-  // REQUIRE(xg->contains("y_Conv"));
-  // REQUIRE(xg->contains("y"));
-  // REQUIRE(xg->contains("z"));
+  REQUIRE(rt_mod_2->get_in_tensor_names() == std::vector<std::string>{"x"});
+  REQUIRE(rt_mod_2->get_out_tensor_names() == std::vector<std::string>{"z"});
+}
+
+TEST_CASE("Test RuntimeModule IO")
+{
+  typedef std::shared_ptr<pyxir::graph::XGraph> XGraphHolder;
+  
+  XGraphHolder xg = pyxir::onnx::import_onnx_model("./test.onnx");
+
+  pyxir::RunOptionsHolder run_options(new RunOptions());
+  run_options->on_the_fly_quantization = true;
+
+  pyxir::RtModHolder rt_mod = pyxir::build_rt(
+    xg, "cpu", std::vector<std::string>{"x"}, std::vector<std::string>{"z"},
+    "cpu-np", run_options);
+
+  rt_mod->save("test.rtmod");
+
+  pyxir::RtModHolder rt_mod_2 = RuntimeModule::Load("test.rtmod");
+
+  REQUIRE(rt_mod_2->get_in_tensor_names() == std::vector<std::string>{"x"});
+  REQUIRE(rt_mod_2->get_out_tensor_names() == std::vector<std::string>{"z"});
+  pyxir::rmrf("test.rtmod");
 }
