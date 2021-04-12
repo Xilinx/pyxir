@@ -71,6 +71,7 @@ TEST_CASE("Write XGraph to string stream")
   REQUIRE(xg_rec->get("y")->xtype[0] == "BiasAdd");
   REQUIRE(xg_rec->get("y")->shapes.size() == 1);
   REQUIRE(xg_rec->get("y")->shapes[0].size() == 4);
+  REQUIRE(xg->get("y")->shapes[0][2] == 4);
   REQUIRE(xg_rec->get("y")->shapes[0][2] == 4);
   REQUIRE(xg_rec->get("y")->get_attr("onnx_id").get_string() == "y");
 
