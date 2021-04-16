@@ -125,7 +125,7 @@ class RuntimeModule : public ISerializable {
       out_file.close();
     }
 
-    void load(const std::string &file_path)
+    static std::unique_ptr<RuntimeModule> Load(const std::string &file_path)
     {
       std::ifstream in_file(file_path);
       std::stringstream buffer;
@@ -133,7 +133,9 @@ class RuntimeModule : public ISerializable {
       std::string serialized_rt_mod = buffer.str();
       in_file.close();
       std::istringstream sstream(serialized_rt_mod);
-      deserialize(sstream);
+      std::unique_ptr<RuntimeModule> rt_mod(new RuntimeModule());
+      rt_mod->deserialize(sstream);
+      return rt_mod;
     }
 
     virtual ~RuntimeModule() {}
