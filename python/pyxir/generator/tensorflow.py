@@ -17,8 +17,6 @@
 import os
 import logging
 
-# import tensorflow as tf
-
 from pyxir.graph.optimization import optimizations, conditions
 from pyxir.graph.optimization.xgraph_optimization_pass \
     import XGraphOptimizationPass

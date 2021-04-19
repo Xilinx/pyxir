@@ -231,12 +231,6 @@ def conv2d(
     insize = [input_layer.shapes[H_idx], input_layer.shapes[W_idx]]
     batches = input_layer.shapes[0]
     logger.debug("-- in shape: {}".format(input_layer.shapes))
-    # assert (
-    #     input_layer.shapes[C_idx] == in_ch,
-    #     "Expected number of input channels (in_ch) was {0} but got {1}"\
-    #     .format(in_ch, input_layer.shapes[C_idx])
-    # )
-
     logger.debug("-- padding (t,b,l,r): {}".format((pad_ht, pad_hb, pad_wl, pad_wr)))
 
     out_h = int(
@@ -365,6 +359,10 @@ def conv2d_transpose(
     """
     bottoms = [input_layer.name]
 
+    layout_idx = tuple([data_layout.index(e) for e in "NCHW"])
+    layout_idx_transpose = tuple(["NCHW".index(e) for e in data_layout])
+    B_idx, C_idx, H_idx, W_idx = layout_idx
+
     logger.debug("-- Conv2DTranspose Kernel layout: {}".format(kernel_layout))
     logger.debug("-- Conv2DTranspose W shape: {}".format(weights_layer.data[0].shape))
 
@@ -406,25 +404,27 @@ def conv2d_transpose(
     insize = [input_layer.shapes[2], input_layer.shapes[3]]
     batches = input_layer.shapes[0]
     logger.debug("{} {}".format(input_layer.shapes, in_ch))
-    assert input_layer.shapes[1] == in_ch
+    assert input_layer.shapes[C_idx] == in_ch
 
     if (
-        padding_hw[0] == (kernel_size[0] - strides[0]) / 2
-        and padding_hw[1] == (kernel_size[1] - strides[1]) / 2
+        (pad_ht + pad_hb) == (kernel_size[0] - strides[0])
+        and abs(pad_ht - pad_hb) <= 1
+        and (pad_wl + pad_wr) == (kernel_size[1] - strides[1])
+        and abs(pad_wl - pad_wr) <= 1
     ):
         padding_type = "SAME"
-    elif padding_hw[0] == 0 and padding_hw[1] == 0:
+    elif pad_ht == 0 and pad_wl == 0:
         padding_type = "VALID"
     else:
         raise NotImplementedError(
             "Unsupported padding for Conv2DTranspose"
             " Only Tensorflow padding 'SAME' and 'VALID'"
             " are supported but got: {} which does not"
-            " translate to 'SAME' == [{}, {}] or 'VALID'"
+            " translate to 'SAME' == [pad_ht + pad_hb = {}, pad_wl + pad_wr = {}] or 'VALID'"
             " == [0, 0]".format(
-                padding_hw,
-                (kernel_size[0] - strides[0]) / 2,
-                (kernel_size[1] - strides[1]) / 2,
+                (pad_ht, pad_hb, pad_wl, pad_wr),
+                (kernel_size[0] - strides[0]),
+                (kernel_size[1] - strides[1]),
             )
         )
 
@@ -435,7 +435,9 @@ def conv2d_transpose(
         out_h = (insize[0] - 1) * strides[0] + kernel_size[0]
         out_w = (insize[1] - 1) * strides[1] + kernel_size[1]
 
-    out_shape = TensorShape([batches, out_ch, out_h, out_w])
+    out_shape = TensorShape(
+        [[batches, out_ch, out_h, out_w][i] for i in layout_idx_transpose]
+    )
 
     padding = [[0, 0], [0, 0], [pad_ht, pad_hb], [pad_wl, pad_wr]]
     padding = [padding["NCHW".index(i)] for i in data_layout]
@@ -535,7 +537,6 @@ def global_pool2d(
             "strides": strides,
             "kernel_size": pool_size,
             "pool_type": pool_type,
-            # 'channels': [channels, channels]
         }
     )
     out_shape = TensorShape(

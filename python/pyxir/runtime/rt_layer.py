@@ -675,13 +675,14 @@ class ConvLayer(RtLayer):
             raise ValueError("Invalid kernel layout: {} for convolution"
                              " layer {}, layout should be OIHW, HWIO or OHWI"
                              .format(kernel_layout, self.name))
+
         channel_idx = attrs['data_layout'].index('C')
-        if kernel_groups not in [1, self.input_shapes[0][channel_idx]]:
-            raise NotImplementedError(
-                "Invalid number of kernel groups: {}. Only 1 and {} (number of"
-                " channels of input) supported. These correspond to a standard"
-                " conv2d respectively depthwise conv2d operation."
-                .format(kernel_groups, self.input_shapes[0][1]))
+        # if kernel_groups not in [1, self.input_shapes[0][channel_idx]]:
+        #     raise NotImplementedError(
+        #         "Invalid number of kernel groups: {}. Only 1 and {} (number of"
+        #         " channels of input) supported. These correspond to a standard"
+        #         " conv2d respectively depthwise conv2d operation."
+        #         .format(kernel_groups, self.input_shapes[0][channel_idx]))
 
         if len(paddings) != 4:
             raise ValueError("Invalid number of paddings: {}, paddings should"

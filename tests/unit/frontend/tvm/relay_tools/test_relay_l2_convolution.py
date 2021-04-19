@@ -16,8 +16,8 @@
 
 import unittest
 import numpy as np
+import logging
 
-# ! To import tvm
 import pyxir
 
 try:
@@ -31,6 +31,95 @@ except Exception as e:
 
 if not skip:
     from pyxir.frontend.tvm import relay as xf_relay
+
+logging.basicConfig()
+logger = logging.getLogger("pyxir")
+# logger.setLevel(logging.DEBUG)
+
+
+def conv2d_test_util(
+    in_shape,
+    weight_shape,
+    out_shape,
+    padding=(0, 0),
+    strides=(1, 1),
+    dilation=(1, 1),
+    groups=1,
+    data_layout="NCHW",
+    kernel_layout="OIHW",
+    conv_transpose=False,
+):
+    data = relay.var("data", relay.TensorType(in_shape, "float32"))
+    weight = relay.expr.const(np.ones(weight_shape, dtype=np.float32))
+    
+    if not conv_transpose:
+        c = relay.nn.conv2d(
+            data=data,
+            weight=weight,
+            strides=strides,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            data_layout=data_layout,
+            kernel_layout=kernel_layout,
+        )
+        expected_type = "Convolution"
+        out_channel = weight_shape[kernel_layout.index("O")]
+    else:
+        c = relay.nn.conv2d_transpose(
+            data=data,
+            weight=weight,
+            strides=strides,
+            padding=padding,
+            dilation=dilation,
+            groups=groups,
+            data_layout=data_layout,
+            kernel_layout=kernel_layout,
+        )
+        expected_type = "Conv2DTranspose"
+        out_channel = weight_shape[kernel_layout.index("I")]
+
+    func = relay.Function([data], c)
+    mod = tvm.IRModule.from_expr(func)
+    mod = relay.transform.InferType()(mod)
+
+    xg = xf_relay.from_relay(mod, {})
+    layers = xg.get_layers()
+    assert len(layers) == 2
+
+    assert layers[0].type[0] == "Input"
+    assert "relay_id" in layers[0].attrs
+
+    X = layers[1]
+    assert X.type[0] == expected_type
+    assert X.shapes == list(
+        out_shape
+    ), "Expected out shape: {0}, but got: {1}".format(out_shape, X.shapes)
+
+    assert "relay_id" in X.attrs
+    assert X.attrs["kernel_size"] == [
+        weight_shape[data_layout.index("H")],
+        weight_shape[data_layout.index("W")],
+    ]
+    assert X.attrs["strides"] == list(strides)
+    expected_padding = [
+        [0, 0],
+        [0, 0],
+        [padding[0], padding[2]],
+        [padding[1], padding[3]],
+    ]
+    assert (
+        X.attrs["padding"] == expected_padding
+    ), "Expected padding: {0}, but got: {1}".format(
+        expected_padding, X.attrs["padding"]
+    )
+    assert X.attrs["channels"] == [
+        in_shape[data_layout.index("C")],
+        out_channel,
+    ]
+    assert X.attrs["data_layout"] == data_layout
+    assert X.attrs["kernel_layout"] == "OIHW"
+    assert X.attrs["groups"] == groups
 
 
 class TestRelayL2Convolutions(unittest.TestCase):
@@ -88,78 +177,9 @@ class TestRelayL2Convolutions(unittest.TestCase):
         assert layers[1].shapes == [-1, 4]
         assert "relay_id" in layers[1].attrs
 
-    def conv2d_test_util(
-        self,
-        in_shape,
-        weight_shape,
-        out_shape,
-        padding=(0, 0),
-        strides=(1, 1),
-        dilation=(1, 1),
-        groups=1,
-        data_layout="NCHW",
-        kernel_layout="OIHW",
-    ):
-        data = relay.var("data", relay.TensorType(in_shape, "float32"))
-        weight = relay.expr.const(np.ones(weight_shape, dtype=np.float32))
-        c = relay.nn.conv2d(
-            data=data,
-            weight=weight,
-            strides=strides,
-            padding=padding,
-            dilation=dilation,
-            groups=groups,
-            data_layout=data_layout,
-            kernel_layout=kernel_layout,
-        )
-
-        func = relay.Function([data], c)
-        mod = tvm.IRModule.from_expr(func)
-        mod = relay.transform.InferType()(mod)
-
-        xg = xf_relay.from_relay(mod, {})
-        layers = xg.get_layers()
-        assert len(layers) == 2
-
-        assert layers[0].type[0] == "Input"
-        assert "relay_id" in layers[0].attrs
-
-        X = layers[1]
-        assert X.type[0] == "Convolution"
-        assert X.shapes == list(
-            out_shape
-        ), "Expected out shape: {0}, but got: {1}".format(out_shape, X.shapes)
-        # np.testing.assert_array_equal(
-        #     X.data[0], np.ones(weight_shape, dtype=np.float32)
-        # )
-        assert "relay_id" in X.attrs
-        assert X.attrs["kernel_size"] == [
-            weight_shape[data_layout.index("H")],
-            weight_shape[data_layout.index("W")],
-        ]
-        assert X.attrs["strides"] == list(strides)
-        expected_padding = [
-            [0, 0],
-            [0, 0],
-            [padding[0], padding[1]],
-            [padding[2], padding[3]],
-        ]
-        assert (
-            X.attrs["padding"] == expected_padding
-        ), "Expected padding: {0}, but got: {1}".format(
-            expected_padding, X.attrs["padding"]
-        )
-        assert X.attrs["channels"] == [
-            in_shape[data_layout.index("C")],
-            weight_shape[kernel_layout.index("O")],
-        ]
-        assert X.attrs["data_layout"] == data_layout
-        assert X.attrs["kernel_layout"] == "OIHW"
-        assert X.attrs["groups"] == groups
-
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_conv2d(self):
-        self.conv2d_test_util(
+        conv2d_test_util(
             in_shape=(-1, 1, 4, 4),
             weight_shape=(2, 1, 2, 2),
             out_shape=(-1, 2, 3, 3),
@@ -167,7 +187,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
             data_layout="NCHW",
             kernel_layout="OIHW",
         )
-        self.conv2d_test_util(
+        conv2d_test_util(
             in_shape=(-1, 1, 4, 4),
             weight_shape=(1, 2, 2, 2),
             out_shape=(-1, 2, 3, 3),
@@ -175,7 +195,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
             data_layout="NCHW",
             kernel_layout="IOHW",
         )
-        self.conv2d_test_util(
+        conv2d_test_util(
             in_shape=(1, 256, 28, 28),
             weight_shape=(256, 256, 3, 3),
             out_shape=(-1, 256, 28, 28),
@@ -184,7 +204,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
             data_layout="NCHW",
             kernel_layout="OIHW",
         )
-        self.conv2d_test_util(
+        conv2d_test_util(
             in_shape=(1, 256, 28, 28),
             weight_shape=(256, 256, 3, 3),
             out_shape=(-1, 256, 28, 28),
@@ -193,7 +213,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
             data_layout="NCHW",
             kernel_layout="OIHW",
         )
-        self.conv2d_test_util(
+        conv2d_test_util(
             in_shape=(1, 1, 4, 4),
             weight_shape=(2, 1, 2, 2),
             out_shape=(-1, 2, 2, 2),
@@ -204,39 +224,57 @@ class TestRelayL2Convolutions(unittest.TestCase):
         )
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_grouped_conv2d(self):
+        conv2d_test_util(
+            in_shape=(-1, 8, 3, 3),
+            weight_shape=(8, 1, 3, 3),
+            out_shape=(-1, 8, 1, 1),
+            padding=(0, 0, 0, 0),
+            data_layout="NCHW",
+            kernel_layout="OIHW",
+            groups=8,
+        )
+        conv2d_test_util(
+            in_shape=(-1, 8, 3, 3),
+            weight_shape=(4, 2, 3, 3),
+            out_shape=(-1, 4, 1, 1),
+            padding=(0, 0, 0, 0),
+            data_layout="NCHW",
+            kernel_layout="OIHW",
+            groups=4,
+        )
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_conv2d_transpose(self):
-        data = relay.var("data", relay.TensorType((-1, 2, 3, 3), "float32"))
-        weight = relay.expr.const(np.ones((2, 4, 3, 3), dtype=np.float32))
-        c = relay.nn.conv2d_transpose(
-            data, weight, padding=(0, 0, 0, 0), kernel_layout="OIHW"
+        conv2d_test_util(
+            in_shape=(-1, 2, 3, 3),
+            weight_shape=(2, 4, 3, 3),
+            out_shape=(-1, 4, 5, 5),
+            padding=(0, 0, 0, 0),
+            data_layout="NCHW",
+            kernel_layout="OIHW",
+            conv_transpose=True
         )
-
-        func = relay.Function([data], c)
-        mod = tvm.IRModule.from_expr(func)
-        mod = relay.transform.InferType()(mod)
-
-        xg = xf_relay.from_relay(mod, {})
-        layers = xg.get_layers()
-
-        assert len(layers) == 2
-
-        assert layers[0].type[0] == "Input"
-        assert "relay_id" in layers[0].attrs
-
-        X = layers[1]
-        assert X.type[0] == "Conv2DTranspose"
-        assert X.shapes == [-1, 4, 5, 5]
-        np.testing.assert_array_equal(
-            X.data[0], np.ones((4, 2, 3, 3), dtype=np.float32)
+        conv2d_test_util(
+            in_shape=(-1, 32, 32, 32),
+            weight_shape=(32, 128, 5, 5),
+            out_shape=(-1, 128, 36, 36),
+            padding=(0, 0, 0, 0),
+            data_layout="NCHW",
+            kernel_layout="OIHW",
+            conv_transpose=True
         )
-        assert "relay_id" in X.attrs
-        assert X.attrs["kernel_size"] == [3, 3]
-        assert X.attrs["strides"] == [1, 1]
-        assert X.attrs["padding"] == [[0, 0], [0, 0], [0, 0], [0, 0]]
-        assert X.attrs["channels"] == [2, 4]
-        assert X.attrs["data_layout"] == "NCHW"
-        assert X.attrs["kernel_layout"] == "OIHW"
-        assert X.attrs["groups"] == 1
+        conv2d_test_util(
+            in_shape=(-1, 32, 128, 1),
+            weight_shape=(32, 8, 31, 1),
+            out_shape=(-1, 8, 256, 1),
+            padding=(14, 0, 15, 0),
+            strides=[2, 1],
+            data_layout="NCHW",
+            kernel_layout="OIHW",
+            conv_transpose=True
+        )
+        # TODO out_padding
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_global_avg_pool2d(self):

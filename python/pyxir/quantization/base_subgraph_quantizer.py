@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for quantizing xgraphs with subgraphs
-
-
-"""
+"""Module for quantizing xgraphs with subgraphs"""
 
 import os
 import logging
 import numpy as np
 import pyxir
 
+from typing import List, Dict
+
+from pyxir.graph import XGraph
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.quantization.base_quantizer import XGraphBaseQuantizer
@@ -33,7 +32,7 @@ logger = logging.getLogger("pyxir")
 class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
 
     """
-    Base class for quantization of Xfgraphs with partitioned subgraphs
+    Base class for quantization of XGraphs with partitioned subgraphs
 
     Attributes
     ----------
@@ -50,24 +49,24 @@ class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
 
-    def __init__(self,
-                 xgraph,
-                 inputs_func,
-                 work_dir=os.path.join(os.getcwd()),
-                 quant_iter=1):
+    def __init__(
+        self, xgraph, inputs_func, work_dir=os.path.join(os.getcwd()), quant_iter=1
+    ):
         #
         super(XGraphBaseSubgraphQuantizer, self).__init__(xgraph)
 
-        self.subgraph_Xps = XGraphBaseSubgraphQuantizer.xgraph_partitioner\
-            .get_subgraphs(self.xgraph)
+        self.subgraph_Xps = XGraphBaseSubgraphQuantizer.xgraph_partitioner.get_subgraphs(
+            self.xgraph
+        )
 
         # Maps external (graph) to internal (subgraph) inputs for each subgraph
         self.subgraph_input_map = {}
         self.subgraph_inputs = {}
         self.subgraph_input_names = []
         for Xp in self.subgraph_Xps:
-            sub_xgraph = XGraphBaseSubgraphQuantizer.xgraph_factory.\
-                build_from_xlayer(Xp.subgraph_data, name=Xp.name)
+            sub_xgraph = XGraphBaseSubgraphQuantizer.xgraph_factory.build_from_xlayer(
+                Xp.subgraph_data, name=Xp.name
+            )
 
             self.subgraph_input_map[Xp.name] = {}
 
@@ -80,9 +79,7 @@ class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
 
         # Setup executable graph
         self.runtime = pyxir.build(
-            self.xgraph,
-            target='cpu',
-            last_layers=self.subgraph_input_names
+            self.xgraph, target="cpu", last_layers=self.subgraph_input_names
         )
 
         self.inputs_func = inputs_func
@@ -90,14 +87,23 @@ class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
         os.makedirs(self.work_dir, exist_ok=True)
         self.quant_iter = quant_iter
 
-    def quantize_subgraph(self, xgraph, inputs, input_names, output_names):
-        # type: (XGraph, Dict[str, numpy.ndarray]) -> None
-        """ Quantize a subgraph with given calibration inputs """
+    def quantize_subgraph(
+        self,
+        xgraph: XGraph,
+        inputs: Dict[str, np.ndarray],
+        input_names: List[str],
+        output_names: List[str],
+    ) -> None:
+        """Quantize a subgraph with given calibration inputs"""
         raise NotImplementedError("")
 
-    def quantize(self):
-        # type: () -> None
-        """ Start quantization of the partitioned xgraph """
+    def quantize(self) -> XGraph:
+        """Start quantization of the partitioned xgraph
+        
+        Returns
+        -------
+        q_xgraph: The quantized XGraph
+        """
 
         input_names = self.runtime.get_input_names()
         input_shapes = self.runtime.get_input_shapes()
@@ -106,7 +112,8 @@ class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
             raise NotImplementedError(
                 "Invalid number of inputs to model: {},{}, Vitis-AI"
                 " quantization only supports models with one input at the"
-                " moment".format(len(input_names), input_names))
+                " moment".format(len(input_names), input_names)
+            )
         input_name = input_names[0]
         input_shape = input_shapes[0]
 
@@ -114,44 +121,27 @@ class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
         for it in range(self.quant_iter):
             inputs = self.inputs_func(it)
 
-            subgraph_inpts = self.runtime.run(
-                inputs,
-                outputs=self.subgraph_input_names
-            )
+            subgraph_inpts = self.runtime.run(inputs, outputs=self.subgraph_input_names)
 
-            for in_name, inpt in \
-                    zip(self.subgraph_input_names, subgraph_inpts):
+            for in_name, inpt in zip(self.subgraph_input_names, subgraph_inpts):
                 self.subgraph_inputs[in_name] = inpt
-
-            # for idx, layer, inpts, outpt, _ in \
-            #         self.runtime.run_stepwise(inputs):
-
-            #     si = 0
-            #     if layer.name in self.subgraph_inputs:
-            #         self.subgraph_inputs[layer.name] = outpt
-            #         si += 1
-
-            #     if len(self.subgraph_inputs) == si:
-            #         break
 
         logger.debug("START Subgraph quantization")
         for Xp in self.subgraph_Xps:
             # Create sub XGraph from subgraph layer subgraph_data
-            sub_xgraph = XGraphBaseSubgraphQuantizer.xgraph_factory.\
-                build_from_xlayer(Xp.subgraph_data, name=Xp.name)
+            sub_xgraph = XGraphBaseSubgraphQuantizer.xgraph_factory.build_from_xlayer(
+                Xp.subgraph_data, name=Xp.name
+            )
 
-            input_names = list(Xp.attrs['__bottom_tensors'].keys())
-            output_names = list(Xp.attrs['__top_tensors'].keys())
+            input_names = list(Xp.attrs["__bottom_tensors"].keys())
+            output_names = list(Xp.attrs["__top_tensors"].keys())
 
-            original_input_names = \
-                list(self.subgraph_input_map[Xp.name].keys())
+            original_input_names = list(self.subgraph_input_map[Xp.name].keys())
             inputs = {
-                self.subgraph_input_map[Xp.name][in_name]:
-                self.subgraph_inputs[in_name]
+                self.subgraph_input_map[Xp.name][in_name]: self.subgraph_inputs[in_name]
                 for in_name in original_input_names
             }
-            self.quantize_subgraph(sub_xgraph, inputs, input_names,
-                                   output_names)
+            self.quantize_subgraph(sub_xgraph, inputs, input_names, output_names)
 
         logger.debug("STOP Subgraph quantization")
 
