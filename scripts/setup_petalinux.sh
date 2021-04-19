@@ -26,6 +26,8 @@ cd hdf5-1.10.7
 make -j$(nproc)
 make install
 
+cd ${TVM_VAI_HOME}
+
 pip3 install Cython==0.29.23 h5py==2.10.0 pillow
 
 # DOWNLOAD PYXIR AND TVM
