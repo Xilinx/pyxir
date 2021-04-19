@@ -35,10 +35,10 @@ import tvm
 from tvm import contrib
 import tvm.relay as relay
 from tvm.relay import transform
-from tvm.contrib import utils, graph_runtime
+from tvm.contrib import utils, graph_executor
 from tvm.contrib.target import vitis_ai
 from tvm.relay.build_module import bind_params_by_name
-from tvm.relay.op.contrib.vitis_ai import annotation
+from tvm.relay.op.contrib.vitis_ai import partition_for_vitis_ai
 
 logging.basicConfig()
 logger = logging.getLogger('pyxir')
@@ -152,10 +152,7 @@ seq = tvm.transform.Sequential([relay.transform.RemoveUnusedFunctions(),
 with tvm.transform.PassContext(opt_level=3):
      mod = seq(mod)
 
-mod["main"] = bind_params_by_name(mod["main"], params)
-mod = annotation(mod, params, target)
-mod = relay.transform.MergeCompilerRegions()(mod)
-mod = relay.transform.PartitionGraph()(mod)
+mod = partition_for_vitis_ai(mod, params, dpu=target)
 
 # Convert convolutions that won't be executed on DPU back to NCHW
 desired_layouts = {'nn.conv2d': ['NCHW', 'default']}
@@ -169,9 +166,11 @@ with tvm.transform.PassContext(opt_level=3):
 # Set Vitis AI export runtime module config to serializae the compilation information
 #   to be loaded again later in this script for aarch64 & DPU cross compilation
 export_rt_mod_file = os.path.join(os.getcwd(), 'vitis_ai.rtmod')
-with tvm.transform.PassContext(opt_level=3,
-                               config={'relay.ext.vitis_ai.options.target': target,
-                                       'relay.ext.vitis_ai.options.export_runtime_module': export_rt_mod_file}):   
+build_options = {
+    'dpu': target,
+    'export_runtime_module': export_rt_mod_file
+}
+with tvm.transform.PassContext(opt_level=3, config={'relay.ext.vitis_ai.options': build_options}):   
 	lib = relay.build(mod, tvm_target, params=params)
 
 
@@ -180,7 +179,7 @@ with tvm.transform.PassContext(opt_level=3,
 ############################################################
 print("Create InferenceSession")
 
-InferenceSession = graph_runtime.GraphModule(lib["default"](tvm.cpu()))
+InferenceSession = graph_executor.GraphModule(lib["default"](tvm.cpu()))
 
 ############################################################
 ## Quantization using first N inputs
@@ -231,8 +230,9 @@ lib_kwargs = {
     'fcompile': contrib.cc.create_shared,
     'cc': "/usr/aarch64-linux-gnu/bin/ld"
 }
-
-with tvm.transform.PassContext(opt_level=3,
-                                config={'relay.ext.vitis_ai.options.load_runtime_module': export_rt_mod_file}):
+build_options = {
+    'load_runtime_module': export_rt_mod_file
+}
+with tvm.transform.PassContext(opt_level=3, config={'relay.ext.vitis_ai.options': build_options}):
     lib_edge_dpu = relay.build(mod, tvm_target, params=params)
     lib_edge_dpu.export_library('lib_dpu.so', **lib_kwargs)

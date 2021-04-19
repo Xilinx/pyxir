@@ -34,7 +34,7 @@ logger = logging.getLogger('pyxir')
 # logger.setLevel(logging.INFO)
 
 import tvm
-from tvm.contrib import graph_runtime
+from tvm.contrib import graph_executor
 from tvm.contrib.download import download_testdata
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -81,7 +81,7 @@ out_shape =(1,1000)
 
 lib_path  = os.path.join(FILE_DIR, sys.argv[1])
 lib = tvm.runtime.module.load_module(lib_path)
-mod = graph_runtime.GraphModule(lib["default"](tvm.cpu()))
+mod = graph_executor.GraphModule(lib["default"](tvm.cpu()))
 
 
 ###########################################################
