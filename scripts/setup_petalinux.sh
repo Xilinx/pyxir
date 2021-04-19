@@ -19,12 +19,14 @@ export TVM_HOME="${TVM_VAI_HOME}"/tvm
 export PYXIR_HOME="${TVM_VAI_HOME}"/pyxir
 
 # INSTALL DEPENDENCIES
-wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.7/src/hdf5-1.10.7.tar.gz
-tar -xzvf hdf5-1.10.7.tar.gz
-cd hdf5-1.10.7
-./configure --prefix=/usr
-make -j$(nproc)
-make install
+cd /tmp && \
+    wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.7/src/hdf5-1.10.7.tar.gz && \
+    tar -zxvf hdf5-1.10.7.tar.gz && \
+    cd hdf5-1.10.7 && \
+    ./configure --prefix=/usr && \
+    make -j$(nproc) && \
+    make install && \
+    cd /tmp && rm -rf hdf5-1.10.7*
 
 cd ${TVM_VAI_HOME}
 
