@@ -18,8 +18,16 @@ export TVM_VAI_HOME=$(pwd)
 export TVM_HOME="${TVM_VAI_HOME}"/tvm
 export PYXIR_HOME="${TVM_VAI_HOME}"/pyxir
 
+if [ -d "${TVM_HOME}" ]; then
+  rm -rf ${TVM_HOME}
+fi
+if [ -d "${PYXIR_HOME}" ]; then
+  rm -rf ${PYXIR_HOME}
+fi
+
 # INSTALL DEPENDENCIES
-cd /tmp && \
+if ! command -v h5cc &> /dev/null; then
+  cd /tmp && \
     wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.7/src/hdf5-1.10.7.tar.gz && \
     tar -zxvf hdf5-1.10.7.tar.gz && \
     cd hdf5-1.10.7 && \
@@ -27,6 +35,7 @@ cd /tmp && \
     make -j$(nproc) && \
     make install && \
     cd /tmp && rm -rf hdf5-1.10.7*
+fi
 
 cd ${TVM_VAI_HOME}
 
