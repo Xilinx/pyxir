@@ -70,6 +70,12 @@ elif '--use_vai_rt_dpuv2' in sys.argv:
 else:
     use_vai_rt_dpuczdx8g = False
 
+if '--use_dpuczdx8g_vart' in sys.argv:
+    use_dpuczdx8g_vart = True
+    sys.argv.remove('--use_dpuczdx8g_vart')
+else:
+    use_dpuczdx8g_vart = False
+
 # DPUCAHX8H/DPUv3e build
 if '--use_vai_rt_dpucahx8h' in sys.argv:
     use_vai_rt_dpucahx8h = True
@@ -176,6 +182,8 @@ class CMakeBuild(build_ext):
             cmake_args.append('-DUSE_VAI_RT_DPUCZDX8G=ON')
         if use_vai_rt_dpucahx8h:
             cmake_args.append('-DUSE_VAI_RT_DPUCAHX8H=ON')
+        if use_dpuczdx8g_vart:
+            cmake_args.append('-DUSE_DPUCZDX8G_VART=ON')
         if self.debug:
             cmake_args.append('-DDEBUG=ON')
             # cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON')

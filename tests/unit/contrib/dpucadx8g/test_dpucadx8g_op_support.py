@@ -28,15 +28,15 @@ class TestDpuv1OpSupport(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-
         def test():
             raise NotImplementedError("")
 
         TestDpuv1OpSupport.target_registry.register_target(
-            'dpuv1', {}, test, test, test, test)
+            "dpuv1", {}, test, test, test, test
+        )
 
     @classmethod
     def tearDownClass(cls):
         # Unregister dpu for other tests
-        TestDpuv1OpSupport.target_registry.unregister_target('dpuv1')
-        TestDpuv1OpSupport.target_registry.unregister_target('DPUCADX8G')
+        TestDpuv1OpSupport.target_registry.unregister_target("dpuv1")
+        TestDpuv1OpSupport.target_registry.unregister_target("DPUCADX8G")

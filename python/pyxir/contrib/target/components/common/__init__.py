@@ -12,3 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """"Module for common target components"""
+
+from pyxir.shared.container import StrContainer
+from pyxir.opaque_func_registry import OpaqueFuncRegistry
+
+
+def is_dpuczdx8g_vart_flow_enabled():
+    of = OpaqueFuncRegistry.Get("pyxir.use_dpuczdx8g_vart")
+    s = StrContainer("")
+    of(s)
+    return s.get_str() == "True"

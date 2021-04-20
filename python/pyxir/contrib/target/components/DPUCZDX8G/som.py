@@ -23,7 +23,9 @@ from pyxir.graph.transformers import subgraph
 
 from .common import xgraph_dpu_optimizer, xgraph_dpu_quantizer
 from pyxir.contrib.target.components.common.vai_c import VAICompiler
-# from .vai_c_depr import VAICompiler
+from pyxir.contrib.target.components.common import is_dpuczdx8g_vart_flow_enabled
+
+from .vai_c_dnnc import VAICompilerDNNC
 
 logger = logging.getLogger('pyxir')
 
@@ -45,7 +47,34 @@ def xgraph_dpu_som_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
 
 def xgraph_dpu_som_compiler(xgraph, **kwargs):
-    arch_path = os.path.join(FILE_DIR, "./som_dpu_3136.json")
-    compiler = VAICompiler(xgraph, arch=arch_path, **kwargs)
-    c_xgraph = compiler.compile()
+    if is_dpuczdx8g_vart_flow_enabled():
+        arch_path = os.path.join(FILE_DIR, "./som_dpu_3136.json")
+        compiler = VAICompiler(xgraph, arch=arch_path, **kwargs)
+        c_xgraph = compiler.compile()
+    else:
+        meta = {
+            "lib": "/usr/local/lib/libn2cube.so",
+            "pre_processing_pool": 4,
+            "post_processing_pool": 4,
+            "dpu_thread_pool": 3,
+            "dpu_task_pool": 16
+        }
+
+        dcf_path =  os.path.join(FILE_DIR, "./som.dcf")
+        arch_path = "/tmp/som.json"
+        if not os.path.exists(arch_path):
+            # Write arch json 
+            arch = {   
+                "target"   : "DPUCZDX8G",
+                "dcf"      : dcf_path,
+                "cpu_arch" : "arm64"
+            }
+
+            with open(arch_path, 'w') as f:
+                json.dump(arch, f, indent=4, sort_keys=True)
+
+        
+        compiler = VAICompilerDNNC(xgraph, arch=arch_path, meta=meta, dcf=dcf_path, **kwargs)
+        c_xgraph = compiler.compile()
+
     return c_xgraph

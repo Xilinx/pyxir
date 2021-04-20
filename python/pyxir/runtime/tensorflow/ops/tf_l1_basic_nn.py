@@ -482,23 +482,36 @@ class ScaleLayer(rt_layer.ScaleLayer, RtLayerTF):
         inpt, gamma, beta = inpts
         assert gamma.shape == beta.shape
 
+        if len(gamma.shape) == 0:
+            gamma = np.reshape(gamma, (1,)) if isinstance(gamma, np.ndarray) else tf.reshape(gamma, (1,))
+            beta = np.reshape(beta, (1,)) if isinstance(beta, np.ndarray) else tf.reshape(beta, (1,))
+
         if self.dtype not in ['float32']:
             inpt = tf.cast(inpt, RtLayerTF.dtype_to_tf[self.dtype])
             gamma = tf.cast(gamma, RtLayerTF.dtype_to_tf[self.dtype])
             beta = tf.cast(beta, RtLayerTF.dtype_to_tf[self.dtype])
 
         compiler_target = kwargs['compiler_target'] if 'compiler_target' in kwargs else None
-        data_format = "NCHW" if self.axis == 1 else "NHWC"
-        
-        if compiler_target == 'DPUv1Compiler' or data_format == "NCHW":
+        is_fused_batch_norm = (self.axis == -1 or self.axis == (len(self.input_shapes[0]) -1)) \
+            and len(gamma.shape) == 1 and gamma.shape[0] == self.input_shapes[0][-1]
+
+        if is_fused_batch_norm:
+            return [tf.nn.fused_batch_norm(
+                inpt,
+                mean=tf.zeros(beta.shape),
+                variance=tf.ones(beta.shape),
+                offset=beta,
+                scale=gamma,
+                # epsilon=0.000001,
+                is_training=False,
+                data_format="NHWC",
+                name=self.name
+            )[0]]
+        else:
             if self.axis not in [None, -1]:
                 shape = [(1 if i != self.axis else -1)
                         for i in range(len(self.shape))]
                 gamma, beta = tf.reshape(gamma, shape), tf.reshape(beta, shape)
-        
-            if len(gamma.shape) == 0:
-                gamma = np.reshape(gamma, (1,)) if isinstance(gamma, np.ndarray) else tf.reshape(gamma, (1,))
-                beta = np.reshape(beta, (1,)) if isinstance(beta, np.ndarray) else tf.reshape(beta, (1,))
             
             if compiler_target == 'DPUv1Compiler':
                 return [tf.add(
@@ -512,18 +525,7 @@ class ScaleLayer(rt_layer.ScaleLayer, RtLayerTF):
                     beta,
                     name=self.name
                 )]
-        else:
-            return [tf.nn.fused_batch_norm(
-                inpt,
-                mean=tf.zeros(beta.shape),
-                variance=tf.ones(beta.shape),
-                offset=beta,
-                scale=gamma,
-                # epsilon=0.000001,
-                is_training=False,
-                data_format=data_format,
-                name=self.name
-            )[0]]
+            
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         assert len(inputs) == len(self.input_shapes),\
