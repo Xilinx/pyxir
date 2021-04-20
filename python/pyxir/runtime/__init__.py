@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for executing XGraphs """
+"""Module for executing XGraphs"""
 
-import warnings
+import logging
 
 from .rt_manager import RtManager
 from .runtime_factory import RuntimeFactory
 from .globals import transpose
 
+logger = logging.getLogger("pyxir")
 rt_manager = RtManager()
 runtime_factory = RuntimeFactory()
 
@@ -27,25 +28,19 @@ runtime_factory = RuntimeFactory()
 try:
     # Register if we can import tensorflow
     from .tensorflow.runtime_tf import RuntimeTF, X_2_TF
-
     rt_manager.register_rt('cpu-tf', RuntimeTF, X_2_TF)
 except Exception as e:
-    warnings.warn("Could not load `cpu-tf` runtime because of error: {}"
-                  .format(e))
+    logger.info("Could not load `cpu-tf` runtime because of error: {0}".format(e))
 
 try:
     # Register if we can import numpy
     from .numpy.runtime_np import RuntimeNP, X_2_NP
-
     rt_manager.register_rt('cpu-np', RuntimeNP, X_2_NP)
 except Exception as e:
-    warnings.warn("Could not load `cpu-np` runtime because of error: {}"
-                  .format(e))
+    logger.info("Could not load `cpu-np` runtime because of error: {0}".format(e))
 
 try:
     from .decentq_sim.runtime_decentq_sim import RuntimeDecentQSim
-
     rt_manager.register_rt('decentq-sim', RuntimeDecentQSim, {})
 except Exception as e:
-    warnings.warn("Could not load `decentq-sim` runtime because of error: {}"
-                  .format(e))
+    logger.info("Could not load `decentq-sim` runtime because of error: {0}".format(e))
