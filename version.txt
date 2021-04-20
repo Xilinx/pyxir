@@ -12,6 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.1.7 ////////////////
+NEW FEATURES:
+    - Run quantization in batches of 32, allowing larger calibration datasets
+UPDATES:
+    - Update TVM example scripts to latest partitioning and TVM runtime API's
+    - Make RuntimeModule load from file function static
+BUG FIXES:
+    - Fix for dilated conv2d
+    - Fix for unsupported op inside resnet/inception-like block
+    - Fix C++ ONNX IO tests
+UNFIXED ISSUES:
+    - Importing tvm before pyxir results in segfault for DPUCADX8G env due to 
+      protobuf mismatch between DPUCADX8G tools and tensorflow
+
 //////////////// VERSION 0.1.6 ////////////////
 NEW FEATURES:
     - Add DPUCZDX8G SOM target
