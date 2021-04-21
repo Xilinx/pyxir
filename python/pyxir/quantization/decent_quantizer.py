@@ -68,12 +68,14 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         inputs_func,
         work_dir=os.path.join(os.getcwd(), "work"),
         quant_iter=1,
+        compiler_target=None,
         **kwargs
     ):
 
         super(DECENTQuantizer, self).__init__(xgraph, inputs_func, work_dir)
 
         self.quant_iter = quant_iter
+        self.compiler_target = compiler_target
         self.gen = TfGenerator()
         self.partition_graphs = {}
         self.res = {}
@@ -171,6 +173,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
             layout="NHWC",
             batch_size=batch_size,
             out_dir=self.work_dir,
+            compiler_target=self.compiler_target,
             **self.kwargs
         )
 

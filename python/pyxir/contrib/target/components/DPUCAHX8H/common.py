@@ -34,7 +34,7 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
 
 
 def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
-    quantizer = DECENTQuantizer(xgraph, inputs_func, **kwargs)
+    quantizer = DECENTQuantizer(xgraph, inputs_func, compiler_target="xcompiler", **kwargs)
     q_xgraph = quantizer.quantize()
     return q_xgraph
 

@@ -209,27 +209,12 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
                          .format(kernel_trans.shape))
         elif kernel_layout == 'OIHW':
             # OIHW -> HWIO
-            # if isinstance(kernel, np.ndarray):
-            #     kernel_trans = np.transpose(kernel, (2, 3, 1, 0))
-            # elif isinstance(kernel, tf.constant):
-            #     kernel_trans = np.transpose()
-            # else:
-            #     kernel_trans = tf.transpose(kernel, (2, 3, 1, 0))
-
             kernel_trans = np.transpose(kernel, (2, 3, 1, 0)) if\
                 isinstance(kernel, np.ndarray) else \
                 tf.transpose(kernel, (2, 3, 1, 0))
             logger.debug("Kernel transposed shape: {}"
                          .format(kernel_trans.shape))
         elif kernel_layout == 'OHWI':
-            # OHWI -> HWIO
-            # if isinstance(kernel, np.ndarray):
-            #     kernel_trans = np.transpose(kernel, (1, 2, 3, 0))
-            # elif isinstance(kernel, tf.constant):
-            #     kernel_trans = np.transpose()
-            # else:
-            #     kernel_trans = tf.transpose(kernel, (1, 2, 3, 0))
-
             kernel_trans = np.transpose(kernel, (1, 2, 3, 0)) if\
                 isinstance(kernel, np.ndarray) else \
                 tf.transpose(kernel, (1, 2, 3, 0))

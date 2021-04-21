@@ -26,7 +26,7 @@ from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.target_registry import TargetRegistry
 from pyxir.runtime.rt_manager import RtManager
 
-from .compilation_infra import conv2d_pool2d_nhwc_oihw_test
+from ..compilation_infra import conv2d_pool2d_nhwc_oihw_test
 
 try:
     import tensorflow as tf

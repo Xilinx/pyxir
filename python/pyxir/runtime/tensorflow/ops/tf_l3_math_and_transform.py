@@ -86,13 +86,22 @@ class LeakyReluLayer(rt_layer.BaseLayer, RtLayerTF):
         assert len(inpts) == 1, "LeakyRelu layer expects one input"
         features, alpha = inpts[0], self.alpha
 
-        with tf.name_scope(self.name, "LeakyRelu", [features, alpha]) as name:
-            features = tf.convert_to_tensor(features, name="features")
-            if features.dtype.is_integer:
-                features = tf.to_float(features)
-            alpha = tf.convert_to_tensor(alpha, dtype=features.dtype,
-                                         name="alpha")
-            return [tf.maximum(alpha * features, features, name=name)]
+        compiler_target = kwargs['compiler_target'] if 'compiler_target' in kwargs else None
+        if compiler_target == "xcompiler":
+            if np.round(alpha, 2) <=0.1 and np.round(alpha,2)>=0.1:
+                alpha=0.1015625
+            else:
+                raise ValueError("DPU supports only with alpha value 0.1 but got alpha value {}"
+                                 .format(alpha))
+            return [tf.nn.leaky_relu(features, alpha=0.1015625, name=self.name)]
+        else:
+            with tf.name_scope(self.name, "LeakyRelu", [features, alpha]) as name:
+                features = tf.convert_to_tensor(features, name="features")
+                if features.dtype.is_integer:
+                    features = tf.to_float(features)
+                alpha = tf.convert_to_tensor(alpha, dtype=features.dtype,
+                                            name="alpha")
+                return [tf.maximum(alpha * features, features, name=name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
         assert len(inputs) == 1, "LeakyRelu layer expects one input"

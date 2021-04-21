@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module wrapping DPUCZDX8G VAI compiler """
+""" Module wrapping DPUCAHX8H VAI compiler """
 
 import os
 import json
@@ -94,7 +94,7 @@ class VAICompiler(XGraphBaseCompiler):
                                       " one input at the moment but found: {}"
                                       .format(len(input_names)))
 
-        netcfg=netcfg.replace('deploy_model.pb','quantize_eval_model.pb')
+        netcfg=netcfg.replace('deploy_model.pb', 'quantize_eval_model.pb')
         command = """
         vai_c_tensorflow \
             --frozen_pb {} \
