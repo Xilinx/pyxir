@@ -482,7 +482,6 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
         # TODO
         xgraph.meta_attrs = q_xgraph.meta_attrs.to_dict()
         # xgraph.copy_from(q_xgraph)
-        import pdb; pdb.set_trace()
 
     quantization_callback.set_func(quant_func, [])
 
