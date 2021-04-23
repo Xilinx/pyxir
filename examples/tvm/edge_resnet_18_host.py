@@ -143,9 +143,11 @@ lib_kwargs = {}
 
 mod, params = relay.frontend.from_mxnet(block, shape_dict)
 mod = relay.transform.InferType()(mod)
+mod["main"] = bind_params_by_name(mod["main"], params)
+mod = transform.RemoveUnusedFunctions()(mod)
 
 # For the edge target we recommend converting the layout to NHWC for best performance
-desired_layouts = {'nn.conv2d': ['NHWC', 'OIHW']}
+desired_layouts = {'nn.conv2d': ['NHWC', 'default']}
 seq = tvm.transform.Sequential([relay.transform.RemoveUnusedFunctions(),
                                         relay.transform.ConvertLayout(desired_layouts),
                                         relay.transform.FoldConstant()])

@@ -105,7 +105,7 @@ end = time.time()
 ###########################################################
 
 out_shape = (1, 1000)
-out = tvm.nd.empty(out_shape, ctx=tvm.cpu(0))
+out = tvm.nd.empty(out_shape)
 res = softmax(mod.get_output(0, out).asnumpy()[0])
 top1 = np.argmax(res)
 
