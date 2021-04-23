@@ -12,6 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.2.0 ////////////////
+NEW FEATURES:
+    - Create DPUCZDX8G (zcu104, zcu102, SOM and Ultra96) VART flow
+UPDATES:
+    - Update TVM example scripts
+BUG FIXES:
+    - Fix LeakyRelu for XCompiler backend (for DPUCAHX8H target)
+UNFIXED ISSUES:
+    - Importing tvm before pyxir results in segfault for DPUCADX8G env due to 
+      protobuf mismatch between DPUCADX8G tools and tensorflow
+
 //////////////// VERSION 0.1.7 ////////////////
 NEW FEATURES:
     - Run quantization in batches of 32, allowing larger calibration datasets
