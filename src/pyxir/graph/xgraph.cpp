@@ -99,7 +99,7 @@ void XGraph::update(const std::string &xl_name)
   }
 
   // Possibly update heads and tails
-  if (xl->bottoms.empty() && !is_input(xl_name))
+  if (xl->is_input() && !is_input(xl_name))
     heads.push_back(xl->name);
 
   if (xl->tops.empty() && !is_output(xl_name))

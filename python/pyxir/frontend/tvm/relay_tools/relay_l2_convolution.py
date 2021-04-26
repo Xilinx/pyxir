@@ -709,13 +709,13 @@ def nn_max_pool2d(expr: Expr,
 
 
 @register_relay_2_xlayer_converter_base('nn.pad')
-def subtract(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+def pad(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     TVM padding layer to XLayer
 
     Relay
     -----
-    Type: tvm.relay.op.nn.nn.batch_flatten
+    Type: tvm.relay.op.nn.pad
     Ref: https://docs.tvm.ai/api/python/relay/nn.html
     Parameters:
         - data (tvm.relay.Expr)
@@ -727,7 +727,14 @@ def subtract(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
             The value used for padding
     """
     pad_width = [[int(e) for e in t] for t in expr.attrs.pad_width]
-    pad_value = float(expr.attrs.pad_value)
+    if hasattr(expr.attrs, "pad_value"):
+        pad_value = float(expr.attrs.pad_value)
+    else:
+        # For tvm>=v0.8.dev0
+        assert len(in_xlayers) > 1, "If pad_value is not a Relay operation attribute, it is expected"\
+            " as an input expression"
+        assert in_xlayers[1].type[0] == "Constant", "Only static padding is supported."
+        pad_value = float(in_xlayers[1].data[0])
 
     logger.debug("nn_pad: {}".format(hash(expr)))
     logger.debug("-- pad width: {}".format(pad_width))
