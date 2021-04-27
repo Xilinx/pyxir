@@ -75,18 +75,17 @@ class TestRelayFrontend(unittest.TestCase):
 
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == "Constant"
-        assert layers[1].type[0] == "Input"
-        assert layers[2].type[0] == "Pad"
-        assert layers[3].type[0] == "Convolution"
-        assert layers[4].type[0] == "BatchNorm"
-        assert layers[5].type[0] == "ReLU"
-        assert layers[6].type[0] == "Mean"
-        assert layers[7].type[0] == "Reshape"
-        assert layers[8].type[0] == "Dense"
-        assert layers[9].type[0] == "BiasAdd"
-        assert layers[10].type[0] == "Softmax"
-        assert layers[11].type[0] == "Reshape"
+        assert layers[0].type[0] == "Input"
+        assert layers[1].type[0] == "Pad"
+        assert layers[2].type[0] == "Convolution"
+        assert layers[3].type[0] == "BatchNorm"
+        assert layers[4].type[0] == "ReLU"
+        assert layers[5].type[0] == "Mean"
+        assert layers[6].type[0] == "Reshape"
+        assert layers[7].type[0] == "Dense"
+        assert layers[8].type[0] == "BiasAdd"
+        assert layers[9].type[0] == "Softmax"
+        assert layers[10].type[0] == "Reshape"
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_simple_network_cvx(self):
@@ -118,18 +117,18 @@ class TestRelayFrontend(unittest.TestCase):
         assert len(xgraph.get_input_names()) == 1
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == "Constant"
-        assert layers[1].type[0] == "StrInput"
-        assert layers[1].shapes == [-1]
-        assert layers[2].type[0] == "Cvx"
-        assert layers[2].shapes == [-1, 3, 224, 224]
-        assert layers[3].type[0] == "Pad"
-        assert layers[4].type[0] == "Convolution"
-        assert layers[5].type[0] == "ReLU"
+        # assert layers[0].type[0] == "Constant"
+        assert layers[0].type[0] == "StrInput"
+        assert layers[0].shapes == [-1]
+        assert layers[1].type[0] == "Cvx"
+        assert layers[1].shapes == [-1, 3, 224, 224]
+        assert layers[2].type[0] == "Pad"
+        assert layers[3].type[0] == "Convolution"
+        assert layers[4].type[0] == "ReLU"
 
-        assert layers[1].tops == ["data_cvx"]
-        assert layers[2].bottoms == ["data"]
-        assert layers[2].tops[0][:7] == "nn.pad-"
+        assert layers[0].tops == ["data_cvx"]
+        assert layers[1].bottoms == ["data"]
+        assert layers[1].tops[0][:7] == "nn.pad-"
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_conv2d_transpose(self):

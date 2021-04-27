@@ -380,15 +380,12 @@ class TestRelayL2Convolutions(unittest.TestCase):
         xg = xf_relay.from_relay(mod, {})
         layers = xg.get_layers()
 
-        assert len(layers) == 3
+        assert len(layers) == 2
 
-        assert layers[0].type[0] == "Constant"
+        assert layers[0].type[0] == "Input"
         assert "relay_id" in layers[0].attrs
-        
-        assert layers[1].type[0] == "Input"
-        assert "relay_id" in layers[1].attrs
 
-        X = layers[2]
+        X = layers[1]
         assert X.type[0] == "Pad"
         assert X.bottoms == ["var"]
         assert X.shapes == [-1, 2, 5, 5]

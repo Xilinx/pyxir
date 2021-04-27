@@ -93,18 +93,17 @@ class TestRelayFrontend(unittest.TestCase):
 
         layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == "Constant"
-        assert layers[1].type[0] == "Input"
-        assert layers[2].type[0] == "Pad"
-        assert layers[3].type[0] == "Convolution"
-        assert layers[4].type[0] == "BatchNorm"
-        assert layers[5].type[0] == "ReLU"
-        assert layers[6].type[0] == "Mean"
-        assert layers[7].type[0] == "Reshape"
-        assert layers[8].type[0] == "Dense"
-        assert layers[9].type[0] == "BiasAdd"
-        assert layers[10].type[0] == "Softmax"
-        assert layers[11].type[0] == "Reshape"
+        assert layers[0].type[0] == "Input"
+        assert layers[1].type[0] == "Pad"
+        assert layers[2].type[0] == "Convolution"
+        assert layers[3].type[0] == "BatchNorm"
+        assert layers[4].type[0] == "ReLU"
+        assert layers[5].type[0] == "Mean"
+        assert layers[6].type[0] == "Reshape"
+        assert layers[7].type[0] == "Dense"
+        assert layers[8].type[0] == "BiasAdd"
+        assert layers[9].type[0] == "Softmax"
+        assert layers[10].type[0] == "Reshape"
 
         os.remove(json_file)
         os.remove(params_file)

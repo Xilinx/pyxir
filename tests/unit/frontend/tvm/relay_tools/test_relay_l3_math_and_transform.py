@@ -175,6 +175,7 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         # 1
         c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
         net = relay.reshape(c, (4, 0, 2))
+        net = relay.Tuple([net])
         net = relay.Function([], net)
         mod = tvm.IRModule.from_expr(net)
         mod = relay.transform.InferType()(mod)
@@ -188,6 +189,7 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         # 2
         c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
         net = relay.reshape(c, (6, 1, -1))
+        net = relay.Tuple([net])
         net = relay.Function([], net)
         mod = tvm.IRModule.from_expr(net)
         mod = relay.transform.InferType()(mod)
@@ -201,6 +203,7 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         # 3
         c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
         net = relay.reshape(c, (-2,))
+        net = relay.Tuple([net])
         net = relay.Function([], net)
         mod = tvm.IRModule.from_expr(net)
         mod = relay.transform.InferType()(mod)
@@ -214,6 +217,7 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         # 4
         c = relay.expr.const(np.ones((2, 3, 4, 5), dtype=np.float32))
         net = relay.reshape(c, (-3, -3))
+        net = relay.Tuple([net])
         net = relay.Function([], net)
         mod = tvm.IRModule.from_expr(net)
         mod = relay.transform.InferType()(mod)
@@ -343,7 +347,7 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         data = relay.var("data", relay.TensorType((1, 3, 2, 2), "float32"))
 
         net = relay.transpose(data, axes=(0, 2, 3, 1))
-
+        net = relay.Tuple([net])
         net = relay.Function(relay.analysis.free_vars(net), net)
 
         mod = tvm.IRModule.from_expr(net)
