@@ -25,9 +25,7 @@ logger = logging.getLogger("pyxir")
 
 class XGraphBasicOptimizer(XGraphBaseOptimizer):
 
-    """
-    TODO
-    """
+    """Basic optimizer used by most targets"""
 
     def __init__(self, xgraph,  copy=False):
         super(XGraphBasicOptimizer, self).__init__(xgraph, copy)

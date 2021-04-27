@@ -46,7 +46,7 @@ def xgraph_dpu_op_support_annotator(xgraph: XGraph, target: Target, **kwargs) ->
 
 def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
     XGraphPatternAnnotator()(xgraph)
-    xgraph = XGraphPatternMutator(xgraph)()
+    xgraph = XGraphPatternMutator()(xgraph)
 
     layout_transform_pass = XGraphLayoutTransformationPass('NHWC', target=target)
     dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)

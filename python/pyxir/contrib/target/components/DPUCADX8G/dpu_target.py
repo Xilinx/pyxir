@@ -94,7 +94,7 @@ def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), data_layout='NCHW', **kw
 def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
     # Annoate and merge patterns (e.g. mul + max = leaky relu)
     XGraphPatternAnnotator()(xgraph)
-    xgraph = XGraphPatternMutator(xgraph)()
+    xgraph = XGraphPatternMutator()(xgraph)
 
     layout_transform_pass = \
         XGraphLayoutTransformationPass('NHWC', target=target)

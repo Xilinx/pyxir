@@ -19,6 +19,7 @@ import logging
 
 from pyxir.graph import XGraph, XLayer
 
+from .xgraph_optimization_pass import XGraphOptimizationPass
 logger = logging.getLogger("pyxir")
 
 
@@ -42,7 +43,7 @@ class XGraphBaseOptimizer(object):
         self.xgraph = xgraph if not copy else copy.deepcopy(xgraph)
         self.optimization_passes = {}
 
-    def add_optimization_pass(self, level, opt_pass):
+    def add_optimization_pass(self, level: int, opt_pass) -> None:
         # type: (int, XfgraphOptimizationPass) -> None
         assert(isinstance(level, int))
         if level in self.optimization_passes:
@@ -50,11 +51,8 @@ class XGraphBaseOptimizer(object):
         else:
             self.optimization_passes[level] = [opt_pass]
 
-    def optimize(self):
-        # type: () -> XGraph
-        """
-        Start optimization
-        """
+    def optimize(self) -> XGraph:
+        """Start optimization"""
 
         xgraph = self.xgraph
 
@@ -65,8 +63,11 @@ class XGraphBaseOptimizer(object):
                         .format(idx, level, len(opt_passes)))
 
             for opt_pass in opt_passes:
-                logger.info("--name: {}".format(opt_pass.name))
-
-                xgraph = opt_pass.execute(xgraph)
+                # TODO
+                if isinstance(opt_pass, XGraphOptimizationPass):
+                    logger.info("--name: {}".format(opt_pass.name))
+                    xgraph = opt_pass.execute(xgraph)
+                else:
+                    xgraph = opt_pass(xgraph)
 
         return self.xgraph

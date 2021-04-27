@@ -137,7 +137,8 @@ def register_relay_2_xlayer_converter_base(relay_op):
 
             # !Important: set input layer tops
             for iX in iXs:
-                iX.tops.append(op_name)
+                if iX.name in X.bottoms:
+                    iX.tops.append(op_name)
 
             return X
 
