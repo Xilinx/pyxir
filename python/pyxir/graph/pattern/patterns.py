@@ -65,8 +65,8 @@ class XGraphPatternAnnotator(XGraphVisitor):
 class XGraphPatternMutator(XGraphMutator):
     """Mutate patterns in XGraph (for mul + max = leaky_relu)"""
 
-    def __init__(self, xgraph: XGraph):
-        super().__init__(xgraph)
+    def __init__(self):
+        super().__init__()
         self.lr_layers = {}
         self.lr_layers_bottoms = {}
 

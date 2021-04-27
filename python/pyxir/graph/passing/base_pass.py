@@ -55,23 +55,17 @@ class XGraphVisitor(object):
 
 class XGraphMutator(object):
 
-    """
-    Mutator class for changing XGraph
+    """Mutator class for changing XGraph"""
 
-    Arguments
-    ---------
-    xgraph: XGraph
-        the XGraph object to be mutated
-    """
+    def __init__(self):
+        self.xgraph = None
 
-    def __init__(self, xgraph: XGraph):
-        self.xgraph = xgraph
-
-    def __call__(self):
+    def __call__(self, xgraph: XGraph):
         """Main method to be called on object to start mutation pass"""
+        self.xgraph = xgraph
         new_xg = XGraph(self.xgraph.get_name())
         new_xg.copy_meta_attrs(self.xgraph)
-        for X in self.xgraph.get_layers():
+        for X in xgraph.get_layers():
             new_X = self.visit(X)
             # if new_X not None
             if new_X:
