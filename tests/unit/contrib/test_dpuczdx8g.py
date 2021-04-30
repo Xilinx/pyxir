@@ -32,6 +32,7 @@ from .compilation_infra import (
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_leaky_relu_nhwc_oihw_test,
+    xcompiler_pool_activation_nhwc_test,
     conv2d_pool2d_nhwc_oihw_test,
     conv2d_leaky_relu_nhwc_oihw_test,
 )
@@ -53,7 +54,6 @@ class TestDPUCZDX8G(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-
         # Import DPU module
         from pyxir.contrib.dpuv2 import dpuv2
 
@@ -215,6 +215,168 @@ class TestDPUCZDX8G(unittest.TestCase):
             ],
         )
 
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_conv2d_act_pool2d(self):
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 64, 64, 16),
+            (8, 16, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
+            activation="ReLU",
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 64, 64, 16),
+            (8, 16, 2, 2),
+            [1, 1],
+            [1, 1],
+            [4, 4],
+            "Max",
+            [2, 2],
+            [0, 0],
+            activation="LeakyRelu",
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_conv2d_constraints(self):
+        # Violate kernel_w * kernel_h * ceil(input_channel / channel_parallel) <= bank_depth,
+        #   partitioning should take care of it
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 4, 4, 4096),
+            (512, 4096, 3, 3),
+            [2, 2],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_depthwise_conv2d_pool2d(self):
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 3, 3, 8),
+            (8, 1, 3, 3),
+            [1, 1, 1, 1],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
+            conv_groups=8,
+            targets=["DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102", "DPUCZDX8G-som"],
+            expected_nb_subgraphs=3,
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_scale_conv2d(self):
+        # Standalone scale/batchnorm unsupported in DPUCAHX8H compiler
+        xcompiler_scale_conv2d_nhwc_oihw_test(
+            (1, 299, 299, 3),
+            (64, 3, 7, 7),
+            [3, 3],
+            [2, 2],
+            [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+            expected_nb_subgraphs=3,
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_resnetv1_block(self):
+        xcompiler_resnetv1_block_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            w2_shape=(64, 64, 1, 1),
+            w3_shape=(64, 64, 3, 3),
+            w4_shape=(256, 64, 1, 1),
+            c3_padding=[1, 1, 1, 1],
+            target="DPUCZDX8G-zcu104",
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G DNNC/DNNDK test")
+    def test_compile_conv2d_leaky_relu(self):
+        xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_depthwise_conv2d_leaky_relu(self):
+        xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
+            (1, 3, 3, 8),
+            (8, 1, 3, 3),
+            [1, 1, 1, 1],
+            [1, 1],
+            [1, 1],
+            conv_groups=8,
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+            expected_nb_subgraphs=2,
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_pool_activation(self):
+        pass
+        # xcompiler_pool_activation_nhwc_test(
+        #     (1, 3, 3, 8),
+        #     "Max",
+        #     [2, 2],
+        #     [1, 1, 1, 1],
+        #     [1, 1],
+        #     "ReLU",
+        #     targets=[
+        #         "DPUCZDX8G-zcu104",
+        #         # "DPUCZDX8G-zcu102",
+        #         # "DPUCZDX8G-ultra96",
+        #         # "DPUCZDX8G-som",
+        #     ],
+        # )
+
+    ##############
+    # DNNC TESTS #
+    ##############
+
     @unittest.skipIf(is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G DNNC/DNNDK test")
     def test_compile_conv2d_pool2d_dnnc(self):
         conv2d_pool2d_nhwc_oihw_test(
@@ -349,68 +511,9 @@ class TestDPUCZDX8G(unittest.TestCase):
             ],
         )
 
-    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
-    def test_compile_depthwise_conv2d_pool2d(self):
-        xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 3, 3, 8),
-            (8, 1, 3, 3),
-            [1, 1, 1, 1],
-            [1, 1],
-            [1, 1],
-            "Max",
-            [2, 2],
-            [0, 0],
-            conv_groups=8,
-            targets=["DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102", "DPUCZDX8G-som"],
-            expected_nb_subgraphs=3,
-        )
-
-    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
-    def test_compile_scale_conv2d(self):
-        # Standalone scale/batchnorm unsupported in DPUCAHX8H compiler
-        xcompiler_scale_conv2d_nhwc_oihw_test(
-            (1, 299, 299, 3),
-            (64, 3, 7, 7),
-            [3, 3],
-            [2, 2],
-            [1, 1],
-            target="DPUCZDX8G-zcu104",
-            expected_nb_subgraphs=3,
-        )
-
-    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
-    def test_compile_resnetv1_block(self):
-        xcompiler_resnetv1_block_test(
-            in_shape=(1, 112, 112, 64),
-            pool_size=[3, 3],
-            pool_strides=[2, 2],
-            w1_shape=(256, 64, 1, 1),
-            w2_shape=(64, 64, 1, 1),
-            w3_shape=(64, 64, 3, 3),
-            w4_shape=(256, 64, 1, 1),
-            c3_padding=[1, 1, 1, 1],
-            target="DPUCZDX8G-zcu104",
-        )
-
     @unittest.skipIf(is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G DNNC/DNNDK test")
     def test_compile_conv2d_leaky_relu_dnnc(self):
         conv2d_leaky_relu_nhwc_oihw_test(
-            (1, 4, 4, 1),
-            (2, 1, 2, 2),
-            [0, 0],
-            [1, 1],
-            [1, 1],
-            targets=[
-                "DPUCZDX8G-zcu104",
-                "DPUCZDX8G-zcu102",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
-            ],
-        )
-
-    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G DNNC/DNNDK test")
-    def test_compile_conv2d_leaky_relu(self):
-        xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
             (1, 4, 4, 1),
             (2, 1, 2, 2),
             [0, 0],
@@ -557,6 +660,7 @@ class TestDPUCZDX8G(unittest.TestCase):
                     "padding": [[0, 0], [0, 0], [1, 1], [1, 1]],
                     "kernel_size": [3, 3],
                     "strides": [1, 1],
+                    "pool_type": "Max",
                 },
                 targets=[],
             ),

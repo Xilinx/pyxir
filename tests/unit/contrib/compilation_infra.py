@@ -66,14 +66,17 @@ def _create_conv2d_pool2d_nhwc_oihw(
     conv_groups=1,
     conv_invalid=False,
     kernel_layout="OIHW",
+    activation=None,
     target="DPUCZDX8G-zcu104",
 ) -> XGraph:
 
     kernel_w, kernel_h = w_shape[2], w_shape[3]
-    W = np.random.randint(-10, 10, size=w_shape).astype(np.float32)
+    W = np.random.randint(-8, 10, size=w_shape).astype(np.float32)
     # B = np.array([1., -1.], dtype=np.float32)
+    net = []
 
     x1 = px.ops.input("in1", shape=list(in_shape))
+    net.append(x1)
     w1 = px.ops.constant("weight", W)
     conv1 = px.ops.conv2d(
         op_name="conv1",
@@ -86,15 +89,24 @@ def _create_conv2d_pool2d_nhwc_oihw(
         groups=conv_groups,
         data_layout="NHWC",
     )
+    net.append(conv1)
+    if activation == "ReLU":
+        res = px.ops.relu("act", [conv1])
+        net.append(res)
+    elif activation == "LeakyRelu":
+        res = px.ops.leaky_relu("act", [conv1], alpha=0.1)
+        net.append(res)
+    else:
+        res = conv1
     pool1 = px.ops.pool2d(
         op_name="pool1",
-        input_layer=conv1,
+        input_layer=res,
         pool_type=pool_type,
         pool_size=list(pool_size),
         padding=list(pool_padding),
         layout="NHWC",
     )
-    net = [x1, conv1, pool1]
+    net.append(pool1)
     xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
     xgraph = px.partition(xgraph, [target])
     return xgraph
@@ -130,6 +142,7 @@ def conv2d_pool2d_nhwc_oihw_test(
             conv_groups,
             conv_invalid,
             kernel_layout,
+            None,
             target,
         )
 
@@ -169,6 +182,7 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
     conv_groups=1,
     conv_invalid=False,
     kernel_layout="OIHW",
+    activation=None,
     targets=["DPUCAHX8H-u50"],
     expected_nb_subgraphs=3,
 ):
@@ -187,6 +201,7 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
             conv_groups,
             conv_invalid,
             kernel_layout,
+            activation,
             target,
         )
 
@@ -296,44 +311,46 @@ def xcompiler_scale_conv2d_nhwc_oihw_test(
     conv_dilation,
     conv_groups=1,
     kernel_layout="OIHW",
-    target="DPUCAHX8H-u50",
+    targets=["DPUCAHX8H-u50"],
     expected_nb_subgraphs=3,
 ):
+    for target in targets:
+        xgraph = _create_scale_conv2d_nhwc_oihw(
+            in_shape,
+            w_shape,
+            conv_padding,
+            conv_strides,
+            conv_dilation,
+            conv_groups,
+            kernel_layout,
+            target,
+        )
 
-    xgraph = _create_scale_conv2d_nhwc_oihw(
-        in_shape,
-        w_shape,
-        conv_padding,
-        conv_strides,
-        conv_dilation,
-        conv_groups,
-        kernel_layout,
-        target,
-    )
+        def inputs_func(iter):
+            inputs = np.ones(in_shape, dtype=np.float32)
+            return {"in1": inputs}
 
-    def inputs_func(iter):
-        inputs = np.ones(in_shape, dtype=np.float32)
-        return {"in1": inputs}
+        work_dir = os.path.join(FILE_PATH, "work")
+        build_dir = os.path.join(FILE_PATH, "build")
+        quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
+        opt_xgraph = px.optimize(q_xgraph, target)
+        c_xgraph = px.compile(
+            opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
+        )
+        c_output = c_xgraph.get_compiler_output()
 
-    work_dir = os.path.join(FILE_PATH, "work")
-    build_dir = os.path.join(FILE_PATH, "build")
-    quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
-    q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
-    opt_xgraph = px.optimize(q_xgraph, target)
-    c_xgraph = px.compile(opt_xgraph, target, work_dir=work_dir, build_dir=build_dir)
-    c_output = c_xgraph.get_compiler_output()
+        g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
+        # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
+        subgraphs = get_child_subgraphs(g)
+        assert (
+            len(subgraphs) == expected_nb_subgraphs
+        ), "Expected {0} subgraphs but got: {1}".format(
+            expected_nb_subgraphs, len(subgraphs)
+        )
 
-    g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
-    # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
-    subgraphs = get_child_subgraphs(g)
-    assert (
-        len(subgraphs) == expected_nb_subgraphs
-    ), "Expected {0} subgraphs but got: {1}".format(
-        expected_nb_subgraphs, len(subgraphs)
-    )
-
-    shutil.rmtree(work_dir)
-    shutil.rmtree(build_dir)
+        shutil.rmtree(work_dir)
+        shutil.rmtree(build_dir)
 
 
 def _create_resnetv1_block(
@@ -515,6 +532,7 @@ def _create_conv2d_leaky_relu_nhwc_oihw(
     conv_padding,
     conv_strides,
     conv_dilation,
+    conv_groups=1,
     kernel_layout="OIHW",
     target="DPUCZDX8G-zcu104",
 ) -> XGraph:
@@ -533,6 +551,7 @@ def _create_conv2d_leaky_relu_nhwc_oihw(
         strides=list(conv_strides),
         padding_hw=list(conv_padding),
         dilation=list(conv_dilation),
+        groups=conv_groups,
         data_layout="NHWC",
     )
     lr1 = px.ops.leaky_relu("lr1", [conv1], alpha=0.1)
@@ -548,6 +567,7 @@ def conv2d_leaky_relu_nhwc_oihw_test(
     conv_padding,
     conv_strides,
     conv_dilation,
+    conv_groups=1,
     kernel_layout="OIHW",
     targets=["DPUCZDX8G-zcu104"],
 ) -> None:
@@ -559,6 +579,7 @@ def conv2d_leaky_relu_nhwc_oihw_test(
             conv_padding,
             conv_strides,
             conv_dilation,
+            conv_groups,
             kernel_layout,
             target,
         )
@@ -592,6 +613,7 @@ def xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
     conv_padding,
     conv_strides,
     conv_dilation,
+    conv_groups=1,
     kernel_layout="OIHW",
     targets=["DPUCZDX8G-zcu104"],
     expected_nb_subgraphs=3,
@@ -604,6 +626,7 @@ def xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
             conv_padding,
             conv_strides,
             conv_dilation,
+            conv_groups,
             kernel_layout,
             target,
         )
@@ -620,10 +643,100 @@ def xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
         c_xgraph = px.compile(
             opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
         )
-        
+
         g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
         # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
         subgraphs = get_child_subgraphs(g)
+        assert (
+            len(subgraphs) == expected_nb_subgraphs
+        ), "Expected {0} subgraphs but got: {1}".format(
+            expected_nb_subgraphs, len(subgraphs)
+        )
+
+
+def _create_pooling_activation_nhwc(
+    in_shape, pool_type, pool_size, pool_padding, pool_strides, activation, target,
+) -> XGraph:
+
+    x1 = px.ops.input("in1", shape=list(in_shape))
+    pool1 = px.ops.pool2d(
+        op_name="pool1",
+        input_layer=x1,
+        pool_type=pool_type,
+        pool_size=list(pool_size),
+        padding=list(pool_padding),
+        strides=list(pool_strides),
+        layout="NHWC",
+    )
+    # if activation == "ReLU":
+    #     res = px.ops.relu("res", [pool1])
+    # elif activation == "LeakyRelu":
+    #     res = px.ops.leaky_relu("res", [pool1], alpha=0.1)
+    # else:
+    #     raise ValueError("Unsupported activation: {0}".format(activation))
+
+    channels = int(pool1.shapes[-1])
+
+    W = np.random.randint(-10, 10, size=(channels, channels, 1, 1)).astype(np.float32)
+    w1 = px.ops.constant("weight", W)
+    conv1 = px.ops.conv2d(
+        op_name="conv1",
+        input_layer=pool1,
+        weights_layer=w1,
+        kernel_size=[1, 1],
+        strides=[1, 1],
+        padding_hw=[0, 0],
+        dilation=[1, 1],
+        groups=1,
+        data_layout="NHWC",
+    )
+    net = [x1, pool1, conv1]
+    xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
+    xgraph = px.partition(xgraph, [target])
+    return xgraph
+
+
+def xcompiler_pool_activation_nhwc_test(
+    in_shape,
+    pool_type,
+    pool_size,
+    pool_padding,
+    pool_strides,
+    activation,
+    targets=["DPUCZDX8G-zcu104"],
+    expected_nb_subgraphs=3,
+) -> None:
+
+    for target in targets:
+        xgraph = _create_pooling_activation_nhwc(
+            in_shape,
+            pool_type,
+            pool_size,
+            pool_padding,
+            pool_strides,
+            activation,
+            target,
+        )
+
+        def inputs_func(iter):
+            inputs = np.ones(in_shape, dtype=np.float32)
+            return {"in1": inputs}
+
+        work_dir = os.path.join(FILE_PATH, "work")
+        build_dir = os.path.join(FILE_PATH, "build")
+        quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
+        opt_xgraph = px.optimize(q_xgraph, target)
+        c_xgraph = px.compile(
+            opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
+        )
+
+        g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
+        # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
+        subgraphs = get_child_subgraphs(g)
+        import pdb
+
+        pdb.set_trace()
         assert (
             len(subgraphs) == expected_nb_subgraphs
         ), "Expected {0} subgraphs but got: {1}".format(
