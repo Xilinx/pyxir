@@ -16,7 +16,7 @@
 
 import os
 import unittest
-
+import logging
 import numpy as np
 
 from pyxir import partition
@@ -34,7 +34,13 @@ from .compilation_infra import (
     xcompiler_conv2d_leaky_relu_nhwc_oihw_test,
     conv2d_pool2d_nhwc_oihw_test,
     conv2d_leaky_relu_nhwc_oihw_test,
+    conv2d_pool2d_naming_test,
+    multi_output_conv2d_naming_test,
 )
+
+# logging.basicConfig()
+# logger = logging.getLogger("pyxir")
+# logger.setLevel(logging.DEBUG)
 
 try:
     import tensorflow as tf
@@ -408,7 +414,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             ],
         )
 
-    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G DNNC/DNNDK test")
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
     def test_compile_conv2d_leaky_relu(self):
         xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
             (1, 4, 4, 1),
@@ -423,6 +429,12 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-som",
             ],
         )
+
+    @unittest.skipIf(is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G DNNC/DNNDK test")
+    def test_dnnc_out_names(self):
+        multi_output_conv2d_naming_test(["nn.conv-134", "nn.relu-22"])
+        multi_output_conv2d_naming_test(["nn..con.v--1.", "n.n.-relu-2-"])
+        conv2d_pool2d_naming_test(["conv1", "nn.conv-1"], ["nn.pool1", "nn.pool-1"])
 
     def test_supported_ops(self):
         ultra96_ops = TestDPUCZDX8G.target_registry.get_supported_op_check_names(
