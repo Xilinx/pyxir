@@ -130,7 +130,7 @@ class RuntimeTF(BaseRuntime):
             # TODO
             if layer.name in self.hidden_out_tensor_names:
                 inpt = self.tf_tensors[layer_name]
-                if self.compiler_target == 'DPUv1Compiler':
+                if self.compiler_target == 'DPUv1Compiler' or self.compiler_target == "xcompiler":
                     # identity = tf.add(
                     #     tf.multiply(inpt, np.ones((1,), dtype=np.float32), name=layer.name),
                     #     np.zeros((1,), dtype=np.float32),
@@ -138,7 +138,9 @@ class RuntimeTF(BaseRuntime):
                     # )
                     # TODO
                     channels = inpt.shape[-1]
-                    kernel = tf.constant(np.ones((1, 1, channels, channels), dtype=np.float32))
+                    z = np.identity(channels, dtype=np.float32).reshape(1,1,channels,channels)
+                    #kernel = tf.constant(np.ones((1, 1, channels, channels), dtype=np.float32))
+                    kernel = tf.constant(z) # dtype=np.float32))
                     identity = tf.nn.conv2d(inpt, kernel, strides=[1], padding='VALID', name=layer.name)
                 else:
                     identity = tf.add(

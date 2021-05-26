@@ -79,9 +79,15 @@ else:
 # DPUCAHX8H/DPUv3e build
 if '--use_vai_rt_dpucahx8h' in sys.argv:
     use_vai_rt_dpucahx8h = True
+    use_vart_clouddpu = False
     sys.argv.remove('--use_vai_rt_dpucahx8h')
+elif '--use_vart_clouddpu' in sys.argv:
+    use_vart_clouddpu = True
+    use_vai_rt_dpucahx8h = False
+    sys.argv.remove('--use_vart_clouddpu')  
 else:
     use_vai_rt_dpucahx8h = False
+    use_vart_clouddpu = False
 
 ###############
 # STATIC DATA #
@@ -182,6 +188,8 @@ class CMakeBuild(build_ext):
             cmake_args.append('-DUSE_VAI_RT_DPUCZDX8G=ON')
         if use_vai_rt_dpucahx8h:
             cmake_args.append('-DUSE_VAI_RT_DPUCAHX8H=ON')
+        if use_vart_clouddpu:
+            cmake_args.append('-DUSE_VART_CLOUDDPU=ON')
         if use_dpuczdx8g_vart:
             cmake_args.append('-DUSE_DPUCZDX8G_VART=ON')
         if self.debug:

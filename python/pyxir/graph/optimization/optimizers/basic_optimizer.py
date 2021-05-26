@@ -76,4 +76,11 @@ class XGraphBasicOptimizer(XGraphBaseOptimizer):
             opt_func=optimizations.merge_bias,
             name='MergeBiasIntoConvDense'
         )
+        # import pdb; pdb.set_trace()
+        # logger.info("Add TransformMulAndMaxIntoLeakyRelu pass")
+        # opt_pass.add_optimization(
+        #     condition_func=lambda bXs, X, tXs: 'Maximum' in X.type,
+        #     opt_func=optimizations.transform_mul_and_max_into_lrelu,
+        #     name='TransformMulAndMaxIntoLeakyRelu'
+        # )
         self.add_optimization_pass(10, opt_pass)

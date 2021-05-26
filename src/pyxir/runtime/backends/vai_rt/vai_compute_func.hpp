@@ -22,8 +22,9 @@
 #if defined(USE_VAI_RT_DPUCADX8G) || (defined(USE_VAI_RT_DPUCZDX8G) && !defined(USE_DPUCZDX8G_VART))
 #include <dpu_runner.hpp>
 #include "vai_api/dpu_func.hpp"
-#elif defined(USE_VAI_RT_DPUCAHX8H) || (defined(USE_VAI_RT_DPUCZDX8G) && defined(USE_DPUCZDX8G_VART))
+#elif defined(USE_VAI_RT_DPUCAHX8H) || defined(USE_VART_CLOUDDPU)|| (defined(USE_VAI_RT_DPUCZDX8G) && defined(USE_DPUCZDX8G_VART))
 #include "xir_api/dpu_func.hpp"
+#include "xir_api/dpu_func_int8.hpp"
 #endif
 
 #include "pyxir/graph/xgraph.hpp"
