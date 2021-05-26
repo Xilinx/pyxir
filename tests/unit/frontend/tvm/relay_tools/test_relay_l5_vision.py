@@ -82,52 +82,6 @@ class TestRelayL5VisionOperationConversions(unittest.TestCase):
         assert layers[1].shapes == [-1, 40, 40, 32]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
-    def test_image_resize_to_upsampling2d(self):
-        data = relay.var("data", relay.TensorType((1, 20, 20, 32), "float32"))
-
-        net = relay.image.resize(
-            data,
-            size=[40, 40],
-            layout="NHWC",
-            method="nearest_neighbor",
-            coordinate_transformation_mode="asymmetric"
-        )
-
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
-        params={}
-        xgraph = xf_relay.from_relay(mod, params)
-        layers = xgraph.get_layers()
-
-        assert layers[1].type[0] == 'Transpose'
-        assert layers[1].shapes  == [-1, 32, 20, 20]
-        assert layers[2].type[0] == 'Upsampling2D'
-        assert layers[2].shapes  == [-1, 32, 40, 40]
-        assert layers[3].type[0] == 'Transpose'
-        assert layers[3].shapes  == [-1, 40, 40, 32]
-
-    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
-    def test_image_resize(self):
-        data = relay.var("data", relay.TensorType((1, 20, 20, 32), "float32"))
-
-        net = relay.image.resize(
-            data,
-            size=[40, 40],
-            layout = "NHWC",
-            method="nearest_neighbor",
-            coordinate_transformation_mode="half_pixel"
-        )
-
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
-        params={}
-        xgraph = xf_relay.from_relay(mod, params)
-        layers = xgraph.get_layers()
-
-        assert layers[1].type[0] == 'AnyOp'
-        assert layers[1].shapes  == [-1, 40, 40, 32]
-
-    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_yolo_reorg(self):
         data = relay.var("data", relay.TensorType((-1, 4, 2, 2), "float32"))
 

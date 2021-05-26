@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-<<<<<<< HEAD
 """Module wrapping the DECENT quantizer"""
-=======
-"""Module wrapping DNNDK decent quantizer"""
->>>>>>> Add pattern annotator for partitioning op support with mul + max = lrelu pattern (#20)
 
 import os
 import json
