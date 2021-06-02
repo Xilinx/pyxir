@@ -80,7 +80,6 @@ class VAICompiler(XGraphBaseCompiler):
             .get_subgraphs(self.xgraph)[0]
         subxg_layers = Xp.subgraph_data
         xgraph = VAICompiler.xgraph_factory.build_from_xlayer(subxg_layers)
-        # assert xgraph.get_name() == net_name
 
         input_names = xgraph.get_input_names()
         input_shapes = [xgraph.get(in_name).shapes[:]
@@ -98,9 +97,7 @@ class VAICompiler(XGraphBaseCompiler):
         in_shape_dict = {}
 
         in_shape_dict['input_shape'] = ','.join([str(elem) for elem in graph_input_shapes])
-    
-        #import pdb;pdb.set_trace()
-
+ 
         netcfg=netcfg.replace('deploy_model.pb','quantize_eval_model.pb')
         command = """
         vai_c_tensorflow \
