@@ -76,7 +76,8 @@ if '--use_dpuczdx8g_vart' in sys.argv:
 else:
     use_dpuczdx8g_vart = False
 
-# DPUCAHX8H/DPUv3e build
+# CLOUD DPU with VART runtime build
+# '--use_vai_rt_dpucahx8h' is here for backward compatibility
 if '--use_vai_rt_dpucahx8h' in sys.argv:
     use_vai_rt_dpucahx8h = True
     use_vart_cloud_dpu = False
