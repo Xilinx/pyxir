@@ -58,28 +58,84 @@ class TestDPUCAHX8H(unittest.TestCase):
 
     def test_compile_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], "Max", [2, 2], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=["DPUCAHX8H-u50"],
         )
         # Strided
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [2, 2], [1, 1], "Max", [2, 2], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [2, 2],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=["DPUCAHX8H-u50"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [3, 3], [1, 1], "Avg", [2, 2], [1, 1],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCAHX8H-u50"],
         )
         # Padded
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [1, 1], "Max", [4, 4], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [4, 4],
+            [0, 0],
+            targets=["DPUCAHX8H-u50"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 8, 8, 1), (2, 1, 3, 3), [2, 2], [1, 1], [1, 1], "Avg", [4, 4], [0, 0],
+            (1, 8, 8, 1),
+            (2, 1, 3, 3),
+            [2, 2],
+            [1, 1],
+            [1, 1],
+            "Avg",
+            [4, 4],
+            [0, 0],
+            targets=["DPUCAHX8H-u50"],
         )
         # Dilated
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [2, 2], "Max", [2, 2], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [2, 2],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=["DPUCAHX8H-u50"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 10, 10, 1), (2, 1, 2, 2), [1, 1], [1, 1], [4, 4], "Max", [2, 2], [0, 0],
+            (1, 10, 10, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [4, 4],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=["DPUCAHX8H-u50"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 28, 28, 512),
@@ -90,6 +146,7 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
+            targets=["DPUCAHX8H-u50"],
         )
 
     def test_compile_depthwise_conv2d_pool2d(self):
@@ -104,6 +161,7 @@ class TestDPUCAHX8H(unittest.TestCase):
             [0, 0],
             conv_groups=8,
             expected_nb_subgraphs=4,
+            targets=["DPUCAHX8H-u50"],
         )
 
     def test_compile_scale_conv2d(self):
@@ -115,6 +173,7 @@ class TestDPUCAHX8H(unittest.TestCase):
             [2, 2],
             [1, 1],
             expected_nb_subgraphs=5,
+            targets=["DPUCAHX8H-u50"],
         )
         # xcompiler_scale_conv2d_nhwc_oihw_test(
         #     (1, 28, 28, 512), (512, 512, 3, 3), [2, 2, 2, 2], [1, 1], [2, 2],
@@ -130,4 +189,5 @@ class TestDPUCAHX8H(unittest.TestCase):
             w3_shape=(64, 64, 3, 3),
             w4_shape=(256, 64, 1, 1),
             c3_padding=[1, 1, 1, 1],
+            target="DPUCAHX8H-u50",
         )
