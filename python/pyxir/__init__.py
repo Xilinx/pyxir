@@ -26,7 +26,7 @@ from pyxir.targets.cpu import build_for_cpu_execution,\
 from .graph.xop_registry import XOpRegistry, xop_register_op_layout_transform,\
     xop_register_op_transpose_transform
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 device_r = TargetRegistry()

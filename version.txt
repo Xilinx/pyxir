@@ -12,6 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.2.1 ////////////////
+NEW FEATURES:
+    - /
+UPDATES:
+    - Add support for padding value argument instead of attribute in latest TVM Relay padding op
+BUG FIXES:
+    - Fix DNNC output parsing issue if non-alphabetic and/or non-numeric characters exist in
+      the output names 
+UNFIXED ISSUES:
+    - Importing tvm before pyxir results in segfault for DPUCADX8G env due to 
+      protobuf mismatch between DPUCADX8G tools and tensorflow
+
 //////////////// VERSION 0.2.0 ////////////////
 NEW FEATURES:
     - Create DPUCZDX8G (zcu104, zcu102, SOM and Ultra96) VART flow

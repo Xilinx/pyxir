@@ -35,7 +35,7 @@ from setuptools.command.build_ext import build_ext
 
 from pathlib import Path
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
