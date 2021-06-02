@@ -32,8 +32,6 @@ from pyxir.graph.pattern import XGraphPatternMutator, XGraphPatternAnnotator
 from pyxir.generator.tensorflow import XGraphTfGeneratorOptimizer
 from pyxir.graph.optimization.optimizers import QOptimizer, ExternalQOptimizer
 from pyxir.quantization.default_quantizer import XGraphDefaultQuantizer
-# from pyxir.quantization.mse_quantization.mse_threshold_quantizer import\
-#     XGraphMSEThresholdQuantizer
 from pyxir.graph.transformers.layout_transformation_pass import \
     XGraphLayoutTransformationPass
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
@@ -79,7 +77,7 @@ def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), data_layout='NHWC', **kw
 
     Returns:
     --------
-    And XGraph built/scheduled for execution on DPU
+    An XGraph built/scheduled for execution on DPU
     """
     # NOTE DPUCADF8H layers are in NHWC format because of the tensorflow
     #   intemediate structure we use to communicate with  DPUCADF8H compiler
@@ -93,7 +91,9 @@ def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), data_layout='NHWC', **kw
 
 
 def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
-    # Annoate and merge patterns (e.g. mul + max = leaky relu)
+    """Optimize/transform XGraph for execution on this DPU"""
+    
+    # Annotate and merge patterns (e.g. mul + max = leaky relu)
     XGraphPatternAnnotator()(xgraph)
     xgraph = XGraphPatternMutator()(xgraph)
 
@@ -101,8 +101,6 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
         XGraphLayoutTransformationPass('NHWC', target=target)
     dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
 
-    # optimizer = QOptimizer(dpu_xgraph)
-    # optimizer.optimize()
     optimizer = XGraphTfGeneratorOptimizer(dpu_xgraph)
     optimizer.optimize()
 
@@ -110,12 +108,7 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
 
 
 def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
-
-    # quantizer = XGraphDefaultQuantizer(xgraph, inputs_func, **kwargs)
-    # q_xgraph = quantizer.quantize()
-
-    # quantizer = XGraphMSEThresholdQuantizer(xgraph, inputs_func, **kwargs)
-    # q_xgraph = quantizer.quantize()
+    """Quantize XGraph for execution on this DPU"""
     quantizer = DECENTQuantizer(xgraph, inputs_func, compiler_target='xcompiler', **kwargs)
     q_xgraph = quantizer.quantize()
 
