@@ -37,7 +37,7 @@ const std::vector<std::string> vaiTargets {"DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102
 #elif defined(USE_VAI_RT_DPUCAHX8H)
 const std::vector<std::string> vaiTargets {"DPUCAHX8H-u50", "DPUCAHX8H-u280"};
 
-#elif defined(USE_VART_CLOUDDPU)
+#elif defined(USE_VART_CLOUD_DPU)
 const std::vector<std::string> vaiTargets {"DPUCAHX8H-u50", "DPUCAHX8H-u280", "DPUCADF8H"};
 
 #else
