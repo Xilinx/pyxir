@@ -33,6 +33,7 @@ from .compilation_infra import (
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_leaky_relu_nhwc_oihw_test,
     xcompiler_pool_activation_nhwc_test,
+    xcompiler_conv2d_transpose_nhwc_oihw_test,
     conv2d_pool2d_nhwc_oihw_test,
     conv2d_leaky_relu_nhwc_oihw_test,
 )
@@ -372,6 +373,22 @@ class TestDPUCZDX8G(unittest.TestCase):
         #         # "DPUCZDX8G-som",
         #     ],
         # )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_conv2d_transpose(self):
+        xcompiler_conv2d_transpose_nhwc_oihw_test(
+            (1, 3, 3, 2),
+            (4, 2, 3, 3),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
 
     ##############
     # DNNC TESTS #

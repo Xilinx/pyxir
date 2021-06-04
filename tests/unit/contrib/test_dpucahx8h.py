@@ -29,6 +29,7 @@ from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
+    xcompiler_conv2d_transpose_nhwc_oihw_test,
 )
 
 try:
@@ -190,4 +191,14 @@ class TestDPUCAHX8H(unittest.TestCase):
             w4_shape=(256, 64, 1, 1),
             c3_padding=[1, 1, 1, 1],
             target="DPUCAHX8H-u50",
+        )
+
+    def test_compile_conv2d_transpose(self):
+        xcompiler_conv2d_transpose_nhwc_oihw_test(
+            (1, 3, 3, 2),
+            (4, 2, 3, 3),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            targets=["DPUCAHX8H-u50"],
         )

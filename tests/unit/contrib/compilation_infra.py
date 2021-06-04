@@ -742,3 +742,102 @@ def xcompiler_pool_activation_nhwc_test(
         ), "Expected {0} subgraphs but got: {1}".format(
             expected_nb_subgraphs, len(subgraphs)
         )
+
+
+####################
+# TRANSPOSE CONV2D #
+####################
+
+
+def _create_transpose_conv2d_nhwc_oihw(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    conv_groups=1,
+    conv_invalid=False,
+    kernel_layout="OIHW",
+    target="DPUCZDX8G-zcu104",
+    conv_name="conv1",
+    pool_name="pool1",
+) -> XGraph:
+
+    kernel_w, kernel_h = w_shape[2], w_shape[3]
+    W = np.random.randint(-10, 10, size=w_shape).astype(np.float32)
+    # B = np.array([1., -1.], dtype=np.float32)
+
+    x1 = px.ops.input("in1", shape=list(in_shape))
+    w1 = px.ops.constant("weight", W)
+    conv1 = px.ops.conv2d_transpose(
+        op_name=conv_name,
+        input_layer=x1,
+        weights_layer=w1,
+        kernel_size=[kernel_w, kernel_h],
+        strides=list(conv_strides),
+        padding_hw=list(conv_padding),
+        dilation=list(conv_dilation),
+        groups=conv_groups,
+        data_layout="NHWC",
+    )
+    net = [x1, conv1]
+    xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
+    xgraph = px.partition(xgraph, [target])
+    return xgraph
+
+
+def xcompiler_conv2d_transpose_nhwc_oihw_test(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    conv_groups=1,
+    conv_invalid=False,
+    kernel_layout="OIHW",
+    targets=["DPUCAHX8H-u50"],
+    expected_nb_subgraphs=3,
+):
+
+    for target in targets:
+        xgraph = _create_transpose_conv2d_nhwc_oihw(
+            in_shape,
+            w_shape,
+            conv_padding,
+            conv_strides,
+            conv_dilation,
+            conv_groups,
+            conv_invalid,
+            kernel_layout,
+            target=target,
+        )
+
+        def inputs_func(iter):
+            inputs = np.ones(in_shape, dtype=np.float32)
+            return {"in1": inputs}
+
+        work_dir = os.path.join(FILE_PATH, "work")
+        build_dir = os.path.join(FILE_PATH, "build")
+        quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
+        opt_xgraph = px.optimize(q_xgraph, target)
+        c_xgraph = px.compile(
+            opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
+        )
+        c_output = c_xgraph.get_compiler_output()
+
+        assert list(c_output.keys()) == ["xp0"]
+        assert c_output.get_in_map("xp0") == {"xinput0": "xinput0"}
+        assert c_output.get_out_map("xp0") == {"conv1": "conv1"}
+        assert len(c_output.get_code_files("xp0")) == 1
+
+        g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
+        # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
+        subgraphs = get_child_subgraphs(g)
+        assert len(subgraphs) == expected_nb_subgraphs
+        dpu_subgraph = subgraphs[1]
+        # import pdb; pdb.set_trace()
+        # assert len(dpu_subgraph.get_children()) == 3
+
+        shutil.rmtree(work_dir)
+        shutil.rmtree(build_dir)

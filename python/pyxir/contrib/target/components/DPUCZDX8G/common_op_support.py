@@ -67,8 +67,8 @@ def is_conv2d_transpose_supported(
         bank_depth=bank_depth,
         max_stride=16,
         min_stride=1,
-        max_kernel=16,
-        min_kernel=1,
+        max_kernel_sz=16,
+        min_kernel_sz=1,
     )
 
 
