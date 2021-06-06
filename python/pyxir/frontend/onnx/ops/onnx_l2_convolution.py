@@ -18,6 +18,7 @@ Module for transforming ONNX L2 operators to XLayer objects
 L2: Convolution related operators
 """
 
+import math
 import logging
 import numpy as np
 import pyxir as px
@@ -63,11 +64,23 @@ def avg_pool(node: NodeWrapper,
         else [1, 1]
     stride_h, stride_w = strides
 
-    if auto_pad != 'NOTSET':
+    if auto_pad not in ['NOTSET', "SAME_UPPER", "SAME_LOWER"]:
         raise ValueError("AveragePool autopad attribute not supported but was:"
                          " {}".format(auto_pad))
 
-    padding = pads if pads is not None else [0, 0, 0, 0]
+    if auto_pad in ["SAME_UPPER", "SAME_LOWER"]:
+        out_h, out_w = int(math.ceil(in_h / stride_h)), int(math.ceil(in_w / stride_w))
+        pad_h = (out_h - 1) * stride_h + kernel_h - in_h
+        pad_w = (out_w - 1) * stride_w + kernel_w - in_w
+        if auto_pad == "SAME_UPPER":
+            pad_ht, pad_hb = pad_h // 2, pad_h - (pad_h // 2)
+            pad_wl, pad_wr = pad_w // 2, pad_w - (pad_w // 2)
+        else:
+            pad_ht, pad_hb = pad_h - (pad_h // 2), pad_h // 2
+            pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
+        padding = [pad_ht, pad_hb, pad_wl, pad_wr]
+    else:
+        padding = pads if pads is not None else [0, 0, 0, 0]
 
     # [pad_ht, pad_hb, pad_wl, pad_wr] -> [pad_ht, pad_wl,  pad_hb, pad_wr]
     # TODO move internal pool padding to [pad_ht, pad_hb, pad_wl, pad_wr]
@@ -143,23 +156,16 @@ def conv(node: NodeWrapper,
     assert auto_pad == 'NOTSET' or pads is None
     if (auto_pad == 'NOTSET' and pads is None) or auto_pad == 'VALID':
         padding = [0, 0, 0, 0]  # ht, hb, wl, wr
-    elif auto_pad == 'SAME_UPPER':
-        # out_h == in_h
-        pad_h = int((in_h - 1) * stride_h - in_h +
-                    (dil_h * (kernel_h - 1) + 1))
-        pad_w = int((in_w - 1) * stride_w - in_w +
-                    (dil_w * (kernel_w - 1) + 1))
-        pad_ht, pad_hb = pad_h // 2, pad_h - (pad_h // 2)
-        pad_wl, pad_wr = pad_w // 2, pad_w - (pad_w // 2)
-        padding = [pad_ht, pad_hb, pad_wl, pad_wr]
-    elif auto_pad == 'SAME_LOWER':
-        # out_h == in_h
-        pad_h = int((in_h - 1) * stride_h - in_h +
-                    (dil_h * (kernel_h - 1) + 1))
-        pad_w = int((in_w - 1) * stride_w - in_w +
-                    (dil_w * (kernel_w - 1) + 1))
-        pad_ht, pad_hb = pad_h - (pad_h // 2), pad_h // 2
-        pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
+    elif auto_pad in ["SAME_UPPER", "SAME_LOWER"]:
+        out_h, out_w = int(math.ceil(in_h / stride_h)), int(math.ceil(in_w / stride_w))
+        pad_h = (out_h - 1) * stride_h + (dil_h * (kernel_h - 1) + 1) - in_h
+        pad_w = (out_w - 1) * stride_w + (dil_w * (kernel_w - 1) + 1) - in_w
+        if auto_pad == "SAME_UPPER":
+            pad_ht, pad_hb = pad_h // 2, pad_h - (pad_h // 2)
+            pad_wl, pad_wr = pad_w // 2, pad_w - (pad_w // 2)
+        else:
+            pad_ht, pad_hb = pad_h - (pad_h // 2), pad_h // 2
+            pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
         padding = [pad_ht, pad_hb, pad_wl, pad_wr]
     else:
         assert len(pads) % 2 == 0
@@ -262,6 +268,7 @@ def conv_transpose(node: NodeWrapper,
     if np.sum(output_padding) != 0:
         raise NotImplementedError("Conv2DTranspose with output padding not"
                                   " equal to a zero vector is unsupported")
+    out_pad_h, out_pad_w = output_padding
     output_shape = node_attrs['output_shape'] if 'output_shape' in node_attrs\
         else None
     pads = node_attrs['pads'] if 'pads' in node_attrs\
@@ -276,42 +283,30 @@ def conv_transpose(node: NodeWrapper,
         assert auto_pad == 'NOTSET' or pads is None
         if (auto_pad == 'NOTSET' and pads is None) or auto_pad == 'VALID':
             padding = [0, 0, 0, 0]  # ht, hb, wl, wr
-        elif auto_pad == 'SAME_UPPER':
-            # out_h == in_h
-            pad_h = int((in_h - 1) * stride_h - in_h +
-                        (dil_h * (kernel_h - 1) + 1))
-            pad_w = int((in_w - 1) * stride_w - in_w +
-                        (dil_w * (kernel_w - 1) + 1))
-            pad_ht, pad_hb = pad_h // 2, pad_h - (pad_h // 2)
-            pad_wl, pad_wr = pad_w // 2, pad_w - (pad_w // 2)
-            padding = [pad_ht, pad_hb, pad_wl, pad_wr]
-        elif auto_pad == 'SAME_LOWER':
-            # out_h == in_h
-            pad_h = int((in_h - 1) * stride_h - in_h +
-                        (dil_h * (kernel_h - 1) + 1))
-            pad_w = int((in_w - 1) * stride_w - in_w +
-                        (dil_w * (kernel_w - 1) + 1))
-            pad_ht, pad_hb = pad_h - (pad_h // 2), pad_h // 2
-            pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
+        elif auto_pad in ["SAME_UPPER", "SAME_LOWER"]:
+            out_h, out_w = in_h * stride_h, in_w * stride_w
+            pad_h = stride_h * (in_h - 1) + out_pad_h + ((kernel_h - 1) * dil_h + 1) - out_h
+            pad_w = stride_w * (in_w - 1) + out_pad_w + ((kernel_w - 1) * dil_w + 1) - out_w
+            if auto_pad == "SAME_UPPER":
+                pad_ht, pad_hb = pad_h // 2, pad_h - (pad_h // 2)
+                pad_wl, pad_wr = pad_w // 2, pad_w - (pad_w // 2)
+            else:
+                pad_ht, pad_hb = pad_h - (pad_h // 2), pad_h // 2
+                pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
             padding = [pad_ht, pad_hb, pad_wl, pad_wr]
         else:
             padding = pads
     else:
-        pad_h = stride_h * (in_h - 1) + output_padding[0] + \
-            ((kernel_h - 1) * dil_h + 1) - output_shape[0]
-        pad_w = stride_w * (in_w - 1) + output_padding[1] + \
-            ((kernel_w - 1) * dil_w + 1) - output_shape[1]
+        out_h, out_w = output_shape[2], output_shape[3]
+        pad_h = stride_h * (in_h - 1) + out_pad_h + ((kernel_h - 1) * dil_h + 1) - out_h
+        pad_w = stride_w * (in_w - 1) + out_pad_w + ((kernel_w - 1) * dil_w + 1) - out_w
 
         if auto_pad != 'SAME_UPPER':
-            pad_ht = pad_h // 2
-            pad_hb = pad_h - (pad_h // 2)
-            pad_wl = pad_w // 2
-            pad_wr = pad_w - (pad_w // 2)
+            pad_ht, pad_hb = pad_h // 2, pad_h - (pad_h // 2)
+            pad_wl, pad_wr = pad_w // 2, pad_w - (pad_w // 2)
         else:
-            pad_ht = pad_h - (pad_h // 2)
-            pad_hb = pad_h // 2
-            pad_wl = pad_w - (pad_w // 2)
-            pad_wr = pad_w // 2
+            pad_ht, pad_hb = pad_h - (pad_h // 2), pad_h // 2
+            pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
         padding = [pad_ht, pad_hb, pad_wl, pad_wr]
 
     # Quant_info (optional)
@@ -522,23 +517,34 @@ def max_pool(node: NodeWrapper,
         else [1, 1]
     stride_h, stride_w = strides
 
-    if auto_pad != 'NOTSET' and auto_pad != 'VALID':
+    if auto_pad not in ['NOTSET', 'VALID', 'SAME_UPPER', 'SAME_LOWER']:
         raise ValueError("MaxPool autopad attribute not supported but was: {}"
                          .format(auto_pad))
     if storage_order != 0:
         raise ValueError("MaxPool storage_order != 0 attribute not supported"
                          " but got: {}".format(storage_order))
-
-    padding = pads if pads is not None else [0, 0, 0, 0]
-
-    # [pad_ht, pad_hb, pad_wl, pad_wr] -> [pad_ht, pad_wl,  pad_hb, pad_wr]
-    # TODO move internal pool padding to [pad_ht, pad_hb, pad_wl, pad_wr]
-    padding = [padding[i] for i in [0, 2, 1, 3]]
-
     # TODO dilations
     if dilations != [1, 1]:
         raise NotImplementedError("Dilations are expected to be [1, 1] for"
                                   " now")
+
+    if auto_pad in ["SAME_UPPER", "SAME_LOWER"]:
+        out_h, out_w = int(math.ceil(in_h / stride_h)), int(math.ceil(in_w / stride_w))
+        pad_h = (out_h - 1) * stride_h + (dil_h * (kernel_h - 1) + 1) - in_h
+        pad_w = (out_w - 1) * stride_w + (dil_w * (kernel_w - 1) + 1) - in_w
+        if auto_pad == "SAME_UPPER":
+            pad_ht, pad_hb = pad_h // 2, pad_h - (pad_h // 2)
+            pad_wl, pad_wr = pad_w // 2, pad_w - (pad_w // 2)
+        else:
+            pad_ht, pad_hb = pad_h - (pad_h // 2), pad_h // 2
+            pad_wl, pad_wr = pad_w - (pad_w // 2), pad_w // 2
+        padding = [pad_ht, pad_hb, pad_wl, pad_wr]
+    else:
+        padding = pads if pads is not None else [0, 0, 0, 0]
+
+    # [pad_ht, pad_hb, pad_wl, pad_wr] -> [pad_ht, pad_wl,  pad_hb, pad_wr]
+    # TODO move internal pool padding to [pad_ht, pad_hb, pad_wl, pad_wr]
+    padding = [padding[i] for i in [0, 2, 1, 3]]
 
     # Quant_info (optional)
     vai_quant_in = node_attrs['vai_quant_in']\
