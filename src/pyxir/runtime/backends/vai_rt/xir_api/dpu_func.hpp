@@ -38,7 +38,7 @@ class DpuFunc : public KernelFunc {
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
 
-  public:
+  protected:
 
     /** @brief The names of the input tensor in the order that they will be provided */
     std::vector<std::string> in_tensor_names_;
