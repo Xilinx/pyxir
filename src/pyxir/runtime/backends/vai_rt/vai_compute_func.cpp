@@ -56,7 +56,7 @@ VaiComputeFunc::VaiComputeFunc(
     XLayerHolder X = xg->get(xl_name);
     
     if (X->xtype[0] == "DPU" && target == "DPUCADF8H") {
-      #if defined(USE_VART_CLOUDDPU)
+      #if defined(USE_VART_CLOUD_DPU)
         std::unique_ptr<KernelFunc> dpu_func(new DpuFuncInt8(X, build_dir_));
         kernel_funcs_.push_back(std::move(dpu_func));     
       #endif
