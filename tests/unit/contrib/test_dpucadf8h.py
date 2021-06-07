@@ -124,7 +124,6 @@ class TestDPUCADF8H(unittest.TestCase):
         )
 
     def test_compile_scale_conv2d(self):
-        # Standalone scale/batchnorm unsupported in DPUCADF8H compiler
         xcompiler_scale_conv2d_nhwc_oihw_test(
             (1, 299, 299, 3),
             (64, 3, 7, 7),
