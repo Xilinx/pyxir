@@ -38,12 +38,14 @@ class DpuFunc : public KernelFunc {
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
 
-  private:
+  protected:
 
     /** @brief The names of the input tensor in the order that they will be provided */
     std::vector<std::string> in_tensor_names_;
     /** @brief The names of the output tensor in the order that they will be provided */
     std::vector<std::string> out_tensor_names_;
+    /** @brief Local output buffer for running on DPU  */
+    std::vector<XBufferHolder> out_tensors_local_;
     /** @brief The DPU input tensors */
     std::vector<const xir::Tensor*> dpu_runner_in_tensors_;
     /** @brief The DPU output tensors */
@@ -61,6 +63,7 @@ class DpuFunc : public KernelFunc {
     /** @brief Holder for the DPU runner that will be created using Vitis AI API's */
     std::unique_ptr<vart::Runner> runner_;
 
+
     // VERBOSE
     /** @brief The total time spent in async DPU call */
     int64_t total_async_time_ = 0;
@@ -73,3 +76,4 @@ class DpuFunc : public KernelFunc {
 } // vai_rt
 } // namespace runtime
 } // namespace pyxir
+

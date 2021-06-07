@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-Module for registering DPUCADX8G target and corresponding graph optimizer,
+Module for registering DPUCADF8H target and corresponding graph optimizer,
 quantizer, compiler and build function
 """
 
@@ -32,12 +32,11 @@ from pyxir.graph.pattern import XGraphPatternMutator, XGraphPatternAnnotator
 from pyxir.generator.tensorflow import XGraphTfGeneratorOptimizer
 from pyxir.graph.optimization.optimizers import QOptimizer, ExternalQOptimizer
 from pyxir.quantization.default_quantizer import XGraphDefaultQuantizer
-# from pyxir.quantization.mse_quantization.mse_threshold_quantizer import\
-#     XGraphMSEThresholdQuantizer
 from pyxir.graph.transformers.layout_transformation_pass import \
     XGraphLayoutTransformationPass
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
-from .dpu_compiler import DPUCompiler
+from .vai_c import VAICompiler
+
 
 logger = logging.getLogger('pyxir')
 
@@ -60,9 +59,9 @@ def xgraph_dpu_op_support_annotator(xg: XGraph, target: Target, **kwargs) -> Non
     OpSupportPass(target)(xg)
 
 
-def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), data_layout='NCHW', **kwargs) -> XGraph:
+def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), data_layout='NHWC', **kwargs) -> XGraph:
     """
-    Build/schedule and XGraph for execution on the DPUCADX8G target
+    Build/schedule and XGraph for execution on the DPUCADF8H target
 
     Arguments:
     ----------
@@ -78,13 +77,13 @@ def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), data_layout='NCHW', **kw
 
     Returns:
     --------
-    And XGraph built/scheduled for execution on DPU
+    An XGraph built/scheduled for execution on DPU
     """
-    # NOTE DPU V1 layers are in NHWC format because of the tensorflow
-    #   intemediate structure we use to communicate with dpu v1 compiler
+    # NOTE DPUCADF8H layers are in NHWC format because of the tensorflow
+    #   intemediate structure we use to communicate with  DPUCADF8H compiler
     return subgraph.xgraph_build_func(
         xgraph=xgraph,
-        target='DPUCADX8G',
+        target='DPUCADF8H',
         xtype='DPU',
         layout=data_layout,
         work_dir=work_dir
@@ -92,7 +91,9 @@ def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), data_layout='NCHW', **kw
 
 
 def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
-    # Annoate and merge patterns (e.g. mul + max = leaky relu)
+    """Optimize/transform XGraph for execution on this DPU"""
+    
+    # Annotate and merge patterns (e.g. mul + max = leaky relu)
     XGraphPatternAnnotator()(xgraph)
     xgraph = XGraphPatternMutator()(xgraph)
 
@@ -100,8 +101,6 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
         XGraphLayoutTransformationPass('NHWC', target=target)
     dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
 
-    # optimizer = QOptimizer(dpu_xgraph)
-    # optimizer.optimize()
     optimizer = XGraphTfGeneratorOptimizer(dpu_xgraph)
     optimizer.optimize()
 
@@ -109,13 +108,8 @@ def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
 
 
 def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
-
-    # quantizer = XGraphDefaultQuantizer(xgraph, inputs_func, **kwargs)
-    # q_xgraph = quantizer.quantize()
-
-    # quantizer = XGraphMSEThresholdQuantizer(xgraph, inputs_func, **kwargs)
-    # q_xgraph = quantizer.quantize()
-    quantizer = DECENTQuantizer(xgraph, inputs_func, compiler_target='DPUv1Compiler', **kwargs)
+    """Quantize XGraph for execution on this DPU"""
+    quantizer = DECENTQuantizer(xgraph, inputs_func, compiler_target='xcompiler', **kwargs)
     q_xgraph = quantizer.quantize()
 
     return q_xgraph
@@ -123,76 +117,10 @@ def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
 
 def xgraph_dpu_compiler(xgraph, **kwargs):
     """The DPU specific compiler function"""
-    # TODO: can we move to docker paths to arch file?
-    # Vitis-AI 1.1
-    old_arch = "/opt/vitis_ai/compiler/arch/dpuv1/ALVEO/ALVEO.json"
-    # Vitis-AI 1.2 - ...
-    new_arch = "/opt/vitis_ai/compiler/arch/DPUCADX8G/ALVEO/arch.json"
 
-    if os.path.exists(new_arch):
-        arch = os.path.join(FILE_PATH, 'arch.json')
-    else:
-        arch = os.path.join(FILE_PATH, 'arch_vai_11.json')
-    
-    compiler = DPUCompiler(xgraph, target='DPUCADX8G', arch=arch, **kwargs)
+    # Vitis-AI 1.3 - ...
+    arch = "/opt/vitis_ai/compiler/arch/DPUCADF8H/U250/arch.json" 
+    compiler = VAICompiler(xgraph, arch=arch, **kwargs)
     c_xgraph = compiler.compile()
 
     return c_xgraph
-
-
-# Register DPU numpy layer
-
-
-class DPULayer(BaseLayer):
-
-    try:
-        from vai.dpuv1.rt.vitis.python.dpu.runner import Runner
-    except Exception as e:
-        warnings.warn("Could not import Vitis-AI Runner")
-
-    def init(self):
-        # Setup
-        input_names = self.attrs['input_names']
-        assert(len(input_names) == 1)
-        output_names = self.attrs['output_names']
-        assert(len(output_names) >= 1)
-        self.runner = self.Runner(self.attrs['work_dir'])
-        logger.debug("SHAPE: {}".format(self.shape))
-
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        # For now
-        assert(len(inputs) == 1)
-        assert(inputs[0].shape[0] == 1)
-        X = inputs[0]
-
-        res = []
-        inTensors = self.runner.get_input_tensors()
-        outTensors = self.runner.get_output_tensors()
-
-        batch_sz = 1
-
-        fpgaBlobs = []
-        for io in [inTensors, outTensors]:
-            blobs = []
-            for t in io:
-                shape = (batch_sz,) + tuple([t.dims[i]
-                                             for i in range(t.ndims)][1:])
-                blobs.append(np.empty((shape), dtype=np.float32, order='C'))
-            fpgaBlobs.append(blobs)
-
-        fpgaInput = fpgaBlobs[0][0]
-        np.copyto(fpgaInput[0], X[0])
-
-        jid = self.runner.execute_async(fpgaBlobs[0], fpgaBlobs[1])
-        self.runner.wait(jid)
-
-        res.append(fpgaBlobs[1][0])
-        
-
-        return tuple(res)
-
-    def __del__(self):
-        """ Cleanup DPU resources """
-        self.runner.__del__()

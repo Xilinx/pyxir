@@ -13,15 +13,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+ #include <fstream>
 
 #include <cstdlib>
 #include <cassert>
 #include <algorithm>
 #include <chrono>
+#include <xir/tensor/tensor.hpp>
+#include <xir/util/data_type.hpp>
+
+
 
 #include "pyxir/common/util.hpp"
 #include "dpu_func.hpp"
-
+using namespace std;
 namespace pyxir {
 namespace runtime {
 namespace vai_rt {
@@ -65,7 +70,16 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
   dpu_runner_out_tensors_ = runner_->get_output_tensors();
   assert(dpu_runner_in_tensors_.size() == dpu_in_tensor_names.size());
   assert(dpu_runner_out_tensors_.size() == dpu_out_tensor_names.size());
-
+    
+  if (out_tensors_local_.empty())
+  {
+    for (const auto &shape : xl_->shapes)
+    {
+      std::vector<ssize_t> buffer_shape = shape;
+      buffer_shape[0] = dpu_runner_in_tensors_[0]->get_shape()[0];
+      out_tensors_local_.push_back(create_buffer(buffer_shape));
+    }
+  }
   std::vector<std::string> dpu_runner_in_tensor_names;
   std::transform(dpu_runner_in_tensors_.begin(), dpu_runner_in_tensors_.end(),
                  std::back_inserter(dpu_runner_in_tensor_names),
@@ -75,7 +89,7 @@ DpuFunc::DpuFunc(XLayerHolder &xl, const std::string &build_dir) : KernelFunc(xl
   std::transform(dpu_runner_out_tensors_.begin(), dpu_runner_out_tensors_.end(),
                  std::back_inserter(dpu_runner_out_tensor_names),
                  [](const xir::Tensor *t) -> const std::string { return t->get_name(); });
-
+  
   std::string name = "/aquant";
   for (int i = 0; i < dpu_runner_in_tensor_names.size(); i++)
   {
@@ -169,27 +183,19 @@ void DpuFunc::operator()(
     inputsPtr.push_back(new CpuFlatTensorBuffer(in_tensors[in_idx]->data, batchTensors.back().get()));
     in_idx++;
   }
-  std::vector<XBufferHolder> out_tensors_local;
-  if (out_tensors_local.empty())
-  {
-    for (const auto &shape : xl_->shapes)
-    {
-      std::vector<ssize_t> buffer_shape = shape;
-      buffer_shape[0] = inputTensors[0]->get_shape()[0];
-      out_tensors_local.push_back(create_buffer(buffer_shape));
-    }
-  }
 
   int out_idx = 0;
   for (const auto &oTensor : outputTensors)
   {
     const auto &out_dims = oTensor->get_shape();
     batchTensors.push_back(std::shared_ptr<xir::Tensor>(xir::Tensor::create(oTensor->get_name(), out_dims, xir::DataType{xir::DataType::FLOAT, sizeof(float) * 8u})));
-    outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors_local[out_tensor_order_[out_idx]]->data, batchTensors.back().get()));
+    outputsPtr.push_back(new CpuFlatTensorBuffer(out_tensors_local_[out_tensor_order_[out_idx]]->data, batchTensors.back().get()));
     out_idx++;
   }
+
   auto job_id = runner_->execute_async(inputsPtr, outputsPtr);
   runner_->wait(job_id.first, -1);
+
   out_idx = 0;
   if (out_tensors.empty())
   {
@@ -197,11 +203,12 @@ void DpuFunc::operator()(
     {
       std::vector<ssize_t> buffer_shape = shape;
       buffer_shape[0] = in_tensors[0]->shape[0];
-      pyxir::XBufferHolder xb_out = std::shared_ptr<pyxir::XBuffer>(new pyxir::XBuffer((void *)out_tensors_local[out_idx]->data, 4, "f", buffer_shape.size(), buffer_shape, true, true));
+      pyxir::XBufferHolder xb_out = std::shared_ptr<pyxir::XBuffer>(new pyxir::XBuffer((void *)out_tensors_local_[out_idx]->data, 4, "f", buffer_shape.size(), buffer_shape, true, true));
       out_tensors.push_back(xb_out);
       out_idx++;
     }
   }
+
   for (int i = 0; i < inputsPtr.size(); ++i)
   {
     delete inputsPtr[i];
