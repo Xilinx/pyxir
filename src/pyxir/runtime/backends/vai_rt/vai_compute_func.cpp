@@ -21,7 +21,6 @@
 #include <chrono>
 
 #include "vai_compute_func.hpp"
-#include "dpu_func.hpp"
 
 #include "pyxir/common/util.hpp"
 #include "../cpu/input.hpp"
@@ -76,19 +75,31 @@ VaiComputeFunc::VaiComputeFunc(
       throw std::invalid_argument("VAI Runtime got unsupported operation of"
                                   " type: " + X->xtype[0]);
     }
-
     Xs_.push_back(X);
+    // For timing tracking
+    total_kernel_times_.push_back(0);
   }
+}
 
-  // dpu_func_ = DpuFunc(dpu_X_);
+VaiComputeFunc::~VaiComputeFunc() {
+  if (is_verbose()) {
+    std::cout << "---------------------" << std::endl;
+    std::cout << "PX VAI COMPUTE FUNC TIMINGS: " << std::endl;
+    std::cout << "Total compute time: " << std::to_string(total_compute_time_) << std::endl;
+    for (int i = 0; i < Xs_.size(); ++i) {
+      std::cout << "Kernel " << std::to_string(i) << " time: " <<
+        std::to_string(total_kernel_times_[i]) << std::endl;
+    }
+    std::cout << "---------------------" << std::endl;
+  }
 }
 
 void VaiComputeFunc::operator()(
   std::vector<XBufferHolder> &in_tensors,
   std::vector<XBufferHolder> &out_tensors)
 {
-  pxDebug("Inside VaiComputeFunc::()");
   auto start_vai = std::chrono::high_resolution_clock::now();
+  pxDebug("Inside VaiComputeFunc::()");
 
   std::unordered_map<std::string, std::vector<XBufferHolder>> int_res;
 
@@ -100,8 +111,6 @@ void VaiComputeFunc::operator()(
   for (int i = 0; i < out_tensors.size(); ++i) {
     std::vector<XBufferHolder> out_v{out_tensors[i]};
     int_res[out_tensor_names_[i]] = std::move(out_v);
-    // std::string otn = out_tensor_names_[i];
-    // int_res[otn] = out_tensors[i];
   }
 
   std::vector<XBufferHolder> dpu_in;
@@ -140,23 +149,16 @@ void VaiComputeFunc::operator()(
     pxDebug(("Kernel time: " + std::to_string(duration_kernel.count())).c_str());
     std::chrono::microseconds duration = std::chrono::duration_cast<std::chrono::microseconds>(stop_k-start_k_begin);
     pxDebug(("Time: " + std::to_string(duration.count())).c_str());
+    total_kernel_times_[i] += duration.count();
 
     int_res[otn] = dpu_out;
   }
 
-  // for (const std::string &itn : dpu_in_tensor_names)
-  //   dpu_in.push_back(int_res[itn]);
-
-  // for (const std::string &otn : dpu_out_tensor_names)
-  //   dpu_out.push_back(int_res[otn]);
-
-  // auto start = std::chrono::high_resolution_clock::now();
-  // dpu_func_(dpu_in, dpu_out);
   auto stop = std::chrono::high_resolution_clock::now();
 
-  // std::cout << "Dpu Time: " << std::chrono::duration_cast<std::chrono::microseconds>(stop-start).count() << std::endl;
-  std::cout << "Vai Compute Func Time: " << std::chrono::duration_cast<std::chrono::microseconds>(stop-start_vai).count() << std::endl;
-
+  std::chrono::microseconds vai_compute_time = std::chrono::duration_cast<std::chrono::microseconds>(stop-start_vai);
+  total_compute_time_ += vai_compute_time.count();
+  pxDebug(("Vai Compute Func Time: " + std::to_string(vai_compute_time.count())).c_str());
 }
 
 } // vai_rt

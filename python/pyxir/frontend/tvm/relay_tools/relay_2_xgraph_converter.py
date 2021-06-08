@@ -13,25 +13,27 @@
 # limitations under the License.
 
 
-"""
-Module for transforming TVM Relay expression to XGraph representation
-
-
-"""
+"""Module for transforming TVM Relay expression to XGraph representation"""
 
 import logging
 
 from pyxir import graph
 from pyxir.shared import fancy_logging
 from pyxir.graph.layer import xlayer_factory
-from pyxir.graph.optimization.optimizers.transposes_optimizer\
-    import XGraphTransposesOptimizer
+from pyxir.graph.transformers.remove_unused_ops import RemoveUnusedOps
+from pyxir.graph.optimization.optimizers.transposes_optimizer import (
+    XGraphTransposesOptimizer,
+)
+from pyxir.graph.transformers.layout_transformation_pass import (
+    XGraphLayoutTransformationPass,
+)
 
+from .util import Schedule
 from ..base import BaseConverter
 from .relay_2_xlayer_registry import Relay2XLayerRegistry
 
 fancy_logger = fancy_logging.getLogger("pyxir")
-logger = logging.getLogger('pyxir')
+logger = logging.getLogger("pyxir")
 
 
 class Relay2XGraphConverter(BaseConverter):
@@ -40,12 +42,9 @@ class Relay2XGraphConverter(BaseConverter):
 
     RELAY_2_XLAYER = Relay2XLayerRegistry()
 
-    def from_relay_to_xgraph(self,
-                             sym,
-                             params,
-                             output_op=None,
-                             postprocessing=None,
-                             cvx_preprocessing=None):
+    def from_relay_to_xgraph(
+        self, sym, params, output_op=None, postprocessing=None, cvx_preprocessing=None
+    ):
         # type: (tvm.relay.expr.Expr, dict, str, str, list, dict) ->  XGraph
         """
         Transform a TVM Relay expression to a xfDNN graph and schedule
@@ -82,19 +81,24 @@ class Relay2XGraphConverter(BaseConverter):
 
         fancy_logger.banner("RELAY IR TO PYXIR")
 
-        schedule = []
+        # schedule = []
         net = {}
+        schedule = Schedule(net)
         # CONVERT RELAY EXPRESSION TO XLAYER GRAPH
         # This starts a rescursive expression to graph conversion function
         X = Relay2XGraphConverter.RELAY_2_XLAYER[sym.__class__.__name__](
-            sym, params, schedule, net, {},
+            sym,
+            params,
+            schedule,
+            net,
+            {},
             Relay2XGraphConverter.RELAY_2_XLAYER,
-            cvx_prep=cvx_preprocessing)
+            cvx_prep=cvx_preprocessing,
+        )
 
         # For now only softmax layers can be added to a graph output
         OP_2_XLAYER = {
-            'Softmax': xlayer_factory.get_xop_factory_func('Softmax',
-                                                           internal=True)
+            "Softmax": xlayer_factory.get_xop_factory_func("Softmax", internal=True)
         }
 
         # Add additional output layers to the network that are not specified
@@ -110,24 +114,30 @@ class Relay2XGraphConverter(BaseConverter):
             X = OP_2_XLAYER[output](op_name, [X])
 
             if X.name in net:
-                raise ValueError("This should never happen. Error because the"
-                                 " generated output name already exists in the"
-                                 " network dictionary used for setup.")
+                raise ValueError(
+                    "This should never happen. Error because the"
+                    " generated output name already exists in the"
+                    " network dictionary used for setup."
+                )
 
             schedule.append(X.name)
             net[X.name] = X
 
         # Possibly replace Input layers with CvxInput layers
-        xlayers = [net[op_id] for op_id in net]
-
+        xlayers = [net[op_id] for op_id in schedule]
         xgraph = self.xgraph_factory.build_from_xlayer(
-            net=xlayers,
-            name='relay_xgraph',
-            blobs=False
+            net=xlayers, name="relay_xgraph", blobs=False
         )
+
+        # TODO remove this layout transformer
+        layout_transform_pass = XGraphLayoutTransformationPass("NCHW")
+        xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
 
         # Merge transpose layers
         t_optimizer = XGraphTransposesOptimizer(xgraph)
         t_optimizer.optimize()
+
+        # Remove unused ops
+        xgraph = RemoveUnusedOps()(xgraph)
 
         return xgraph

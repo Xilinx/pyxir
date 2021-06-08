@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <set>
 #include <string>
 #include <vector>
 #include <memory>
@@ -47,6 +48,8 @@ struct XLayer {
   std::vector<XLayer> *subgraph_data = nullptr;
   bool internal;
   std::unordered_map<std::string, XAttr> attrs;
+
+  static std::set<std::string> input_types_;
 
   XLayer(const XLayer &xl) 
          : name(xl.name), xtype(xl.xtype), shapes(xl.shapes),
@@ -145,6 +148,8 @@ struct XLayer {
       subgraph_data->push_back(e);
   }
 
+  bool is_input() { return input_types_.find(xtype[0]) != input_types_.end(); }
+
   // TOPS & BOTTOMS FUNCTIONALITY
 
   bool has_top(const std::string &top_name)
@@ -183,6 +188,8 @@ struct XLayer {
       if (*it == bottom_name) { bottoms.erase(it); break; }
     }
   }
+
+  // ATTRS FUNCTIONALITY
 
   inline bool has_attr(const std::string &attr_name)
   {

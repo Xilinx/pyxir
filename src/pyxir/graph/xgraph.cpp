@@ -14,10 +14,11 @@
  *  limitations under the License.
 */
 
+#include "pyxir/graph/xgraph.hpp"
+
 #include <functional>
 #include <cassert>
 #include <unordered_set>
-#include <pyxir/graph/xgraph.hpp>
 
 namespace pyxir {
 namespace graph {
@@ -98,7 +99,7 @@ void XGraph::update(const std::string &xl_name)
   }
 
   // Possibly update heads and tails
-  if (xl->bottoms.empty() && !is_input(xl_name))
+  if (xl->is_input() && !is_input(xl_name))
     heads.push_back(xl->name);
 
   if (xl->tops.empty() && !is_output(xl_name))
@@ -157,5 +158,5 @@ void XGraph::remove(const std::string &xl_name)
   xidx_.erase(xl_name);
 }
 
-} // graph
-} // pyxir
+} // namespace graph
+} // namespace pyxir

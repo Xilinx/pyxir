@@ -17,11 +17,11 @@
 #pragma once
 
 #include <vector>
+#include <fstream>
 
-#include "compute_func.hpp"
 #include "../common/serializable.hpp"
-#include "pyxir/runtime/compute_func_registry.hpp"
-
+#include "../runtime/compute_func_registry.hpp"
+#include "compute_func.hpp"
 
 namespace pyxir {
 namespace runtime {
@@ -41,14 +41,27 @@ namespace runtime {
 class RuntimeModule : public ISerializable {
 
   public:
-    RuntimeModule() {}
+    RuntimeModule() {
+      run_options_ = RunOptionsHolder(new RunOptions());
+    }
     RuntimeModule(ComputeFuncHolder &compute_func,
                   const std::vector<std::string> &in_tensor_names,
-                  const std::vector<std::string> &out_tensor_names)
-                  : in_tensor_names_(in_tensor_names),
-                    out_tensor_names_(out_tensor_names)
+                  const std::vector<std::string> &out_tensor_names,
+                  RunOptionsHolder &run_options)
+      : in_tensor_names_(in_tensor_names), out_tensor_names_(out_tensor_names),
+        run_options_(run_options)
     { 
       compute_func_ = std::move(compute_func);
+      init();
+    }
+
+    void init()
+    {
+      // For cross compilation we possibly save the runtime module using a callback function
+      //  Currently necessary for ONNX Runtime flow. TODO: remove this requirement
+      compute_func_->set_rt_mod_save_func([this](const std::string &file_path) -> void {
+        save(file_path);
+      });
     }
 
     virtual void execute(std::vector<XBufferHolder> &in_tensors,
@@ -99,6 +112,30 @@ class RuntimeModule : public ISerializable {
         pstream.read(ot_name);
         out_tensor_names_.push_back(ot_name);
       }
+
+      init();
+    }
+
+    void save(const std::string &file_path)
+    {
+      std::ostringstream sstream;
+      serialize(sstream);
+      std::ofstream out_file(file_path);
+      out_file << sstream.str();
+      out_file.close();
+    }
+
+    static std::unique_ptr<RuntimeModule> Load(const std::string &file_path)
+    {
+      std::ifstream in_file(file_path);
+      std::stringstream buffer;
+      buffer << in_file.rdbuf();
+      std::string serialized_rt_mod = buffer.str();
+      in_file.close();
+      std::istringstream sstream(serialized_rt_mod);
+      std::unique_ptr<RuntimeModule> rt_mod(new RuntimeModule());
+      rt_mod->deserialize(sstream);
+      return rt_mod;
     }
 
     virtual ~RuntimeModule() {}
@@ -107,6 +144,7 @@ class RuntimeModule : public ISerializable {
     ComputeFuncHolder compute_func_ = nullptr;
     std::vector<std::string> in_tensor_names_;
     std::vector<std::string> out_tensor_names_;
+    RunOptionsHolder run_options_;
 };
     
 } // namespace runtime

@@ -35,7 +35,7 @@ from setuptools.command.build_ext import build_ext
 
 from pathlib import Path
 
-__version__ = '0.1.3'
+__version__ = '0.2.1'
 
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -69,6 +69,19 @@ elif '--use_vai_rt_dpuv2' in sys.argv:
     sys.argv.remove('--use_vai_rt_dpuv2')
 else:
     use_vai_rt_dpuczdx8g = False
+
+if '--use_dpuczdx8g_vart' in sys.argv:
+    use_dpuczdx8g_vart = True
+    sys.argv.remove('--use_dpuczdx8g_vart')
+else:
+    use_dpuczdx8g_vart = False
+
+# DPUCAHX8H/DPUv3e build
+if '--use_vai_rt_dpucahx8h' in sys.argv:
+    use_vai_rt_dpucahx8h = True
+    sys.argv.remove('--use_vai_rt_dpucahx8h')
+else:
+    use_vai_rt_dpucahx8h = False
 
 ###############
 # STATIC DATA #
@@ -164,9 +177,13 @@ class CMakeBuild(build_ext):
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
 
         if use_vai_rt_dpucadx8g:
-            cmake_args.append('-DUSE_VAI_RT=ON')
+            cmake_args.append('-DUSE_VAI_RT_DPUCADX8G=ON')
         if use_vai_rt_dpuczdx8g:
             cmake_args.append('-DUSE_VAI_RT_DPUCZDX8G=ON')
+        if use_vai_rt_dpucahx8h:
+            cmake_args.append('-DUSE_VAI_RT_DPUCAHX8H=ON')
+        if use_dpuczdx8g_vart:
+            cmake_args.append('-DUSE_DPUCZDX8G_VART=ON')
         if self.debug:
             cmake_args.append('-DDEBUG=ON')
             # cmake_args.append('-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON')
@@ -246,8 +263,8 @@ setuptools.setup(
     version=__version__,
     author="Xilinx Inc",
     author_email="jornt@xilinx.com",
-    description="Xilinx IR ...",
-    long_description="Xilinx IR ...",
+    description=open(os.path.join(FILE_DIR, 'README.md'), encoding='utf-8').read(),
+    long_description=open(os.path.join(FILE_DIR, 'README.md'), encoding='utf-8').read(),
     long_description_content_type="text/markdown",
     url="https://github.com/Xilinx/pyxir",
     packages=setuptools.find_packages("python"),
@@ -264,8 +281,11 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    install_requires=['numpy', 'pydot==1.4.1',
-                      'h5py==2.10.0'],
+    install_requires=[
+        'numpy',
+        'packaging',
+        'pydot==1.4.1',
+        'h5py>=2.8.0'],
     extra_require={'full': ['tensorflow>=1.12.0,<2']},
     # cmdclass={'build_ext': BuildExt},
     cmdclass={

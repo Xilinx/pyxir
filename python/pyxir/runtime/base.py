@@ -17,6 +17,8 @@
 import abc
 import copy
 import logging
+import numpy as np
+import warnings
 
 from pyxir.shapes import TupleShape, TensorShape
 from pyxir.shared import fancy_logging
@@ -248,6 +250,9 @@ def get_bias_add_layer(BiasAddLayer, ConstantLayer):
         if len(X.bottoms) == 1:
             bias_name = op_name + "_bias"
             bias = params[bias_name]
+            # TODO: hack
+            # if max(bias.shape) == np.prod(bias.shape):
+            #     bias = bias.reshape((-1,))
 
             layers.append(ConstantLayer(
                 name=bias_name,

@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for generating a tensorflow graph from an XGraph """
+"""Module for generating a tensorflow graph from an XGraph"""
 
 import os
 import logging
-
-# import tensorflow as tf
 
 from pyxir.graph.optimization import optimizations, conditions
 from pyxir.graph.optimization.xgraph_optimization_pass \
@@ -28,8 +26,6 @@ from pyxir.graph.optimization.optimizers.basic_optimizer \
 from pyxir.runtime.runtime_factory import RuntimeFactory
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
-from pyxir.graph.transformers.layout_transformation_pass \
-    import XGraphLayoutTransformationPass
 
 logger = logging.getLogger('pyxir')
 
@@ -82,15 +78,12 @@ class TfGenerator(object):
 
     @classmethod
     def generate(cls, xgraph, base_name, subgraphs_only=False, layout='NCHW',
-                 batch_size=-1, placeholder=False, out_dir=os.getcwd()):
-        # type: (XGraph, str, boolean, str, int) -> Dict[str, str]
+                 batch_size=-1, placeholder=False, out_dir=os.getcwd(), **kwargs):
+        # type: (XGraph, str, bool, str, int, bool, str, dict) -> Dict[str, str]
         """
         Generate one or multiple tensorflow pb file from an xgraph and
         return dictionary of the base_name/partitions mapping to the pb files
         """
-        # layout_transform_pass = XGraphLayoutTransformationPass(layout)
-        # xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
-        
         # Import tensorflow only when needed
         import tensorflow as tf
 
@@ -105,16 +98,20 @@ class TfGenerator(object):
             for Xp in \
                     TfGenerator.xgraph_partitioner.get_subgraphs(xgraph):
 
+                out_tensor_names = list(Xp.attrs['__top_tensors'].keys())
                 sub_xgraph = TfGenerator.xgraph_factory.build_from_xlayer(
                     Xp.subgraph_data)
                 executors.append(
                     (base_name + '_' + Xp.name,
                      Xp.name,
                      TfGenerator.runtime_factory
-                        .build_runtime(sub_xgraph, batch_size=batch_size,
-                                       placeholder=placeholder),
-                     sub_xgraph.get_output_names())
-                 )
+                        .build_runtime(sub_xgraph,
+                                       batch_size=batch_size,
+                                       placeholder=placeholder,
+                                       out_tensor_names=out_tensor_names,
+                                       **kwargs),
+                     out_tensor_names), # sub_xgraph.get_output_names()
+                )
 
         ret = {}
         for file_name, name, executor, output_names in executors:
@@ -124,7 +121,7 @@ class TfGenerator(object):
 
             with tf.compat.v1.Session(graph=executor.tf_graph) as sess:
                 sess.run(tf.compat.v1.global_variables_initializer())
-                graph_def = tf.graph_util.convert_variables_to_constants(
+                graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
                     sess,
                     graph_def,
                     output_names
@@ -132,7 +129,7 @@ class TfGenerator(object):
 
             file_path = os.path.join(out_dir, file_name + '.pb')
 
-            with tf.gfile.GFile(file_path, "wb") as f:
+            with tf.io.gfile.GFile(file_path, "wb") as f:
                 f.write(graph_def.SerializeToString())
 
             ret[name] = file_path

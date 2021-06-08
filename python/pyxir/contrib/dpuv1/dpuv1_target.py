@@ -22,12 +22,13 @@ import logging
 import pyxir
 
 from pyxir.graph.transformers import subgraph
+from pyxir.runtime import base
 
-from pyxir.contrib.target.DPUCADX8G.dpu_target import xgraph_dpu_optimizer,\
-    xgraph_dpu_quantizer
-from pyxir.contrib.target.DPUCADX8G.dpu_compiler import DPUCompiler
-
-import pyxir.contrib.target.DPUCADX8G.dpu_target
+from ..target import DPUCADX8G
+from ..target.components.DPUCADX8G.dpu_target import DPULayer
+from ..target.components.DPUCADX8G.dpu_target import xgraph_dpu_optimizer
+from ..target.components.DPUCADX8G.dpu_target import xgraph_dpu_quantizer
+from ..target.components.DPUCADX8G.dpu_compiler import DPUCompiler
 
 logger = logging.getLogger('pyxir')
 
@@ -57,9 +58,9 @@ def xgraph_dpuv1_compiler(xgraph, **kwargs):
     new_arch = "/opt/vitis_ai/compiler/arch/DPUCADX8G/ALVEO/arch.json"
 
     if os.path.exists(new_arch):
-        arch = os.path.join(FILE_PATH, '../target/DPUCADX8G/arch.json')
+        arch = os.path.join(FILE_PATH, '../target/components/DPUCADX8G/arch.json')
     else:
-        arch = os.path.join(FILE_PATH, '../target/DPUCADX8G/arch_vai_11.json')
+        arch = os.path.join(FILE_PATH, '../target/components/DPUCADX8G/arch_vai_11.json')
     
     compiler = DPUCompiler(xgraph, 'dpuv1', arch, **kwargs)
     c_xgraph = compiler.compile()
@@ -72,3 +73,6 @@ pyxir.register_target('dpuv1',
                       xgraph_dpu_quantizer,
                       xgraph_dpuv1_compiler,
                       xgraph_dpuv1_build_func)
+
+
+# pyxir.register_op('cpu-np', 'DPU', base.get_layer(DPULayer))

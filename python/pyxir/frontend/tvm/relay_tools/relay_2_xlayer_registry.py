@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Data structure for registering and tracking Relay to XLayer converters
-
-
-"""
+"""Data structure for registering and tracking Relay to XLayer converters"""
 
 import logging
 
@@ -115,6 +111,7 @@ def register_relay_2_xlayer_converter_base(relay_op):
 
             if expr in net:
                 # This expressions is already transformed so we reuse that one
+                logger.debug("MEMORY: {}".format(relay_op))
                 return net[expr]
 
             iXs = []
@@ -140,7 +137,8 @@ def register_relay_2_xlayer_converter_base(relay_op):
 
             # !Important: set input layer tops
             for iX in iXs:
-                iX.tops.append(op_name)
+                if iX.name in X.bottoms:
+                    iX.tops.append(op_name)
 
             return X
 

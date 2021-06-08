@@ -27,16 +27,13 @@ namespace pyxir {
 namespace runtime {
 
 OnlineQuantComputeFunc::OnlineQuantComputeFunc(
-  XGraphHolder &xg,
-  const std::string &target,
-  const std::vector<std::string> &in_tensor_names,
-  const std::vector<std::string> &out_tensor_names,
-  const std::string &runtime,
-  RunOptionsHolder const &run_options)
-  : xg_(xg), target_(target), in_tensor_names_(in_tensor_names),
-    out_tensor_names_(out_tensor_names), runtime_(runtime),
-    run_options_(run_options)
-{
+    XGraphHolder &xg, const std::string &target,
+    const std::vector<std::string> &in_tensor_names,
+    const std::vector<std::string> &out_tensor_names,
+    const std::string &runtime, RunOptionsHolder &run_options)
+    : xg_(xg), target_(target), in_tensor_names_(in_tensor_names),
+      out_tensor_names_(out_tensor_names), runtime_(runtime),
+      run_options_(run_options) {
   init();
 }
 
@@ -64,7 +61,7 @@ void OnlineQuantComputeFunc::init()
     count_ = run_options_->nb_quant_inputs + 1;
   } else if (run_options_->is_prebuilt && !is_target_supported_) {
     // Do not create compute function
-    pxWarning("Cross compiling for different target device: " + target_);
+    pxInfo("Cross compiling for different target device: " + target_);
   } else {   
     quant_of_ = std::make_shared<OpaqueFunc>(OpaqueFunc());
     OpaqueFuncHolder rt_func_of = std::make_shared<OpaqueFunc>(OpaqueFunc());
@@ -109,15 +106,36 @@ void OnlineQuantComputeFunc::operator()(
       compile_func(xg_, target_, in_tensor_names_, out_tensor_names_,
                    run_options_->build_dir, run_options_->work_dir, scheduled_xg);
 
-      pxWarning("Not switching to specified runtime: `" + runtime_ + "` after on-the-fly" +
-                " quantization as the model is compiled for a different target device.");
+      pxInfo("Not switching to specified runtime: `" + runtime_ + "` after on-the-fly" +
+             " quantization as the model is compiled for a different target device.");
     } else {
       cf_ = ComputeFuncFactory::GetComputeFunc(
         xg_, target_, in_tensor_names_, out_tensor_names_, runtime_, run_options_
       );
     }
+
+    // Debug runtime and target!! DEBUG ONLY
+    const char *px_debug_runtime_flag = std::getenv("PX_DEBUG_RUNTIME");
+    const char *px_debug_target_flag = std::getenv("PX_DEBUG_TARGET");
+    if (px_debug_runtime_flag != NULL && px_debug_target_flag != NULL) {
+      std::string px_debug_runtime = std::string(px_debug_runtime_flag);
+      std::string px_debug_target = std::string(px_debug_target_flag);
+      pxWarning("Switching to debug runtime: " + px_debug_runtime + ", with target: " + px_debug_target);
+      cf_ = ComputeFuncFactory::GetComputeFunc(
+        xg_, px_debug_target, in_tensor_names_, out_tensor_names_, px_debug_runtime, run_options_
+      );
+    }
+    
     // The final runtime has been built now
     run_options_->is_prebuilt = true;
+    // We possibly save the runtime module using a callback function
+    //  Currently necessary for ONNX Runtime flow. TODO: remove this requirement
+    if (run_options_ && !run_options_->export_runtime_module_path.empty()) {
+      if (!rt_mod_save_callback_)
+        throw std::runtime_error("Trying to export cross compiled runtime module but"
+                                 " compute save function was initialized uncorrectly");
+      rt_mod_save_callback_(run_options_->export_runtime_module_path);
+    }
   }
 }
 

@@ -29,6 +29,8 @@ namespace pyxir {
 namespace runtime {
 
 class IComputeFunc : public ISerializable {
+
+  typedef std::function<void (const std::string &)> RtModSaveFuncType;
   
   public:
     IComputeFunc() {}
@@ -38,6 +40,13 @@ class IComputeFunc : public ISerializable {
 
     virtual void operator()(std::vector<XBufferHolder> &in_tensors,
                             std::vector<XBufferHolder> &out_tensors) = 0;
+
+    void set_rt_mod_save_func(RtModSaveFuncType save_func) //(void (*save_func)(const std::string &))
+    { 
+      rt_mod_save_callback_ = save_func;
+    }
+
+    RtModSaveFuncType rt_mod_save_callback_;
     
 };
 

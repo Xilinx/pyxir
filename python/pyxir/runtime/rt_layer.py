@@ -609,7 +609,7 @@ class ConvLayer(RtLayer):
         The convolution kernel to be used, should be in format OIHW
         (=outchan, inchan, height, width)
     kernel_layout: str
-        the layout of the kernel, should be either OIHW or HWIO
+        the layout of the kernel, should be either OIHW, HWIO or OHWI
     kernel_groups: int
         controls the number of convolutions to be done on the input channels.
         If parameter is equal to 1 respectively in_channels this operation is 
@@ -671,17 +671,18 @@ class ConvLayer(RtLayer):
                              " number of inputs but are {} and {}"
                              .format(len(self.input_shapes), len(self.inputs)))
 
-        if kernel_layout not in ['OIHW', 'HWIO']:
+        if kernel_layout not in ['OIHW', 'HWIO', 'OHWI']:
             raise ValueError("Invalid kernel layout: {} for convolution"
-                             " layer {}, layout should be OIHW or HWIO"
+                             " layer {}, layout should be OIHW, HWIO or OHWI"
                              .format(kernel_layout, self.name))
+
         channel_idx = attrs['data_layout'].index('C')
-        if kernel_groups not in [1, self.input_shapes[0][channel_idx]]:
-            raise NotImplementedError(
-                "Invalid number of kernel groups: {}. Only 1 and {} (number of"
-                " channels of input) supported. These correspond to a standard"
-                " conv2d respectively depthwise conv2d operation."
-                .format(kernel_groups, self.input_shapes[0][1]))
+        # if kernel_groups not in [1, self.input_shapes[0][channel_idx]]:
+        #     raise NotImplementedError(
+        #         "Invalid number of kernel groups: {}. Only 1 and {} (number of"
+        #         " channels of input) supported. These correspond to a standard"
+        #         " conv2d respectively depthwise conv2d operation."
+        #         .format(kernel_groups, self.input_shapes[0][channel_idx]))
 
         if len(paddings) != 4:
             raise ValueError("Invalid number of paddings: {}, paddings should"
@@ -746,7 +747,7 @@ class Conv2DTransposeLayer(RtLayer):
         The convolution kernel to be used, should be in format OIHW
         (=outchan, inchan, height, width)
     kernel_layout: str
-        the layout of the kernel, should be either OIHW or HWIO
+        the layout of the kernel, should be either OIHW, HWIO or OHWI
     kernel_groups: int
         controls the number of convolutions to be done on the input channels.
         If parameter is equal to 1 respectively in_channels this operation is 
@@ -815,9 +816,9 @@ class Conv2DTransposeLayer(RtLayer):
                              " number of inputs but are {} and {}"
                              .format(len(self.input_shapes), len(self.inputs)))
 
-        if kernel_layout not in ['OIHW', 'HWIO']:
+        if kernel_layout not in ['OIHW', 'HWIO', 'OHWI']:
             raise ValueError("Invalid kernel layout: {} for convolution"
-                             " layer {}, layout should be OIHW or HWIO"
+                             " layer {}, layout should be OIHW, HWIO or OHWI"
                              .format(kernel_layout, self.name))
         if kernel_groups not in [1, self.input_shapes[0][1]]:
             raise NotImplementedError(

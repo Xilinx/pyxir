@@ -18,12 +18,16 @@
 
 #include <memory>
 #include <unordered_set>
+
+#if defined(USE_VAI_RT_DPUCADX8G) || (defined(USE_VAI_RT_DPUCZDX8G) && !defined(USE_DPUCZDX8G_VART))
 #include <dpu_runner.hpp>
+#include "vai_api/dpu_func.hpp"
+#elif defined(USE_VAI_RT_DPUCAHX8H) || (defined(USE_VAI_RT_DPUCZDX8G) && defined(USE_DPUCZDX8G_VART))
+#include "xir_api/dpu_func.hpp"
+#endif
 
 #include "pyxir/graph/xgraph.hpp"
 #include "pyxir/common/xbuffer.hpp"
-
-#include "dpu_func.hpp"
 
 void vaiDebugMsg(const char *, const char *, const char *, int);
 #ifdef DEBUG
@@ -44,10 +48,12 @@ class VaiComputeFunc {
                    const std::vector<std::string> &in_tensor_names,
                    const std::vector<std::string> &out_tensor_names,
                    const std::string &build_dir);
+    ~VaiComputeFunc();
 
     void operator()(std::vector<XBufferHolder> &in_tensors,
                     std::vector<XBufferHolder> &out_tensors);
 
+    /** @brief Return whether the give operation type is supported */
     bool is_op_supported(const std::string &op_type)
     {
       return supported_ops_.find(op_type) != supported_ops_.end();
@@ -79,6 +85,12 @@ class VaiComputeFunc {
     DpuFunc dpu_func_;
     /** @brief The DPU layer */
     XLayerHolder dpu_X_;
+
+    // VERBOSE
+    /** @brief Keep track of total time spent in operator() */
+    int64_t total_compute_time_ = 0;
+    /** @brief Keep track of kernel timings */
+    std::vector<int64_t> total_kernel_times_;
 };
 
 } // vai_rt

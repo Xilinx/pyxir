@@ -12,35 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for partitioning XGraph objects
-
-
-"""
+"""Module for partitioning XGraph objects"""
 
 import copy
 import logging
 
+from typing import List
+
+from pyxir.graph import XGraph
 from pyxir.shapes import TupleShape, TensorShape
 from pyxir.shared.vector import StrVector
 
 from ..xgraph_factory import XGraphFactory
 from ..layer import xlayer
-from ..optimization.optimizers.transposes_optimizer import \
-    XGraphTransposesOptimizer
+from ..optimization.optimizers.transposes_optimizer import XGraphTransposesOptimizer
 
-logger = logging.getLogger('pyxir')
+logger = logging.getLogger("pyxir")
 
 
 class XGraphPartitioner(object):
+    """Partition an XGraph for a given target"""
 
     xgraph_factory = XGraphFactory()
 
     def __init__(self):
         pass
 
-    def partition(self, xgraph, targets, last_layer=None):
-        # type: (XGraph, List[str], str) -> XGraph
+    def partition(
+        self, xgraph: XGraph, targets: List[str], last_layer: str = None
+    ) -> XGraph:
         """
         Partition the provided XGraph according to the provided targets
 
@@ -59,9 +59,11 @@ class XGraphPartitioner(object):
         """
         # TODO Add Base partitioning support for multiple algorithms
         if len(targets) != 1:
-            raise NotImplementedError("XGraph partitioning is only supported"
-                                      " for one target at the moment but got:"
-                                      " {}".format(len(targets)))
+            raise NotImplementedError(
+                "XGraph partitioning is only supported"
+                " for one target at the moment but got:"
+                " {}".format(len(targets))
+            )
         target = targets[0]
 
         # ALGO:
@@ -71,7 +73,7 @@ class XGraphPartitioner(object):
         #   this layer, else start a new Partition layer
         # TODO set bottoms and tops to [] for partition input respectively
         #   output layers
-        name, idx = 'xp', 0
+        name, idx = "xp", 0
         name_2_pars = {}
         par_2_names = {}
         xlayers = []
@@ -81,6 +83,15 @@ class XGraphPartitioner(object):
         # Here, T3 has a non-target bottom layer and a new partition has to be
         #   started
         non_target_bottom_layers = set([])
+        # Keep track of layer partition dependencies
+        #  e.g. T1 --> NT --> T2 -->
+        #        `------------^
+        # Here, T1 and T2 can't belong to the same partition because of NT in between
+
+        # Keep track of what partitions a layer depends on (i.e. a partition contains layers
+        #   that come after another partition but there are some unsupported layers in between)
+        # Partitions that depend on eachother can't be merged together
+        partition_dep_map = {}
 
         logger.debug("Partition for target: {}".format(target))
 
@@ -91,6 +102,19 @@ class XGraphPartitioner(object):
             logger.debug("----------------")
             logger.debug(X.name)
 
+            partition_dependencies = set(
+                [
+                    e
+                    for b in X.bottoms
+                    if b in partition_dep_map
+                    for e in partition_dep_map[b]
+                ]
+            )
+            if X.name in partition_dep_map:
+                partition_dep_map[X.name] |= partition_dependencies
+            else:
+                partition_dep_map[X.name] = partition_dependencies
+
             if target not in X.targets or stop_partitioning:
 
                 if X.name in name_2_pars:
@@ -99,26 +123,41 @@ class XGraphPartitioner(object):
                     for p in name_2_pars[X.name]:
                         par_2_names[p].remove(X.name)
 
+                    # This layer depends on these partitions
+                    partition_dep_map[X.name] = set(name_2_pars[X.name])
+
                     del name_2_pars[X.name]
 
-                for t in X.tops:
-                    non_target_bottom_layers.add(t)
+                # for t in X.tops:
+                #     non_target_bottom_layers.add(t)
+
+                # partition_dependencies = set([e for b in X.bottoms
+                #                               if b in name_2_pars
+                #                               for e in name_2_pars[b]])
+                # if X.name in partition_dep_map:
+                #     partition_dep_map[X.name] |= partition_dependencies
 
                 continue
 
-            elif X.name in name_2_pars and \
-                    X.name not in non_target_bottom_layers:
+            elif (
+                X.name in name_2_pars
+                and X.name not in non_target_bottom_layers
+                and partition_dep_map[X.name].isdisjoint(set(name_2_pars[X.name]))
+            ):
 
+                # Check whether only one partition added this layer or one or more of the partitions
+                #   depend on eachother
                 if len(name_2_pars[X.name]) == 1:
+                    # or not partition_dep_map[X.name].isdisjoint(set(name_2_pars[X.name])):
                     # -- p_0 --> A
+                    logger.debug("Add to partition: {}".format(name_2_pars[X.name]))
                     pass
                 else:
                     # -- p_0 --> A
                     # -- p_1 ----^
                     new_p_name = name + str(idx)
                     idx += 1
-                    logger.debug("Merge into new partition: {}"
-                                 .format(new_p_name))
+                    logger.debug("Merge into new partition: {}".format(new_p_name))
 
                     par_2_names[new_p_name] = []
 
@@ -136,6 +175,12 @@ class XGraphPartitioner(object):
 
             else:
                 # Create new partition
+                # Also,
+                # -- p_0 --> A --> p_1 --> B
+                #     `--------------------^
+                logger.debug("Partition dep map: {}".format(partition_dep_map[X.name]))
+                if X.name in name_2_pars:
+                    logger.debug("Name_2_pars[X.name]: {}".format(name_2_pars[X.name]))
 
                 new_p_name = name + str(idx)
                 idx += 1
@@ -165,7 +210,7 @@ class XGraphPartitioner(object):
         # ALGO: keep only largest subgraph, prune all others
         # TODO Make more generic and support multiple criteria
 
-        largest_xp, largest_xp_size = '', 0
+        largest_xp, largest_xp_size = "", 0
         for xp in sorted(par_2_names.keys()):
             if len(par_2_names[xp]) > largest_xp_size:
                 largest_xp = xp
@@ -183,10 +228,9 @@ class XGraphPartitioner(object):
         for X in xgraph.get_layers():
 
             if X.name in name_2_pars:
-                xlayers.append(X._replace(
-                    target=target,
-                    subgraph=name_2_pars[X.name][0]
-                ))
+                xlayers.append(
+                    X._replace(target=target, subgraph=name_2_pars[X.name][0])
+                )
             else:
                 xlayers.append(copy.deepcopy(X))
 
@@ -194,22 +238,21 @@ class XGraphPartitioner(object):
         xgraph = XGraphPartitioner.xgraph_factory.build_from_xlayer(
             net=xlayers,
             name=xgraph.get_name(),
-            output_png='tvm_partitioned_graph.png' if
-            logger.getEffectiveLevel() <= 10 else None
+            output_png="tvm_partitioned_graph.png"
+            if logger.getEffectiveLevel() <= 10
+            else None,
         )
 
         # Transpose optimizer
-        optimizer = XGraphTransposesOptimizer(xgraph,
-                                              target=target,
-                                              opt_name='partitioning')
+        optimizer = XGraphTransposesOptimizer(
+            xgraph, target=target, opt_name="partitioning"
+        )
         optimizer.optimize()
 
         return xgraph
 
-    def get_subgraphs(self, xgraph):
-        # type: (XGraph) -> List[XGraph]
-        """ Return a list of subgraphs for the given xgraph in XGraph format.
-        """
+    def get_subgraphs(self, xgraph: XGraph) -> List[XGraph]:
+        """Return a list of subgraphs for the given xgraph in XGraph format."""
 
         # ALGO:
         # 1. loop through all the XLayers
@@ -234,18 +277,18 @@ class XGraphPartitioner(object):
                     new_subgraph = xlayer.defaultXLayer()
                     new_subgraph = new_subgraph._replace(
                         name=X.subgraph,
-                        type=['SubGraph'],
+                        type=["SubGraph"],
                         data=[],
                         shapes=TupleShape([]),
                         sizes=[],
                         internal=1,
                         attrs={
-                            'target': X.target,
-                            '__bottom_tensors': {},
-                            'orig_bottom_tensors': {},
-                            '__top_tensors': {},
-                            'orig_top_tensors': {},
-                        }
+                            "target": X.target,
+                            "__bottom_tensors": {},
+                            "orig_bottom_tensors": {},
+                            "__top_tensors": {},
+                            "orig_top_tensors": {},
+                        },
                     )
                     subgraphs[X.subgraph] = new_subgraph
                     visited[X.subgraph] = set()
@@ -258,7 +301,7 @@ class XGraphPartitioner(object):
 
                         bX = xgraph.get(b)
 
-                        x_in_name = 'xinput' + str(in_idx)
+                        x_in_name = "xinput" + str(in_idx)
 
                         def find_original_bottom_layers(rX):
                             if not bool(rX.internal):
@@ -267,24 +310,20 @@ class XGraphPartitioner(object):
                             bottom_layers = []
                             for r_bottom_name in rX.bottoms:
                                 rbX = xgraph.get(r_bottom_name)
-                                rec_bottom_layers = \
-                                    find_original_bottom_layers(rbX)
+                                rec_bottom_layers = find_original_bottom_layers(rbX)
                                 bottom_layers.extend(rec_bottom_layers)
 
                             return bottom_layers
 
                         orig_bottoms = find_original_bottom_layers(bX)
 
-                        if 'input_names' not in subgraphs[X.subgraph].attrs:
-                            subgraphs[X.subgraph].attrs['input_names'] =\
-                                [x_in_name]
+                        if "input_names" not in subgraphs[X.subgraph].attrs:
+                            subgraphs[X.subgraph].attrs["input_names"] = [x_in_name]
                         else:
-                            subgraphs[X.subgraph].attrs['input_names']\
-                                .append(x_in_name)
+                            subgraphs[X.subgraph].attrs["input_names"].append(x_in_name)
 
                         # Keep track of input - bottom connections
-                        sg_bottoms_ext = \
-                            subgraphs[X.subgraph].attrs['__bottom_tensors']
+                        sg_bottoms_ext = subgraphs[X.subgraph].attrs["__bottom_tensors"]
                         if X.name not in sg_bottoms_ext:
                             sg_bottoms_ext.update({x_in_name: [b]})
                         else:
@@ -294,21 +333,23 @@ class XGraphPartitioner(object):
                         # Keep track of input - original (model) bottom
                         #   connections, i.e. exclude internally added
                         #   operations here
-                        sg_orig_bottoms_ext = \
-                            subgraphs[X.subgraph].attrs['orig_bottom_tensors']
+                        sg_orig_bottoms_ext = subgraphs[X.subgraph].attrs[
+                            "orig_bottom_tensors"
+                        ]
                         if X.name not in sg_orig_bottoms_ext:
-                            sg_orig_bottoms_ext.update(
-                                {x_in_name: orig_bottoms})
+                            sg_orig_bottoms_ext.update({x_in_name: orig_bottoms})
                         else:
-                            new_orig_bottoms_ext = \
+                            new_orig_bottoms_ext = (
                                 sg_orig_bottoms_ext[x_in_name] + orig_bottoms
+                            )
                             sg_orig_bottoms_ext.update(
-                                {x_in_name: new_orig_bottoms_ext})
+                                {x_in_name: new_orig_bottoms_ext}
+                            )
 
                         new_in_X = xlayer.defaultXLayer()
                         new_in_X = new_in_X._replace(
                             name=x_in_name,
-                            type=['Input'],
+                            type=["Input"],
                             shapes=bX.shapes[:],
                             sizes=bX.sizes[:],
                             # Keep track of the first original layer of the
@@ -319,16 +360,17 @@ class XGraphPartitioner(object):
                             bottoms=[],
                             internal=1,
                             attrs={},
-                            targets=[]
+                            targets=[],
                         )
                         in_idx += 1
 
-                        X_copy.bottoms[:] = \
-                            [(bc if bc != b else new_in_X.name)
-                             for bc in X_copy.bottoms]
+                        X_copy.bottoms[:] = [
+                            (bc if bc != b else new_in_X.name) for bc in X_copy.bottoms
+                        ]
 
-                        subgraphs[X.subgraph].subgraph_data =\
-                            subgraphs[X.subgraph].subgraph_data + [new_in_X]
+                        subgraphs[X.subgraph].subgraph_data = subgraphs[
+                            X.subgraph
+                        ].subgraph_data + [new_in_X]
                         # subgraphs[X.subgraph].shapes[:] = new_in_X.shapes[:]
                         # subgraphs[X.subgraph].sizes[:] = new_in_X.sizes[:]
                         subgraphs[X.subgraph].bottoms.append(b)
@@ -336,19 +378,15 @@ class XGraphPartitioner(object):
                         visited[X.subgraph].add(new_in_X.name)
 
                 if X.tops == []:
-                    sg_tops_ext = \
-                        subgraphs[X.subgraph].attrs['__top_tensors']
-                    sg_orig_tops_ext = \
-                        subgraphs[X.subgraph].attrs['orig_top_tensors']
+                    sg_tops_ext = subgraphs[X.subgraph].attrs["__top_tensors"]
+                    sg_orig_tops_ext = subgraphs[X.subgraph].attrs["orig_top_tensors"]
                     sg_tops_ext.update({X.name: []})
                     sg_orig_tops_ext.update({X.name: []})
 
-                    if 'output_names' not in subgraphs[X.subgraph].attrs:
-                        subgraphs[X.subgraph].attrs['output_names'] =\
-                            [X.name]
+                    if "output_names" not in subgraphs[X.subgraph].attrs:
+                        subgraphs[X.subgraph].attrs["output_names"] = [X.name]
                     else:
-                        subgraphs[X.subgraph].attrs['output_names']\
-                            .append(X.name)
+                        subgraphs[X.subgraph].attrs["output_names"].append(X.name)
 
                 for t in X.tops:
                     tX = xgraph.get(t)
@@ -369,16 +407,13 @@ class XGraphPartitioner(object):
 
                         orig_tops = find_original_top_layers(tX)
 
-                        if 'output_names' not in subgraphs[X.subgraph].attrs:
-                            subgraphs[X.subgraph].attrs['output_names'] =\
-                                [X.name]
+                        if "output_names" not in subgraphs[X.subgraph].attrs:
+                            subgraphs[X.subgraph].attrs["output_names"] = [X.name]
                         else:
-                            subgraphs[X.subgraph].attrs['output_names']\
-                                .append(X.name)
+                            subgraphs[X.subgraph].attrs["output_names"].append(X.name)
 
                         # Keep track of output - top connections
-                        sg_tops_ext = \
-                            subgraphs[X.subgraph].attrs['__top_tensors']
+                        sg_tops_ext = subgraphs[X.subgraph].attrs["__top_tensors"]
                         if X.name not in sg_tops_ext:
                             sg_tops_ext.update({X.name: [t]})  # X.tops[:]
                         else:
@@ -388,15 +423,14 @@ class XGraphPartitioner(object):
                         # Keep track of output - original (model) top
                         #   connections, i.e. exclude internally added
                         #   operations here
-                        sg_orig_tops_ext = \
-                            subgraphs[X.subgraph].attrs['orig_top_tensors']
+                        sg_orig_tops_ext = subgraphs[X.subgraph].attrs[
+                            "orig_top_tensors"
+                        ]
                         if X.name not in sg_orig_tops_ext:
                             sg_orig_tops_ext.update({X.name: orig_tops})
                         else:
-                            new_orig_tops_ext = \
-                                sg_orig_tops_ext[X.name] + orig_tops
-                            sg_orig_tops_ext.update(
-                                {X.name: new_orig_tops_ext})
+                            new_orig_tops_ext = sg_orig_tops_ext[X.name] + orig_tops
+                            sg_orig_tops_ext.update({X.name: new_orig_tops_ext})
 
                         X_copy.tops.remove(t)
                         subgraphs[X.subgraph].tops.append(t)
@@ -408,8 +442,9 @@ class XGraphPartitioner(object):
                     subgraphs[X.subgraph].shapes.append(X.shapes[:])
                     subgraphs[X.subgraph].sizes.extend(X.sizes[:])
 
-                subgraphs[X.subgraph].subgraph_data = \
-                    subgraphs[X.subgraph].subgraph_data + [X_copy]
+                subgraphs[X.subgraph].subgraph_data = subgraphs[
+                    X.subgraph
+                ].subgraph_data + [X_copy]
                 visited[X.subgraph].add(X_copy.name)
 
         sg_list = []

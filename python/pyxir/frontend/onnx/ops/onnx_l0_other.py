@@ -58,7 +58,7 @@ def constant(node: NodeWrapper,
     bottoms = node.get_inputs()
     node_attrs = node.get_attributes()
 
-    print(node_attrs.keys())
+    # print(node_attrs.keys())
     key = list(node_attrs.keys())[0]
     data = node_attrs[key]
 

@@ -4,7 +4,7 @@ PyXIR is an Neural Network Intermediate Representation (IR) for deep learning. I
 
 At the moment PyXIR integrates with following frameworks:
 * [ONNXRuntime](https://github.com/microsoft/onnxruntime/blob/master/docs/execution_providers/Vitis-AI-ExecutionProvider.md)
-* [TVM Open Deep Learning compiler stack](https://github.com/apache/incubator-tvm) (coming up)
+* [TVM Open Deep Learning compiler stack](https://tvm.apache.org/docs/deploy/vitis_ai.html)
 
 and with following Vitis-AI accelerators:
 * DPUCADX8G (formerly DPUv1)

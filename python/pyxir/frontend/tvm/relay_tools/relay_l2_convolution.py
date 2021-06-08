@@ -16,19 +16,23 @@
 Module for transforming Relay L2 operators to XLayer objects
 
 L2: Convolution related operators
-
-
 """
 
 import math
 import logging
 import numpy as np
+import pyxir as px
+
+from typing import Dict, List, Callable
 
 import tvm
+from tvm.relay.expr import Expr
 
 from pyxir import graph
+from pyxir.graph.layer import XLayer
 from pyxir.graph.layer import xlayer_factory as xlf
 
+from .util import Schedule
 from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
     register_relay_2_xlayer_converter_base
 
@@ -36,12 +40,15 @@ logger = logging.getLogger("pyxir")
 
 
 @register_relay_2_xlayer_converter('nn.avg_pool2d')
-def nn_avg_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
-                  **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def nn_avg_pool2d(expr: Expr,
+                  params: Dict[str, np.ndarray],
+                  schedule: Schedule,
+                  net: Dict[Expr, Expr],
+                  op_idx: Dict[str, int],
+                  RELAY_2_XLAYER: Dict[str, Callable],
+                  **kwargs) -> XLayer:
     """
-    TODO
+    TVM Avg Pool2d to XLayer
 
     Relay
     -----
@@ -84,7 +91,7 @@ def nn_avg_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
                                                  net, op_idx, RELAY_2_XLAYER,
                                                  **kwargs)
 
-    logger.debug("nn_avg_pool2d: {}".format(""))
+    logger.debug("nn_avg_pool2d: {}".format(hash(expr)))
 
     # Update schedule with input data layer
     if data_expr not in net:
@@ -92,7 +99,6 @@ def nn_avg_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         net[data_expr] = data_layer
 
     # Create XLayer
-
     pool_type = 'Avg'
 
     # Convert NHWC -> NCHW TODO: remove data layout
@@ -135,13 +141,10 @@ def nn_avg_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
     return res_X
 
 
-@register_relay_2_xlayer_converter('nn.batch_flatten')
-def nn_batch_flatten(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
-                     **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], int, Dict[str, Function]) -> XLayer
+@register_relay_2_xlayer_converter_base('nn.batch_flatten')
+def nn_batch_flatten(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
-    TODO
+    TVM NN batch_flatten to XLayer
 
     Relay
     -----
@@ -151,44 +154,20 @@ def nn_batch_flatten(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         - data (tvm.relay.Expr)
             The input data to the operator.
     """
-    if expr in net:
-        logger.debug("MEMORY: NN BATCH FLATTEN")
-        # This expressions is already transformed so we reuse that one
-        return net[expr]
-
-    data_expr, data_expr_class = expr.args[0], expr.args[0].__class__.__name__
-
-    data_layer = RELAY_2_XLAYER[data_expr_class](data_expr, params, schedule,
-                                                 net, op_idx, RELAY_2_XLAYER,
-                                                 **kwargs)
-
-    logger.debug("nn_batch_flatten: {}".format(""))
-
-    # Update schedule with input data layer
-    if data_expr not in net:
-        schedule.append(data_expr)
-        net[data_expr] = data_layer
-
-    # Create ParametersLayer
-
-    # Create names
-    op_name = 'nn_batch_flatten-' + str(hash(expr))
-
-    P = xlf.get_xop_factory_func('Flatten')(op_name, data_layer,
-                                            relay_id=[hash(expr)])
-
-    # !Important: set input layer tops:
-    data_layer.tops.append(op_name)
-
-    return P
+    X = px.ops.batch_flatten(op_name, in_xlayers, relay_id=[hash(expr)])
+    return X
 
 
 @register_relay_2_xlayer_converter('nn.conv2d')
-def nn_conv2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def nn_conv2d(expr: Expr,
+              params: Dict[str, np.ndarray],
+              schedule: Schedule,
+              net: Dict[Expr, Expr],
+              op_idx: Dict[str, int],
+              RELAY_2_XLAYER: Dict[str, Callable],
+              **kwargs) -> XLayer:
     """
-    TODO
+    TVM Convolution to XLayer
 
     Relay
     -----
@@ -227,19 +206,6 @@ def nn_conv2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         # This expressions is already transformed so we reuse that one
         return net[expr]
 
-    # HW
-    kernel_size = [int(e) for e in list(expr.attrs.kernel_size)]
-    strides = [int(e) for e in list(expr.attrs.strides)]
-    padding = [int(e) for e in list(expr.attrs.padding)]
-    dilation = [int(e) for e in list(expr.attrs.dilation)]
-    groups = int(expr.attrs.groups) if expr.attrs.groups is not None else 1
-    channels = int(expr.attrs.channels) if expr.attrs.channels is not None \
-        else None
-    data_layout = str(expr.attrs.data_layout)
-    kernel_layout = str(expr.attrs.kernel_layout)
-    # out_layout = str(expr.attrs.out_layout)
-    # out_dtype = str(expr.attrs.out_dtype)
-
     data_expr, data_expr_class = \
         expr.args[0], expr.args[0].__class__.__name__
     weights_expr, weights_expr_class = \
@@ -252,11 +218,30 @@ def nn_conv2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
                                                        schedule, net, op_idx,
                                                        RELAY_2_XLAYER,
                                                        **kwargs)
+    weights_shape = weights_layer.shapes
 
-    logger.debug("nn_conv2d")
+    logger.debug("nn_conv2d: {}".format(hash(expr)))
 
-    assert(len(data_layer.shapes) == 4)
-    assert(weights_layer.data is not None)
+    data_layout = str(expr.attrs.data_layout)
+    kernel_layout = str(expr.attrs.kernel_layout)
+    h_index, w_index = kernel_layout.index('H'), kernel_layout.index('W')
+    o_index = kernel_layout.index('O')
+
+    # HW
+    kernel_size = [int(e) for e in list(expr.attrs.kernel_size)] \
+        if expr.attrs.kernel_size is not None \
+        else [weights_shape[h_index], weights_shape[w_index]]
+    strides = [int(e) for e in list(expr.attrs.strides)]
+    padding = [int(e) for e in list(expr.attrs.padding)]
+    dilation = [int(e) for e in list(expr.attrs.dilation)]
+    groups = int(expr.attrs.groups) if expr.attrs.groups is not None else 1
+    channels = int(expr.attrs.channels) if expr.attrs.channels is not None \
+        else weights_shape[o_index]
+    # out_layout = str(expr.attrs.out_layout)
+    # out_dtype = str(expr.attrs.out_dtype)
+
+    assert len(data_layer.shapes) == 4
+    assert weights_layer.data is not None
 
     # Update schedule with child layers
     # ! We don't add weights layer as this weight is precomputed
@@ -315,10 +300,13 @@ def nn_conv2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
 
 
 @register_relay_2_xlayer_converter('nn.conv2d_transpose')
-def nn_conv2d_transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
-                        **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def nn_conv2d_transpose(expr: Expr,
+                        params: Dict[str, np.ndarray],
+                        schedule: Schedule,
+                        net: Dict[Expr, Expr],
+                        op_idx: Dict[str, int],
+                        RELAY_2_XLAYER: Dict[str, Callable],
+                        **kwargs) -> XLayer:
     """
     Convert Relay nn.conv2d_transpose to Conv2DTranspose XLayer
 
@@ -360,19 +348,15 @@ def nn_conv2d_transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
         return net[expr]
 
     # HW
-    kernel_size = [int(e) for e in list(expr.attrs.kernel_size)]
-    strides = [int(e) for e in list(expr.attrs.strides)]
-    padding = [int(e) for e in list(expr.attrs.padding)]
-    dilation = [int(e) for e in list(expr.attrs.dilation)]
-    groups = int(expr.attrs.groups) if expr.attrs.groups is not None else 1
-    channels = int(expr.attrs.channels) if expr.attrs.channels is not None \
-        else None
-    data_layout = str(expr.attrs.data_layout)
-    kernel_layout = str(expr.attrs.kernel_layout)
-    # NOTE TVM uses different kernel layout description than we do and we have to switch O and I
-    kernel_layout = ''.join(({'O': 'I', 'I': 'O', 'H': 'H', 'W': 'W'}[c] for c in kernel_layout))
-    # out_layout = str(expr.attrs.out_layout)
-    # out_dtype = str(expr.attrs.out_dtype)
+    # kernel_size = [int(e) for e in list(expr.attrs.kernel_size)]
+    # strides = [int(e) for e in list(expr.attrs.strides)]
+    # padding = [int(e) for e in list(expr.attrs.padding)]
+    # dilation = [int(e) for e in list(expr.attrs.dilation)]
+    # groups = int(expr.attrs.groups) if expr.attrs.groups is not None else 1
+    # channels = int(expr.attrs.channels) if expr.attrs.channels is not None \
+    #     else None
+    # data_layout = str(expr.attrs.data_layout)
+    # kernel_layout = str(expr.attrs.kernel_layout)
 
     data_expr, data_expr_class = \
         expr.args[0], expr.args[0].__class__.__name__
@@ -386,8 +370,29 @@ def nn_conv2d_transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
                                                        schedule, net, op_idx,
                                                        RELAY_2_XLAYER,
                                                        **kwargs)
+    weights_shape = weights_layer.shapes
 
     logger.debug("nn_conv2d_transpose")
+
+    data_layout = str(expr.attrs.data_layout)
+    kernel_layout = str(expr.attrs.kernel_layout)
+    # NOTE TVM uses different kernel layout description than we do and we have to switch O and I
+    kernel_layout = ''.join(({'O': 'I', 'I': 'O', 'H': 'H', 'W': 'W'}[c] for c in kernel_layout))
+    h_index, w_index = kernel_layout.index('H'), kernel_layout.index('W')
+    o_index = kernel_layout.index('O')
+
+    # HW
+    kernel_size = [int(e) for e in list(expr.attrs.kernel_size)] \
+        if expr.attrs.kernel_size is not None \
+        else [weights_shape[h_index], weights_shape[w_index]]
+    strides = [int(e) for e in list(expr.attrs.strides)]
+    padding = [int(e) for e in list(expr.attrs.padding)]
+    dilation = [int(e) for e in list(expr.attrs.dilation)]
+    groups = int(expr.attrs.groups) if expr.attrs.groups is not None else 1
+    channels = int(expr.attrs.channels) if expr.attrs.channels is not None \
+        else weights_shape[o_index]
+    # out_layout = str(expr.attrs.out_layout)
+    # out_dtype = str(expr.attrs.out_dtype)
 
     logger.debug("-- kernel_size {}".format(kernel_size))
     logger.debug("-- strides {}, {}".format(strides, type(strides[0])))
@@ -445,12 +450,15 @@ def nn_conv2d_transpose(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
 
 
 @register_relay_2_xlayer_converter('nn.global_avg_pool2d')
-def nn_global_avg_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
-                         **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def nn_global_avg_pool2d(expr: Expr,
+                         params: Dict[str, np.ndarray],
+                         schedule: Schedule,
+                         net: Dict[Expr, Expr],
+                         op_idx: Dict[str, int],
+                         RELAY_2_XLAYER: Dict[str, Callable],
+                         **kwargs) -> XLayer:
     """
-    TODO
+    TVM global Avg pooling to XLayer
 
     Relay
     -----
@@ -524,11 +532,15 @@ def nn_global_avg_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
 
 
 @register_relay_2_xlayer_converter('nn.global_max_pool2d')
-def nn_global_max_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
-                         **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def nn_global_max_pool2d(expr: Expr,
+                         params: Dict[str, np.ndarray],
+                         schedule: Schedule,
+                         net: Dict[Expr, Expr],
+                         op_idx: Dict[str, int],
+                         RELAY_2_XLAYER: Dict[str, Callable],
+                         **kwargs) -> XLayer:
     """
+    TVM global max pool to XLayer
     TODO Overlap with globale_avg_pool2d
 
     Relay
@@ -602,12 +614,15 @@ def nn_global_max_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
 
 
 @register_relay_2_xlayer_converter('nn.max_pool2d')
-def nn_max_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
-                  **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+def nn_max_pool2d(expr: Expr,
+                  params: Dict[str, np.ndarray],
+                  schedule: Schedule,
+                  net: Dict[Expr, Expr],
+                  op_idx: Dict[str, int],
+                  RELAY_2_XLAYER: Dict[str, Callable],
+                  **kwargs) -> XLayer:
     """
-    TODO
+    TVM max pool to XLayer
 
     Relay
     -----
@@ -641,12 +656,6 @@ def nn_max_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
                                                  **kwargs)
 
     logger.debug("nn_max_pool2d")
-
-    # logger.debug("strides", type(strides))
-    # logger.debug("padding", padding)
-    # logger.debug("layout", layout)
-    # logger.debug("ceil_mode", ceil_mode)
-    # logger.debug("count_include_pad", count_include_pad)
 
     # Update schedule with input data layer
     if data_expr not in net:
@@ -699,16 +708,14 @@ def nn_max_pool2d(expr, params, schedule, net, op_idx, RELAY_2_XLAYER,
     return res_X
 
 
-@register_relay_2_xlayer_converter('nn.pad')
-def nn_pad(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
-    # type: (tvm.relay.expr.Expr, Dict[str, numpy.ndarray], List[Expr],
-    #   Dict[int, XLayer], Dict[str, int], Dict[str, Function]) -> XLayer
+@register_relay_2_xlayer_converter_base('nn.pad')
+def pad(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
-    TODO
+    TVM padding layer to XLayer
 
     Relay
     -----
-    Type: tvm.relay.op.nn.nn.batch_flatten
+    Type: tvm.relay.op.nn.pad
     Ref: https://docs.tvm.ai/api/python/relay/nn.html
     Parameters:
         - data (tvm.relay.Expr)
@@ -719,51 +726,28 @@ def nn_pad(expr, params, schedule, net, op_idx, RELAY_2_XLAYER, **kwargs):
         - pad_value (float, optional, default=0.0)
             The value used for padding
     """
-    if expr in net:
-        logger.debug("MEMORY: NN PAD")
-        # This expressions is already transformed so we reuse that one
-        return net[expr]
-
-    data_expr, data_expr_class = expr.args[0], expr.args[0].__class__.__name__
-    data_layer = RELAY_2_XLAYER[data_expr_class](data_expr, params, schedule,
-                                                 net, op_idx, RELAY_2_XLAYER,
-                                                 **kwargs)
-
-    # TODO create a class for doing this kind of data retrieval and parsing
     pad_width = [[int(e) for e in t] for t in expr.attrs.pad_width]
-    pad_value = float(expr.attrs.pad_value)
+    if hasattr(expr.attrs, "pad_value"):
+        pad_value = float(expr.attrs.pad_value)
+    else:
+        # For tvm>=v0.8.dev0
+        assert len(in_xlayers) > 1, "If pad_value is not a Relay operation attribute, it is expected"\
+            " as an input expression"
+        assert in_xlayers[1].type[0] == "Constant", "Only static padding is supported."
+        pad_value = float(in_xlayers[1].data[0])
 
-    logger.debug("nn_pad: {}".format(""))
+    logger.debug("nn_pad: {}".format(hash(expr)))
     logger.debug("-- pad width: {}".format(pad_width))
     logger.debug("-- pad value: {}".format(pad_value))
 
-    # Update schedule with input data layer
-    if data_expr not in net:
-        schedule.append(data_expr)
-        net[data_expr] = data_layer
-
-    # Create ParametersLayer
-    # data_layout = kwargs['data_layout']
-
-    # Create name
-    op_name = 'nn_pad-' + str(hash(expr))
-    logger.debug("-- pad input shape: {}".format(data_layer.shapes))
-
-    X = xlf.get_xop_factory_func('Pad')(op_name, data_layer, pad_width,
-                                        pad_value,
-                                        relay_id=[hash(expr)])
-
-    # !Important: set input layer tops:
-    data_layer.tops.append(op_name)
-
+    X = px.ops.pad(op_name, in_xlayers[0], pad_width, pad_value, relay_id=[hash(expr)])
     return X
 
 
 @register_relay_2_xlayer_converter_base('nn.upsampling')
-def nn_upsampling(op_name, expr, in_xlayers):
-    # type: (str, tvm.relay.expr.Expr, List[XLayer]) -> XLayer
+def nn_upsampling(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
-    2D Upsampling
+    TVM 2D Upsampling to XLayer
 
     Relay
     -----
@@ -800,14 +784,15 @@ def nn_upsampling(op_name, expr, in_xlayers):
     method = str(expr.attrs.method)
     align_corners = bool(expr.attrs.align_corners)
 
-    X = xlf.get_xop_factory_func('Upsampling2D')(op_name,
-                                                 in_xlayers,
-                                                 scale_h=scale_h,
-                                                 scale_w=scale_w,
-                                                 data_layout=layout,
-                                                 method=method,
-                                                 align_corners=align_corners,
-                                                 relay_id=[hash(expr)])
+    X = px.ops.upsampling2d(
+        op_name,
+        in_xlayers,
+        scale_h=scale_h,
+        scale_w=scale_w,
+        data_layout=layout,
+        method=method,
+        align_corners=align_corners,
+        relay_id=[hash(expr)]
+    )
     logger.debug("-- outshape: {}".format(list(X.shapes)))
-
     return X

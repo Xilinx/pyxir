@@ -124,7 +124,7 @@ class TestONNXFrontend(unittest.TestCase):
             inputs=['x', 'W', 'B'],
             outputs=['y'],
             kernel_shape=[2, 2],
-            pads=[1, 0, 1, 0]
+            pads=[1, 1, 0, 0]
         )
 
         pool_node = onnx.helper.make_node(
@@ -217,7 +217,7 @@ class TestONNXFrontend(unittest.TestCase):
             inputs=['x', 'W', 'B'],
             outputs=['y'],
             kernel_shape=[2, 2],
-            pads=[1, 0, 1, 0]
+            pads=[1, 1, 0, 0]
         )
 
         pool_node = onnx.helper.make_node(

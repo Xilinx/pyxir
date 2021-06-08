@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for creating XGraph objects
-
-
-"""
+"""Module for creating XGraph objects"""
 
 import logging
 
@@ -35,7 +31,7 @@ class XGraphFactory(object):
                           name: str = 'xgraph',
                           blobs: bool = False,
                           output_png: str = None) -> XGraph:
-        """ Build the XGraph from a list of XLayers """
+        """Build the XGraph from a list of XLayers"""
         if xgraph is None:
             xgraph = XGraph(name)
 

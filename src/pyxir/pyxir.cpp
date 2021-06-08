@@ -19,6 +19,7 @@
 #include <pybind11/embed.h>
 
 #include "pyxir/pyxir.hpp"
+#include "pyxir/ffi/str_container.hpp"
 #include "pyxir/opaque_func_registry.hpp"
 #include "pyxir/contrib/dpuv1.hpp"
 #include "pyxir/runtime/runtime_module_factory.hpp"
@@ -76,6 +77,19 @@ PX_API std::shared_ptr<graph::XGraph> load(
   return xg;
 }
 
+// Global variables
+
+REGISTER_OPAQUE_FUNC("pyxir.use_dpuczdx8g_vart")
+    ->set_func([](pyxir::OpaqueArgs &args) 
+    {
+      #ifdef USE_DPUCZDX8G_VART
+        args[0]->get_str_container()->set_string("True");
+      #else
+        args[0]->get_str_container()->set_string("False");
+      #endif
+    }, std::vector<pxTypeCode>{pxStrContainerHandle});
+
+
 // INITIALIZATION RELATED CODE
 
 bool py_is_initialized() { return Py_IsInitialized(); }
@@ -96,10 +110,13 @@ struct PyInitializer
     //  initialized yet
     if (!py_is_initialized()) {
       py::initialize_interpreter();
-      auto pyxir = py::module::import("pyxir");
       // auto pyxir_onnx = py::module::import("pyxir.frontend.onnx");
       // pyxir::contrib::import_dpuv1_target();
     }
+    py::list sys_modules = py::module::import("sys").attr("modules");
+    bool px_imported = sys_modules.attr("__contains__")("pyxir").cast<bool>();
+    if (!px_imported)
+      auto pyxir = py::module::import("pyxir");
   }
 
   void finalize_py()

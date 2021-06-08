@@ -38,7 +38,7 @@ TEST_CASE("Test RunOptions serialization")
   REQUIRE(run_options2.on_the_fly_quantization == run_options.on_the_fly_quantization);
   REQUIRE(run_options2.nb_quant_inputs == run_options.nb_quant_inputs);
   REQUIRE(run_options2.build_dir == "test_build_dir");
-  REQUIRE(run_options2.work_dir.empty());
+  REQUIRE(run_options2.work_dir == "/tmp/vitis_ai_work");
   REQUIRE(!run_options2.is_prebuilt);
 }
 
@@ -55,6 +55,6 @@ TEST_CASE("Test RunOptions loadFromSStream")
   REQUIRE(run_options2.on_the_fly_quantization == run_options.on_the_fly_quantization);
   REQUIRE(run_options2.nb_quant_inputs == run_options.nb_quant_inputs);
   REQUIRE(run_options2.build_dir == "test_build_dir");
-  REQUIRE(run_options2.work_dir.empty());
+  REQUIRE(run_options2.work_dir == "/tmp/vitis_ai_work");
   REQUIRE(!run_options2.is_prebuilt);
 }

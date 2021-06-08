@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for xf layers doing quantization using MSE threshold clipping approach
-
-
-"""
+"""Module for xf layers doing quantization using MSE threshold clipping approach"""
 
 import abc
 import numpy as np
 import tensorflow as tf
 import logging
+
+from typing import List
 
 from pyxir.shapes import TensorShape, TupleShape
 from pyxir.runtime.rt_layer import RtLayer
@@ -30,6 +28,9 @@ from pyxir.runtime.tensorflow.ops.tf_l1_basic_nn import ReluLayer
 from pyxir.runtime.tensorflow.runtime_tf import X_2_TF
 
 logger = logging.getLogger("pyxir")
+
+# Suppress warnings
+# tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 
 
 def MSE(x1, x2):
@@ -130,8 +131,7 @@ class MSEQuantizeLayer(MSEQuantizeLayerBase, RtLayerTF):
         self.res = self.get_output_tensors(inpts)[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert(len(inpts) == len(self.input_shapes))
 
         # logger.debug([type(inpt) for inpt in inpts])
@@ -244,7 +244,7 @@ class MSEQuantizeLayer(MSEQuantizeLayerBase, RtLayerTF):
 
         logger.debug("Threshold type: {}, input type: {}"
                      .format(type(threshold), type(inpt)))
-        best_th = tf.py_func(mse_optimization, [inpt, threshold], tf.float32)
+        best_th = tf.compat.v1.py_func(mse_optimization, [inpt, threshold], tf.float32)
         best_th.set_shape(threshold.get_shape())
 
         # TODO in stepwise graph assign might not work because we don't have
@@ -257,8 +257,8 @@ class MSEQuantizeLayer(MSEQuantizeLayerBase, RtLayerTF):
             threshold = best_th
 
         if beta is not None:
-            # beta_est = tf.py_func(beta_optimization,
-            #                       [inpt, best_th], tf.float32)
+            # beta_est = tf.compat.v1.py_func(beta_optimization,
+            #                          [inpt, best_th], tf.float32)
             mean_axis = (0, 2, 3) if threshold.shape in [(), (1,)]\
                 else (1, 2, 3)
             beta_est = tf.reduce_mean(inpt - alt_inpt, axis=mean_axis)
@@ -292,9 +292,7 @@ class MSEQuantizeLayer(MSEQuantizeLayerBase, RtLayerTF):
 
         return res_lst
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
+    def forward_exec(self, inputs: List[np.ndarray]):
         assert(len(inputs) == len(self.input_shapes))
 
         feed_dict = {
@@ -394,8 +392,7 @@ class MSEQuantizeBiasLayer(MSEQuantizeBiasLayerBase, RtLayerTF):
                                             self.th_params])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert(len(inpts) == 3)
         inpt, threshold_ext, threshold_params = inpts
         bitwidth, do_rounding = self.bitwidth, self.do_rounding
@@ -438,9 +435,7 @@ class MSEQuantizeBiasLayer(MSEQuantizeBiasLayerBase, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
+    def forward_exec(self, inputs: np.ndarray):
         assert(len(inputs) == 3)
 
         with tf.Session() as sess:
@@ -534,17 +529,14 @@ class MSEMockQuantizeLayer(MSEMockQuantizeLayerBase, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt, self.th])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert(len(inpts) == 2)
         inpt, threshold_ext = inpts
         bitwidth = self.bitwidth
 
         return [inpt]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
+    def forward_exec(self, inputs: List[np.ndarray]):
         assert(len(inputs) == 2)
 
         with tf.Session() as sess:
@@ -656,9 +648,7 @@ class MSEQuantizeEltwiseLayer(MSEQuantizeEltwiseLayerBase, RtLayerTF):
                                             self.right_q, self.th])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-        """ """
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert(len(inpts) == 5)
 
         left, left_q, right, right_q, threshold = inpts
@@ -751,9 +741,9 @@ class MSEQuantizeEltwiseLayer(MSEQuantizeEltwiseLayerBase, RtLayerTF):
 
         logger.debug("Type threshold: {}, type left: {}, type right: {}"
                      .format(type(threshold), type(left), type(right)))
-        best_th = tf.py_func(mse_optimization,
-                             [left, left_q, right, right_q, threshold],
-                             tf.float32)
+        best_th = tf.compat.v1.py_func(mse_optimization,
+                                [left, left_q, right, right_q, threshold],
+                                tf.float32)
         best_th.set_shape(threshold.get_shape())
 
         # TODO in stepwise graph assign might not work because we don't have
@@ -793,9 +783,7 @@ class MSEQuantizeEltwiseLayer(MSEQuantizeEltwiseLayerBase, RtLayerTF):
 
         return [tf.add(res_left, res_right), left_q, right_q, threshold]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
+    def forward_exec(self, inputs: List[np.ndarray]):
         assert(len(inputs) == 4)
 
         with tf.Session() as sess:
@@ -807,9 +795,8 @@ class MSEQuantizeEltwiseLayer(MSEQuantizeEltwiseLayerBase, RtLayerTF):
                 self.th: inputs[4]
                 })
 
+
 # MSEQuantizeConcat
-
-
 class MSEQuantizeConcatLayerBase(RtLayer):
 
     __metaclass__ = abc.ABCMeta
@@ -902,8 +889,7 @@ class MSEQuantizeConcatLayer(MSEQuantizeConcatLayerBase, RtLayerTF):
         self.res = self.get_output_tensors([self.left, self.right, self.th])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         assert(len(inpts) == 3)
 
         left, right, threshold = inpts
@@ -983,8 +969,8 @@ class MSEQuantizeConcatLayer(MSEQuantizeConcatLayerBase, RtLayerTF):
             return best_th.astype(np.float32)
 
         logger.debug(type(threshold), type(left), type(right))
-        best_th = tf.py_func(mse_optimization, [left, right, threshold],
-                             tf.float32)
+        best_th = tf.compat.v1.py_func(mse_optimization, [left, right, threshold],
+                                tf.float32)
         best_th.set_shape(threshold.get_shape())
 
         # TODO in stepwise graph assign might not work because we don't have
@@ -1005,9 +991,7 @@ class MSEQuantizeConcatLayer(MSEQuantizeConcatLayerBase, RtLayerTF):
 
         return [tf.add(left, right), threshold]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
+    def forward_exec(self, inputs: List[np.ndarray]):
         assert(len(inputs) == 4)
 
         with tf.Session() as sess:

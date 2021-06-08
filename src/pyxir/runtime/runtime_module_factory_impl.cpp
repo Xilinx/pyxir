@@ -28,14 +28,11 @@
 namespace pyxir {
 namespace runtime {
 
-
 RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
-  std::shared_ptr<graph::XGraph> &xg,
-  const std::string &target,
-  const std::vector<std::string> &in_tensor_names,
-  const std::vector<std::string> &out_tensor_names,
-  RunOptionsHolder const &run_options)
-{
+    std::shared_ptr<graph::XGraph> &xg, const std::string &target,
+    const std::vector<std::string> &in_tensor_names,
+    const std::vector<std::string> &out_tensor_names,
+    RunOptionsHolder run_options) {
   if (!OpaqueFuncRegistry::Exists("pyxir.build_rt"))
     throw std::runtime_error("Cannot build the runtime because the "
                              " `pyxir.build_rt` opaque function is not "
@@ -63,7 +60,7 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
     ComputeFuncHolder cf(new OnlineQuantComputeFunc(
       xg, target, in_tensor_names, out_tensor_names, rt_name_, run_options
     ));
-    RtModHolder rt_mod(new RuntimeModule(cf, in_tensor_names, out_tensor_names));
+    RtModHolder rt_mod(new RuntimeModule(cf, in_tensor_names, out_tensor_names, run_options));
 
     return rt_mod;
   }
@@ -77,7 +74,7 @@ RtModHolder DefaultRuntimeModuleFactoryImpl::get_runtime_module(
   ComputeFuncHolder cf = ComputeFuncFactory::GetComputeFunc(
     xg, target, in_tensor_names, out_tensor_names, rt_name_, run_options
   );
-  RtModHolder rt_mod(new RuntimeModule(cf, in_tensor_names, out_tensor_names));
+  RtModHolder rt_mod(new RuntimeModule(cf, in_tensor_names, out_tensor_names, run_options));
 
   return rt_mod;
 }

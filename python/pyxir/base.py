@@ -42,8 +42,6 @@ from pyxir.io.api import visualize, save, load, get_xgraph_str
 from pyxir.runtime import runtime_factory
 from pyxir.runtime.base_runtime import BaseRuntime
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
-from pyxir.graph.optimization.optimizers.basic_optimizer \
-    import XGraphBasicOptimizer
 from pyxir.graph.transformers.layout_transformation_pass \
     import XGraphLayoutTransformationPass
 
@@ -84,14 +82,13 @@ def transform_layout(xgraph: XGraph, layout: str):
     return xgraph
 
 
-def partition(xgraph: XGraph, targets: List[str], last_layer: str=None):
-    """ Partition the model for the given targets """
+def partition(xgraph: XGraph, targets: List[str], last_layer: str=None) -> XGraph:
+    """Partition the model for the given targets"""
 
     target_registry.check_targets(targets)
+    target_registry.annotate_ops(xgraph)
 
-    p_xgraph = xgraph_partitioner.partition(
-        xgraph, targets, last_layer
-    )
+    p_xgraph = xgraph_partitioner.partition(xgraph, targets, last_layer)
     return p_xgraph
 
 
@@ -100,8 +97,8 @@ def partition(xgraph: XGraph, targets: List[str], last_layer: str=None):
 def partition_opaque_func(xgraph: XGraph,
                           targets: List[str],
                           last_layer: str = None):
-    """ Expose the XGraph partition function an opaque function
-        so it can be called from both Python and C++ """
+    """Expose the XGraph partition function an opaque function
+       so it can be called from both Python and C++"""
 
     if last_layer == "":
         last_layer = None
@@ -115,7 +112,7 @@ def partition_opaque_func(xgraph: XGraph,
 ######################
 
 def optimize(xgraph: XGraph, target: str, **kwargs) -> XGraph:
-    """ Optimize the XGraph for the given target """
+    """Optimize the XGraph for the given target"""
 
     fancy_logger.banner("START GRAPH OPTIMIZATION FOR TARGET: {}"
                         .format(target))
@@ -509,24 +506,28 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
                                     it.to_numpy(copy=True)],
                                    axis=0)
             else:
-                calibration_inputs[in_name] = it.to_numpy(copy=True)
+                calibration_inputs[in_name] = it.to_numpy(copy=True)     
 
         # Run on inputs
         inputs = {it_name: it.to_numpy()
                   for it_name, it in zip(in_tensor_names, in_tensors)}
 
-        outs = rt_mod.run(inputs, out_tensor_names)
 
+        outs = rt_mod.run(inputs, out_tensor_names)
         # TODO: hacky way to get in right layout. We possibly have transposes in the
         #   model to get the output in the right but we are retrieving just before
         #   those transposes
         for idx, ot_name in enumerate(out_tensor_names):
             tXs = xgraph.get_top_layers(ot_name)
-            if len(tXs) == 1 and 'Transpose' in tXs[0].type:
-                outs[idx] = np.transpose(outs[idx], axes=tuple(tXs[0].attrs['axes']))
+            # TODO previous: if len(tXs) == 1 and 'Transpose' in tXs[0].type:
+            tp_layers = [tX for tX in tXs if 'Transpose' in tX.type]
+            if len(tp_layers) > 0:
+                outs[idx] = np.transpose(outs[idx], axes=tuple(tp_layers[0].attrs['axes']))
 
+        # TODO: output order does not match
         for out, out_tensor in zip(outs, out_tensors):
             out_tensor.copy_from(out)
+            
 
     # Set the internal function in the rt_cpu_callback OpaqueFunc
     rt_cpu_callback.set_func(rt_func, [TypeCode.vXBuffer, TypeCode.vXBuffer])
@@ -617,3 +618,12 @@ def run(rt_mod: BaseRuntime,
     return [res[outpt] for outpt in outputs]\
         if len(outputs) > 0\
         else res['output']
+
+########
+# Test #
+########
+
+@register_opaque_func('pyxir.test.copy_xbuffers', [TypeCode.vXBuffer, TypeCode.vXBuffer])
+def copy_xbuffers(in_buffers, out_buffers):
+    for idx, xb in enumerate(in_buffers):
+        out_buffers[idx].copy_from(xb)

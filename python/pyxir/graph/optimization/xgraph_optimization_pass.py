@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module containing graph optimization passes
-
-
-"""
+"""Module defining graph optimization passes"""
 
 import logging
 
@@ -57,7 +53,6 @@ class XGraphOptimizationPass(XGraphBasePass):
         })
 
     def execute(self, xgraph):
-        # type: (XGraph) -> XGraph
         """
         """
         condition_funcs = [opt['condition_func'] for opt in self.optimizations]

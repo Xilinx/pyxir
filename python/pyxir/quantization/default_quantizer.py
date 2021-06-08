@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for quantizing XGraph models
-
-
-"""
+"""Module for quantizing XGraph models"""
 
 import os
 import numpy as np

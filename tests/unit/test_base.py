@@ -12,27 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the Pyxir base functionality
-
-
-"""
+"""Module for testing the Pyxir base functionality"""
 
 import unittest
 import numpy as np
 import pyxir as px
-import tensorflow as tf
 
 from pyxir.opaque_func import OpaqueFunc
 from pyxir.shared.xbuffer import XBuffer
 from pyxir.opaque_func_registry import OpaqueFuncRegistry
 from pyxir.graph.xgraph_factory import XGraphFactory
 
+try:
+    import tensorflow as tf
+    skip_tf = False
+except ModuleNotFoundError:
+    skip_tf = True
 
 class TestBase(unittest.TestCase):
 
     xg_factory = XGraphFactory()
 
+    @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because tensorflow is not available")
     def test_build_rt_opaque_func_cpu_tf(self):
         tf.compat.v1.reset_default_graph()
 

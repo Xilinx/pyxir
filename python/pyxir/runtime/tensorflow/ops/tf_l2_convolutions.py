@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XLayer neural network layers implemented on top of tensorflow
-
-
-"""
+"""Module for XLayer neural network layers implemented on top of tensorflow"""
 
 import os
 import abc
@@ -24,6 +20,8 @@ import math
 import numpy as np
 import tensorflow as tf
 import logging
+
+from typing import List
 
 from .tf_l0_input_and_other import ConstantLayer
 from .tf_l1_basic_nn import ReluLayer
@@ -44,8 +42,8 @@ logger = logging.getLogger("pyxir")
 
 class BatchNormLayer(rt_layer.BatchNormLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
 
         self.axis = self.attrs['axis']
 
@@ -86,8 +84,8 @@ class BatchNormLayer(rt_layer.BatchNormLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         assert len(inpts) == 5
 
         inpt, mean, variance, gamma, beta = inpts
@@ -104,8 +102,8 @@ class BatchNormLayer(rt_layer.BatchNormLayer, RtLayerTF):
             variance_epsilon=self.variance_epsilon
         )]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
 
         assert(len(inputs) == len(self.input_shapes))
 
@@ -128,11 +126,8 @@ def bias_add_factory():
 
 class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
 
-    def init(self):
-        # () -> None
-        """
-        Initialize a convolution layer on top of tf.nn.conv2d operation
-        """
+    def init(self) -> None:
+        """Initialize a convolution layer on top of tf.nn.conv2d operation"""
         self.layout = self.attrs['data_layout']
 
         logger.info("Init {} layer: {}".format(
@@ -168,9 +163,7 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         self.res = self.get_output_tensors(self.inpts)[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def _get_conv_tensor(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-
+    def _get_conv_tensor(self, inpts, **kwargs):
         if len(inpts) == 3:
             inpt, kernel, biases = inpts
         elif len(inpts) == 1:
@@ -206,18 +199,25 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
                 tf.transpose(kernel, (2, 3, 0, 1))
             logger.debug("Kernel transposed shape: {}"
                          .format(kernel_trans.shape))
+        elif kernel_layout == 'OHWI' and self.kernel_groups > 1:
+            # OHWI -> HWOI
+            # NOTE: discrepancy between TVM and Tensorflow??
+            kernel_trans = np.transpose(kernel, (1, 2, 0, 3)) if\
+                isinstance(kernel, np.ndarray) else \
+                tf.transpose(kernel, (1, 2, 0, 3))
+            logger.debug("Kernel transposed shape: {}"
+                         .format(kernel_trans.shape))
         elif kernel_layout == 'OIHW':
             # OIHW -> HWIO
-            # if isinstance(kernel, np.ndarray):
-            #     kernel_trans = np.transpose(kernel, (2, 3, 1, 0))
-            # elif isinstance(kernel, tf.constant):
-            #     kernel_trans = np.transpose()
-            # else:
-            #     kernel_trans = tf.transpose(kernel, (2, 3, 1, 0))
-
             kernel_trans = np.transpose(kernel, (2, 3, 1, 0)) if\
                 isinstance(kernel, np.ndarray) else \
                 tf.transpose(kernel, (2, 3, 1, 0))
+            logger.debug("Kernel transposed shape: {}"
+                         .format(kernel_trans.shape))
+        elif kernel_layout == 'OHWI':
+            kernel_trans = np.transpose(kernel, (1, 2, 3, 0)) if\
+                isinstance(kernel, np.ndarray) else \
+                tf.transpose(kernel, (1, 2, 3, 0))
             logger.debug("Kernel transposed shape: {}"
                          .format(kernel_trans.shape))
         else:
@@ -274,6 +274,8 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
             logger.debug("Padded input shape: {}".format(padded_inpt.shape))
 
         use_bias = (not isinstance(biases, np.ndarray)) or biases.any()
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if self.kernel_groups == 1:
             conv_res = tf.nn.conv2d(
                 padded_inpt,
@@ -282,20 +284,21 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
                 padding_type,
                 data_format='NHWC',
                 dilations=dilations,
-                name=self.name  # if not use_bias else self.name + '_Conv'
+                name=self.name if not (use_bias or use_activation) else self.name + '_Conv'
             )
         else:
             conv_res = tf.nn.depthwise_conv2d(
                 input=padded_inpt,
                 filter=kernel_trans,
                 strides=strides,
-                padding=padding_type
+                padding=padding_type,
+                name=self.name if not (use_bias or use_activation) else self.name + '_Conv'
             )
 
         return conv_res
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        
         # assert(len(inpts) == 1)
         res = self._get_conv_tensor(inpts)
 
@@ -313,10 +316,12 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         if biases.dtype not in ['float32', tf.float32]:
             biases = tf.cast(biases, RtLayerTF.dtype_to_tf[self.dtype])
 
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if (not isinstance(biases, np.ndarray)) or biases.any():
             # Remove biases if numpy.ndarray and all zeros
             res = tf.nn.bias_add(res, biases, data_format='NHWC',
-                                 name=self.name + '_Bias')
+                                 name=self.name if not (use_activation) else self.name + '_Bias')
         # if self.use_activation not
         # in ['relu', 'leaky_relu']
         # else self.name + '_Bias')
@@ -324,20 +329,20 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         # TODO:name of convolution
         # ACTIVATIONS
         if self.use_activation == 'relu':
-            res = tf.nn.relu(res, name=self.name + "_Relu")
+            res = tf.nn.relu(res, name=self.name)
         elif self.use_activation == 'leaky_relu':
             res = tf.nn.leaky_relu(
                 res,
                 alpha=self.activation_attrs['alpha'],
-                name=self.name + "_Relu")
+                name=self.name)
 
         if self.layout == 'NCHW':
             res = tf.transpose(res, (0, 3, 1, 2))
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
         assert(len(inputs) == len(self.input_shapes))
         feed_dict = {
             self.inpts[i]: inputs[i] for i in range(len(inputs))
@@ -347,7 +352,7 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
             return sess.run(self.res, feed_dict=feed_dict)
 
     def get_output_for_quantization(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+        
         """
         TODO
         """
@@ -357,7 +362,6 @@ class ConvLayer(rt_layer.ConvLayer, RtLayerTF):
         }
 
         with tf.compat.v1.Session() as sess:
-            # return sess.run(self.quant_output, feed_dict=feed_dict)
             return sess.run(self.res, feed_dict=feed_dict)
 
 
@@ -390,8 +394,7 @@ class TensorInitializer(tf.keras.initializers.Initializer):
 
 class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
-    def init(self):
-        # () -> None
+    def init(self) -> None:
         """
         Initialize a transposed convolution layer on top of
             tf.nn.conv2d_tranpose operation
@@ -430,18 +433,17 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def _get_conv_tensor(self, inpts, placeholder=False):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def _get_conv_tensor(self, inpts, placeholder=False, **kwargs):
+        
 
         if len(inpts) == 3:
-            inpt, kernel, _ = inpts
+            inpt, kernel, biases = inpts
         elif len(inpts) == 1:
             inpt = inpts[0]
             kernel = \
                 tf.compat.v1.placeholder_with_default(self.kernel,
                                                       self.kernel.shape)
-            # biases = tf.compat.v1.placeholder_with_default(self.biases,
-            # self.biases.shape)
+            biases = tf.compat.v1.placeholder_with_default(self.biases, self.biases.shape)
         else:
             raise ValueError("Invalid number of inputs for convolution"
                              " operator constructor: {}. Number of inputs"
@@ -466,6 +468,13 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
             kernel_trans = np.transpose(kernel, (2, 3, 0, 1)) if\
                 isinstance(kernel, np.ndarray) else \
                 tf.transpose(kernel, (2, 3, 0, 1))
+            logger.debug("Kernel transposed shape: {}"
+                         .format(kernel_trans.shape))
+        elif kernel_layout == 'OHWI':
+            # OHWI -> HWOI
+            kernel_trans = np.transpose(kernel, (1, 2, 0, 3)) if\
+                isinstance(kernel, np.ndarray) else \
+                tf.transpose(kernel, (1, 2, 0, 3))
             logger.debug("Kernel transposed shape: {}"
                          .format(kernel_trans.shape))
         else:
@@ -528,6 +537,9 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         else:
             output_shape = tf.stack([self.batch_size] + output_shape_hwc)
 
+        use_bias = (not isinstance(biases, np.ndarray)) or biases.any()
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if self.kernel_groups == 1:
             if self.placeholder is True:
                 # For stepwise tensorflow model, TODO: remove stepwise
@@ -537,7 +549,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
                     strides=strides,
                     padding=padding_type,
                     output_shape=output_shape,
-                    name=self.name
+                    name=self.name if not (use_bias or use_activation) else self.name + '_ConvTrans'
                     # dilations=dilations TODO: not available in 1.13
                 )
             else:
@@ -570,7 +582,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
                     strides=strides,
                     padding=padding_type,
                     output_shape=output_shape_reconst,
-                    name=self.name
+                    name=self.name if not (use_bias or use_activation) else self.name + '_ConvTrans'
                     # dilations=dilations TODO: not available in 1.13
                 )
 
@@ -591,8 +603,8 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
         return conv_res
 
-    def get_output_tensors(self, inpts, placeholder=False):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts, placeholder=False, **kwargs):
+        
         # assert(len(inpts) == 1)
         res = self._get_conv_tensor(inpts, placeholder=placeholder)
 
@@ -612,21 +624,23 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
         if biases.dtype not in ['float32', tf.float32]:
             biases = tf.cast(biases, RtLayerTF.dtype_to_tf[self.dtype])
 
+        use_activation = self.use_activation in ['relu', 'leaky_relu']
+
         if (not isinstance(biases, np.ndarray)) or biases.any():
             # Remove biases if numpy.ndarray and all zeros
             res = tf.nn.bias_add(res, biases, data_format='NHWC',
-                                 name=self.name + '_Bias')
+                                 name=self.name if not (use_activation) else self.name + '_Bias')
             # if self.use_activation not
             # in ['relu', 'leaky_relu']
             # else self.name + '_Bias')
 
         if self.use_activation == 'relu':
-            res = tf.nn.relu(res, name=self.name + '_Relu')
+            res = tf.nn.relu(res, name=self.name)
         elif self.use_activation == 'leaky_relu':
             res = tf.nn.leaky_relu(
                 res,
                 alpha=self.activation_attrs['alpha'],
-                name=self.name + '_Relu'
+                name=self.name
             )
 
         if self.data_layout == 'NCHW':
@@ -634,8 +648,8 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        
         assert len(inputs) == len(self.input_shapes)
         feed_dict = {
             self.inpts[i]: inputs[i] for i in range(len(inputs))
@@ -645,7 +659,7 @@ class Conv2DTransposeLayer(rt_layer.Conv2DTransposeLayer, RtLayerTF):
             return sess.run(self.res, feed_dict=feed_dict)
 
     def get_output_for_quantization(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
+        
         """
         TODO
         """
@@ -671,9 +685,7 @@ def conv2d_transpose_factory():
 @rt_register_xlayer_2_tf('Flatten')
 class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
-
+    def init(self) -> None:
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
@@ -682,16 +694,12 @@ class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-        assert(len(inpts) == 1)
-        return [tf.contrib.layers.flatten(inpts[0])]
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        assert len(inpts) == 1, "Flatten layer expects one input"
+        return [tf.contrib.layers.flatten(inpts[0], name=self.name)]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        assert(len(inputs) == 1)
-
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Flatten layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -702,14 +710,10 @@ class FlattenLayer(rt_layer.BaseLayer, RtLayerTF):
 
 class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
         self.layout = self.attrs['data_layout']
-
-        logger.info("Init pooling layer: {}, shape: {}".format(self.op,
-                                                               self.shape))
+        logger.info("Init pooling layer: {}, shape: {}".format(self.op, self.shape))
         logger.debug("Paddings: {}".format(self.paddings))
-
         self.inpt = \
             tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
                                      shape=self.input_shapes[0])
@@ -717,9 +721,8 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
         self.res = self.get_output_tensors([self.inpt])[0]
         logger.info("Res shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-        assert(len(inpts) == 1)
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        assert len(inpts) == 1, "Pooling layer expects one input"
 
         op, ksize, paddings, strides = \
             self.op, self.ksize, self.paddings, self.strides
@@ -730,7 +733,7 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
             strides = [strides[0], strides[2], strides[3], strides[1]]
 
         if op == 'Max':
-            tf_pool_func = tf.nn.max_pool
+            tf_pool_func = tf.nn.max_pool2d
         elif op == 'Avg':
             tf_pool_func = tf.nn.avg_pool2d
         else:
@@ -743,19 +746,10 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
             inpt = tf.transpose(inpt, (0, 2, 3, 1))
             logger.debug("Input shape transformed: {}".format(inpt.shape))
 
-        # pad_along_height = max((out_height - 1) * strides[1] +
-        #   filter_height - in_height, 0)
         out_h = self.shape[2] if self.layout == 'NCHW' else self.shape[1]
         out_w = self.shape[3] if self.layout == 'NCHW' else self.shape[2]
         in_h, strides_h = int(inpt.shape[1]), strides[1]
         in_w, strides_w = int(inpt.shape[2]), strides[2]
-        # pad_along_height = max((out_h - 1) * strides[1] + ksize[1] -
-        #                        int(inpt.shape[1]), 0)
-        # pad_along_width = max((out_w - 1) * strides[2] + ksize[2] -
-        #                       int(inpt.shape[2]), 0)
-        # logger.debug("Paddings: {}".format(paddings))
-        # logger.debug("out_h: {}, pad_along_h: {}, out_w: {}, pad_along_w: {}"
-        #             .format(out_h, pad_along_height, out_w, pad_along_width))
 
         if [list(pad) for pad in paddings] == [[0, 0], [0, 0], [0, 0], [0, 0]]:
             padded_inpt = inpt
@@ -786,11 +780,8 @@ class PoolingLayer(rt_layer.PoolingLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        assert(len(inputs) == 1)
-
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Pooling layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
 
@@ -802,8 +793,7 @@ def pooling_factory():
 
 class PoolingNoDivisionLayer(PoolingLayer):
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
         """
         NOTE: On FPGA, average pooling is computed as a sum over the
             respective tiles
@@ -833,8 +823,8 @@ def pooling_no_division_factory():
 @rt_register_xlayer_2_tf('Upsampling2D')
 class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
 
-    def init(self):
-        # type: () -> None
+    def init(self) -> None:
+        
         self.scale_h = self.attrs['scale_h']
         self.scale_w = self.attrs['scale_w']
         self.layout = self.attrs['data_layout']
@@ -868,15 +858,8 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
         logger.info("Input shape: {}".format(self.inpt.shape))
         logger.info("Output shape: {}".format(self.res.shape))
 
-    def get_output_tensors(self, inpts):
-        # type: (List[tf.Tensor]) -> tf.Tensor
-        assert len(inpts) == 1
-
-        # res = tf.keras.layers.UpSampling2D(
-        #     size=[self.scale_h, self.scale_w],
-        #     data_format=self.data_format
-        #     # interpolation=self.interpolation
-        # )(inpts[0])
+    def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
+        assert len(inpts) == 1, "Upsampling2D layer expects one input"
 
         res = inpts[0]
         if self.layout == 'NCHW':
@@ -914,10 +897,7 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
 
         return [res]
 
-    def forward_exec(self, inputs):
-        # type: (List[numpy.ndarray]) -> numpy.ndarray
-
-        assert(len(inputs) == 1)
-
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+        assert len(inputs) == 1, "Upsampling2D layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})

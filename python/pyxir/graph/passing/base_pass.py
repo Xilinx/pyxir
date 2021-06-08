@@ -12,20 +12,71 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for XGraph graph passes
-
-
-"""
+"""Module for XGraph graph passes"""
 
 import abc
 import copy
 import logging
 import warnings
 
+from pyxir.graph import XGraph, XLayer
 from pyxir.graph.xgraph_factory import XGraphFactory
 
 logger = logging.getLogger("pyxir")
+
+def pass_factory(cls):
+
+    def wrapper(*args, **kwargs):
+        obj = cls(*args, **kwargs)
+        return obj
+
+    def factory():
+        return wrapper
+
+    return factory
+
+class XGraphVisitor(object):
+    """Visitor class for visiting XGraph"""
+
+    def __init__(self):
+        self.xgraph = None
+
+    def __call__(self, xgraph: XGraph) -> None:
+        """Main method to be called on object to start visitor pass"""
+        self.xgraph = xgraph
+        for X in self.xgraph.get_layers():
+            self.visit(X)
+        self.xgraph = None
+
+    def visit(self, X: XLayer) -> XLayer:
+        """Visit an XLayer"""
+        pass
+
+
+class XGraphMutator(object):
+
+    """Mutator class for changing XGraph"""
+
+    def __init__(self):
+        self.xgraph = None
+
+    def __call__(self, xgraph: XGraph):
+        """Main method to be called on object to start mutation pass"""
+        self.xgraph = xgraph
+        new_xg = XGraph(self.xgraph.get_name())
+        new_xg.copy_meta_attrs(self.xgraph)
+        for X in xgraph.get_layers():
+            new_X = self.visit(X)
+            # if new_X not None
+            if new_X:
+                # Make sure tops are not set
+                new_X.tops = []
+                new_xg.add(new_X)
+        return new_xg
+
+    def visit(self, X: XLayer) -> XLayer:
+        """Mutate an XLayer"""
+        return X
 
 
 class XGraphBasePass(object):
