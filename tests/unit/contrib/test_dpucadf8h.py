@@ -55,6 +55,7 @@ class TestDPUCADF8H(unittest.TestCase):
         # Unregister dpu for other tests
         TestDPUCADF8H.target_registry.unregister_target("DPUCADF8H")
 
+    @unittest.skipIf(True, "Skip DPUCADF8H tests for now")
     def test_compile_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], "Max", [2, 2], [0, 0],
@@ -107,7 +108,7 @@ class TestDPUCADF8H(unittest.TestCase):
             targets=["DPUCADF8H"],
             expected_nb_subgraphs=2
         )
-
+    @unittest.skipIf(True, "Skip DPUCADF8H tests for now")
     def test_compile_depthwise_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 3, 3, 8),
@@ -122,7 +123,7 @@ class TestDPUCADF8H(unittest.TestCase):
             expected_nb_subgraphs=2, 
             targets=["DPUCADF8H"]
         )
-
+    @unittest.skipIf(True, "Skip DPUCADF8H tests for now")
     def test_compile_scale_conv2d(self):
         xcompiler_scale_conv2d_nhwc_oihw_test(
             (1, 299, 299, 3),
@@ -136,7 +137,7 @@ class TestDPUCADF8H(unittest.TestCase):
         # xcompiler_scale_conv2d_nhwc_oihw_test(
         #     (1, 28, 28, 512), (512, 512, 3, 3), [2, 2, 2, 2], [1, 1], [2, 2],
         # )
-
+    @unittest.skipIf(True, "Skip DPUCADF8H tests for now")
     def test_compile_resnetv1_block(self):
         xcompiler_resnetv1_block_test(
             in_shape=(1, 112, 112, 64),
