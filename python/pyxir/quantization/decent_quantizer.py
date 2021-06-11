@@ -145,7 +145,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         quant_info_file = os.path.join(
             self.work_dir, "quant_info_{}.txt".format(xgraph.get_name())
         )
-        self._save_quant_info(netcfg, quant_info_file)
+        #self._save_quant_info(netcfg, quant_info_file)
 
         self.q_output.add(
             xgraph.get_name(), netcfg, quant_info_file, frozen_graph, q_eval_file
@@ -153,7 +153,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         # TODO
         # Add quantization info to corresponding XLayers
-        self._add_quant_info_to_xgraph(netcfg)
+        #self._add_quant_info_to_xgraph(netcfg)
 
     def quantize(self) -> XGraph:
         """Quantize the XGraph model using the decent_q quantizer
@@ -209,7 +209,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
                 "q_eval": quant_eval_file,
             }
 
-        self.xgraph.set_quantizer_output(self.q_output)
+        #self.xgraph.set_quantizer_output(self.q_output)
 
         return q_xgraph
 
