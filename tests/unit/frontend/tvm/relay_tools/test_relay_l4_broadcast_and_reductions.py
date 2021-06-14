@@ -99,6 +99,21 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
         assert layers[1].shapes == [2, 3, 3]
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_strided_slice_onnx(self):
+        c = relay.expr.const(np.ones((2, 3, 4), np.float32))
+        m = relay.strided_slice(c, (0, 0, 1), (0x7FFFFFFF, 3, 0x7FFFFFFF), (1, 1, 1))
+        net = relay.Function([], m)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == "Constant"
+        assert layers[1].type[0] == "StridedSlice"
+        assert layers[1].shapes == [2, 3, 3]
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_where_constant(self):
         x = relay.var("x", relay.TensorType((-1, 2, 2, 4), "float32"))
         y = relay.var("y", relay.TensorType((-1, 2, 2, 4), "float32"))
