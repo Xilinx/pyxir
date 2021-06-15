@@ -139,21 +139,13 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
             calib_iter=nb_quant_iters,
         )
         self.decent_q.quantize_frozen(input_graph_def, inputs_func, q_config)
-
-        netcfg = os.path.join(self.work_dir, "deploy_model.pb")
         q_eval_file = os.path.join(self.work_dir, "quantize_eval_model.pb")
-        quant_info_file = os.path.join(
-            self.work_dir, "quant_info_{}.txt".format(xgraph.get_name())
-        )
-        #self._save_quant_info(netcfg, quant_info_file)
 
         self.q_output.add(
-            xgraph.get_name(), netcfg, quant_info_file, frozen_graph, q_eval_file
+            xgraph.get_name(), frozen_graph, q_eval_file
         )
 
-        # TODO
-        # Add quantization info to corresponding XLayers
-        #self._add_quant_info_to_xgraph(netcfg)
+
 
     def quantize(self) -> XGraph:
         """Quantize the XGraph model using the decent_q quantizer
@@ -198,116 +190,16 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
                 self.xgraph.meta_attrs["quant_keys"] = [qkey]
             else:
                 self.xgraph.meta_attrs["quant_keys"].append(qkey)
-            quant_file = self.q_output.get_q_file(qkey)
-            quant_info_file = self.q_output.get_q_info(qkey)
             quant_orig_pb = self.q_output.get_orig_pb(qkey)
             quant_eval_file = self.q_output.get_q_eval(qkey)
             self.xgraph.meta_attrs[qkey] = {
-                "q_file": quant_file,
-                "q_info": quant_info_file,
                 "orig_pb": quant_orig_pb,
                 "q_eval": quant_eval_file,
             }
 
-        #self.xgraph.set_quantizer_output(self.q_output)
-
         return q_xgraph
 
-    def _add_quant_info_to_xgraph(self, deploy_frozen_graph: str) -> None:
-        """
-        Retrieve the quantization info from the provided quantized model and
-        add the information to the corresponding XLayers
-        """
 
-        # Import tensorflow only when needed to avoid strict dependency
-        import tensorflow as tf
-
-        quant_info = []
-
-        input_graph_def = tf.compat.v1.GraphDef()
-        with tf.io.gfile.GFile(deploy_frozen_graph, "rb") as f:
-            input_graph_def.ParseFromString(f.read())
-
-            for idx, node in enumerate(input_graph_def.node):
-
-                if node.name in self.xgraph:
-                    X = self.xgraph.get(node.name)
-                    X.attrs["vai_quant_idx"] = idx + 1
-
-                    if "ipos" in node.attr.keys():
-                        X.attrs["vai_quant"] = ["vai_quant_in"]
-                        X.attrs["vai_quant_in"] = [
-                            int(v) for v in node.attr["ipos"].list.i
-                        ]
-                    if "opos" in node.attr.keys():
-                        X.attrs["vai_quant"].append("vai_quant_out")
-                        X.attrs["vai_quant_out"] = [
-                            int(v) for v in node.attr["opos"].list.i
-                        ]
-                    if "wpos" in node.attr.keys():
-                        X.attrs["vai_quant"].append("vai_quant_weights")
-                        X.attrs["vai_quant_weights"] = [
-                            int(v) for v in node.attr["wpos"].list.i
-                        ]
-                    if "bpos" in node.attr.keys():
-                        X.attrs["vai_quant"].append("vai_quant_biases")
-                        X.attrs["vai_quant_biases"] = [
-                            int(v) for v in node.attr["bpos"].list.i
-                        ]
-
-    def _save_quant_info(self, deploy_frozen_graph: str, filename: str) -> None:
-        """Retrieve the quantization info from the provided quantized model"""
-        quant_info = self._get_quant_info(deploy_frozen_graph)
-
-        lines = [
-            [q_op["idx"]]
-            + [q_op["name"]]
-            + [str(i) for i in q_op["ipos"]]
-            + [str(i) for i in q_op["opos"]]
-            + [str(i) for i in q_op["wpos"]]
-            + [str(i) for i in q_op["bpos"]]
-            for q_op in quant_info
-        ]
-        s = "\n".join([" ".join(line) for line in lines])
-
-        with open(filename, "w") as f:
-            f.write(s)
-
-    def _get_quant_info(self, deploy_frozen_graph: str) -> List[dict]:
-        """Retrieve the quantization info from the provided quantized model"""
-
-        # import tensorflow only when needed to avoid strict dependency
-        import tensorflow as tf
-
-        quant_info = []
-
-        input_graph_def = tf.compat.v1.GraphDef()
-        with tf.io.gfile.GFile(deploy_frozen_graph, "rb") as f:
-            input_graph_def.ParseFromString(f.read())
-
-            for idx, node in enumerate(input_graph_def.node):
-
-                q_op = {
-                    "idx": str(idx + 1),
-                    "name": node.name,
-                    "ipos": [],
-                    "opos": [],
-                    "wpos": [],
-                    "bpos": [],
-                }
-
-                if "ipos" in node.attr.keys():
-                    q_op["ipos"].extend([int(v) for v in node.attr["ipos"].list.i])
-                if "opos" in node.attr.keys():
-                    q_op["opos"].extend([int(v) for v in node.attr["opos"].list.i])
-                if "wpos" in node.attr.keys():
-                    q_op["wpos"].extend([int(v) for v in node.attr["wpos"].list.i])
-                if "bpos" in node.attr.keys():
-                    q_op["bpos"].extend([int(v) for v in node.attr["bpos"].list.i])
-
-                quant_info.append(q_op)
-
-        return quant_info
 
     def eval(
         self,

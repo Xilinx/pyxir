@@ -341,12 +341,11 @@ class XGraph(object):
         for q_key in self.meta_attrs["quant_keys"]:
             q_output.add(
                 q_key=q_key,
-                q_file=self.meta_attrs[q_key]['q_file'],
-                q_info=self.meta_attrs[q_key]['q_info'],
-                orig_pb=self.meta_attrs[q_key]['orig_pb']
+                orig_pb=self.meta_attrs[q_key]['orig_pb'],
+                q_eval=self.meta_attrs[q_key]['q_eval']
             )
             logger.debug("QOutput q_info: {}"
-                         .format(self.meta_attrs[q_key]['q_info']))
+                         .format(self.meta_attrs[q_key]['q_eval']))
 
         return q_output
 

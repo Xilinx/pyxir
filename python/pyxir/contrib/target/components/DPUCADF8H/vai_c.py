@@ -55,7 +55,7 @@ class VAICompiler(XGraphBaseCompiler):
 
 
         q_output = self.xgraph.get_quantizer_output()
-        self.netcfgs = {q_key: q_output.get_q_file(q_key)
+        self.netcfgs = {q_key: q_output.get_q_eval(q_key)
                         for q_key in q_output.keys()}
         assert(len(self.netcfgs) == 1)
         self.work_dir = work_dir
@@ -98,7 +98,6 @@ class VAICompiler(XGraphBaseCompiler):
 
         in_shape_dict['input_shape'] = ','.join([str(elem) for elem in graph_input_shapes])
  
-        netcfg=netcfg.replace('deploy_model.pb','quantize_eval_model.pb')
         command = """
         vai_c_tensorflow \
             --frozen_pb {} \
