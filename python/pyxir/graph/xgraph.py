@@ -176,13 +176,13 @@ class XGraph(object):
             raise ValueError("xlayer argument should be of type: XLayer but"
                              " was: {}".format(type(X)))
 
-        xlayer      = X._get_xlayer()
-        xlayer.name = px.stringify(xlayer.name)
-        for i in range(len(xlayer.bottoms)):
-            xlayer.bottoms[i] = px.stringify(xlayer.bottoms[i])
-        for i in range(len(xlayer.tops)):
-            xlayer.tops[i] = px.stringify(xlayer.tops[i])
-        self._xgraph.add(xlayer)
+        # xlayer      = X._get_xlayer()
+        # xlayer.name = px.stringify(xlayer.name)
+        # for i in range(len(xlayer.bottoms)):
+        #     xlayer.bottoms[i] = px.stringify(xlayer.bottoms[i])
+        # for i in range(len(xlayer.tops)):
+        #     xlayer.tops[i] = px.stringify(xlayer.tops[i])
+        self._xgraph.add(X._get_xlayer())
 
 
         # Setup targets

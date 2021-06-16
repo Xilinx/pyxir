@@ -426,15 +426,15 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert(layers[0].type[0] == 'Input')
         assert(layers[0].name == 'in1')
         assert(layers[0].bottoms == [])
-        assert(layers[0].tops == ['conv1_bottom_NCHW>NHWC'])
+        assert(layers[0].tops == ['conv1_bottom_NCHW-NHWC'])
 
         assert(layers[1].type[0] == 'Transpose')
-        assert(layers[1].name == 'conv1_bottom_NCHW>NHWC')
+        assert(layers[1].name == 'conv1_bottom_NCHW-NHWC')
         assert(layers[1].bottoms == ['in1'])
         assert(layers[1].tops == ['xp0'])
 
         assert(layers[2].type[0] == 'TEST')
-        assert(layers[2].bottoms == ['conv1_bottom_NCHW>NHWC'])
+        assert(layers[2].bottoms == ['conv1_bottom_NCHW-NHWC'])
         assert(layers[2].tops == ['pool1'])
         assert(layers[2].attrs['target'] == 'test')
         assert(layers[2].attrs['input_names'] == ['xinput0'])
@@ -442,10 +442,10 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert(layers[2].attrs['input_layers']['xinput0'] == ['conv1'])
         assert(layers[2].attrs['output_layers']['pool1'] == ['pool1'])
         assert(layers[2].attrs['__bottom_tensors'] ==
-               {'xinput0': ['conv1_bottom_NCHW>NHWC']})
+               {'xinput0': ['conv1_bottom_NCHW-NHWC']})
         assert(layers[2].attrs['orig_bottom_tensors'] == {'xinput0': ['in1']})
         assert(layers[2].attrs['__top_tensors'] ==
-               {'pool1': ['pool1_top_NHWC>NCHW']})
+               {'pool1': ['pool1_top_NHWC-NCHW']})
         assert(layers[2].attrs['orig_top_tensors'] == {'pool1': ['add1']})
 
         assert(layers[3].type[0] == 'TupleGetItem')
@@ -455,7 +455,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[3].attrs['axes'] == [0, 3, 1, 2]
 
         # assert(layers[4].type[0] == 'Transpose')
-        # assert(layers[4].name == 'pool1_top_NHWC>NCHW')
+        # assert(layers[4].name == 'pool1_top_NHWC-NCHW')
         # assert(layers[4].bottoms == ['pool1'])
         # assert(layers[4].tops == ['add1'])
         # assert layers[4].attrs['axes'] == [0, 3, 1, 2]
@@ -572,12 +572,12 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[0].type[0] == 'Input'
         assert layers[0].name == 'in1'
         assert layers[0].bottoms == []
-        assert layers[0].tops == ['conv1_bottom_NCHW>NHWC']
+        assert layers[0].tops == ['conv1_bottom_NCHW-NHWC']
         assert layers[0].target == 'cpu'
         assert layers[0].subgraph is None
 
         assert layers[1].type[0] == 'Transpose'
-        assert layers[1].name == 'conv1_bottom_NCHW>NHWC'
+        assert layers[1].name == 'conv1_bottom_NCHW-NHWC'
         assert layers[1].bottoms == ['in1']
         assert layers[1].tops == ['xp2']
         assert layers[1].target == 'cpu'
@@ -586,12 +586,12 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[2].type[0] == 'Input'
         assert layers[2].name == 'in2'
         assert layers[2].bottoms == []
-        assert layers[2].tops == ['conv2_bottom_NCHW>NHWC']
+        assert layers[2].tops == ['conv2_bottom_NCHW-NHWC']
         assert layers[2].target == 'cpu'
         assert layers[2].subgraph is None
 
         assert layers[3].type[0] == 'Transpose'
-        assert layers[3].name == 'conv2_bottom_NCHW>NHWC'
+        assert layers[3].name == 'conv2_bottom_NCHW-NHWC'
         assert layers[3].bottoms == ['in2']
         assert layers[3].tops == ['xp2']
         assert layers[3].target == 'cpu'
@@ -599,8 +599,8 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         assert layers[4].type[0] == 'TEST'
         assert layers[4].name == 'xp2'
-        assert layers[4].bottoms == ['conv1_bottom_NCHW>NHWC',
-                                     'conv2_bottom_NCHW>NHWC']
+        assert layers[4].bottoms == ['conv1_bottom_NCHW-NHWC',
+                                     'conv2_bottom_NCHW-NHWC']
         assert layers[4].tops == ['concat1']
         assert layers[4].attrs['target'] == 'test'
         assert layers[4].attrs['input_names'] == ['xinput0', 'xinput1']
@@ -609,14 +609,14 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[4].attrs['input_layers']['xinput1'] == ['conv2']
         assert layers[4].attrs['output_layers']['concat1'] == ['concat1']
         assert(layers[4].attrs['__bottom_tensors'] ==
-               {'xinput0': ['conv1_bottom_NCHW>NHWC'],
-                'xinput1': ['conv2_bottom_NCHW>NHWC']})
+               {'xinput0': ['conv1_bottom_NCHW-NHWC'],
+                'xinput1': ['conv2_bottom_NCHW-NHWC']})
         assert(layers[4].attrs['orig_bottom_tensors'] ==
                {'xinput0': ['in1'],
                 'xinput1': ['in2']})
         assert layers[4].attrs['__top_tensors'] == {
             'concat1':
-                ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']
+                ['merge_pool1_top_NHWC-NCHW_conv2_top_NHWC-NCHW']
             }
         assert layers[4].attrs['orig_top_tensors'] == {
             'concat1': ['dense1']
@@ -634,7 +634,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         # assert layers[6].type[0] == 'Transpose'
         # assert layers[6].name ==\
-        #     'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
+        #     'merge_pool1_top_NHWC-NCHW_conv2_top_NHWC-NCHW'
         # assert layers[6].bottoms == ['concat1']
         # assert layers[6].tops == ['dense1']
         # assert layers[6].target == 'cpu'
@@ -774,12 +774,12 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[0].name == 'in1'
         assert layers[0].shapes == [1, 1, 4, 4]
         assert layers[0].bottoms == []
-        assert layers[0].tops == ['conv1_bottom_NCHW>NHWC']
+        assert layers[0].tops == ['conv1_bottom_NCHW-NHWC']
         assert layers[0].target == 'cpu'
         assert layers[0].subgraph is None
 
         assert layers[1].type[0] == 'Transpose'
-        assert layers[1].name == 'conv1_bottom_NCHW>NHWC'
+        assert layers[1].name == 'conv1_bottom_NCHW-NHWC'
         assert layers[1].shapes == [1, 4, 4, 1]
         assert layers[1].bottoms == ['in1']
         assert layers[1].tops == ['xp2']
@@ -797,7 +797,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[3].type[0] == 'TEST'
         assert layers[3].name == 'xp2'
         assert layers[3].shapes == [[1, 2, 2, 4]]
-        assert layers[3].bottoms == ['conv1_bottom_NCHW>NHWC', 'in2']
+        assert layers[3].bottoms == ['conv1_bottom_NCHW-NHWC', 'in2']
         assert layers[3].tops == ['concat1']
         assert layers[3].target == 'cpu'
         assert layers[3].subgraph is None
@@ -808,7 +808,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[3].attrs['input_layers']['xinput1'] == ['conv2']
         assert layers[3].attrs['output_layers']['concat1'] == ['concat1']
         assert(layers[3].attrs['__bottom_tensors'] ==
-               {'xinput0': ['conv1_bottom_NCHW>NHWC'],
+               {'xinput0': ['conv1_bottom_NCHW-NHWC'],
                 'xinput1': ['in2']})
         assert(layers[3].attrs['orig_bottom_tensors'] ==
                {'xinput0': ['in1'],
@@ -935,12 +935,12 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[0].name == 'in1'
         assert layers[0].shapes == [1, 1, 4, 4]
         assert layers[0].bottoms == []
-        assert layers[0].tops == ['conv1_bottom_NCHW>NHWC']
+        assert layers[0].tops == ['conv1_bottom_NCHW-NHWC']
         assert layers[0].target == 'cpu'
         assert layers[0].subgraph is None
 
         assert layers[1].type[0] == 'Transpose'
-        assert layers[1].name == 'conv1_bottom_NCHW>NHWC'
+        assert layers[1].name == 'conv1_bottom_NCHW-NHWC'
         assert layers[1].shapes == [1, 4, 4, 1]
         assert layers[1].bottoms == ['in1']
         assert layers[1].tops == ['xp2']
@@ -951,12 +951,12 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[2].name == 'in2'
         assert layers[2].shapes == [1, 1, 4, 4]
         assert layers[2].bottoms == []
-        assert layers[2].tops == ['conv2_bottom_NCHW>NHWC']
+        assert layers[2].tops == ['conv2_bottom_NCHW-NHWC']
         assert layers[2].target == 'cpu'
         assert layers[2].subgraph is None
 
         assert layers[3].type[0] == 'Transpose'
-        assert layers[3].name == 'conv2_bottom_NCHW>NHWC'
+        assert layers[3].name == 'conv2_bottom_NCHW-NHWC'
         assert layers[3].shapes == [1, 4, 4, 1]
         assert layers[3].bottoms == ['in2']
         assert layers[3].tops == ['xp2']
@@ -966,8 +966,8 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[4].type[0] == 'TEST'
         assert layers[4].name == 'xp2'
         assert layers[4].shapes == [[1, 2, 2, 4]]
-        assert layers[4].bottoms == ['conv1_bottom_NCHW>NHWC',
-                                     'conv2_bottom_NCHW>NHWC']
+        assert layers[4].bottoms == ['conv1_bottom_NCHW-NHWC',
+                                     'conv2_bottom_NCHW-NHWC']
         assert layers[4].tops == ['concat1']
         assert layers[4].target == 'cpu'
         assert layers[4].subgraph is None
@@ -979,14 +979,14 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[4].attrs['input_layers']['xinput1'] == ['conv2']
         assert layers[4].attrs['output_layers']['concat1'] == ['concat1']
         assert(layers[4].attrs['__bottom_tensors'] ==
-               {'xinput0': ['conv1_bottom_NCHW>NHWC'],
-                'xinput1': ['conv2_bottom_NCHW>NHWC']})
+               {'xinput0': ['conv1_bottom_NCHW-NHWC'],
+                'xinput1': ['conv2_bottom_NCHW-NHWC']})
         assert(layers[4].attrs['orig_bottom_tensors'] ==
                {'xinput0': ['in1'],
                 'xinput1': ['in2']})
         assert layers[4].attrs['__top_tensors'] ==\
             {'concat1':
-                ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']}
+                ['merge_pool1_top_NHWC-NCHW_conv2_top_NHWC-NCHW']}
         assert layers[4].attrs['orig_top_tensors'] ==\
             {'concat1': ['dense1']}
 
@@ -1000,7 +1000,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         # assert layers[6].type[0] == 'Transpose'
         # assert layers[6].name ==\
-        #     'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
+        #     'merge_pool1_top_NHWC-NCHW_conv2_top_NHWC-NCHW'
         # assert layers[6].shapes == [1, 4, 2, 2]
         # assert layers[6].bottoms == ['concat1']
         # assert layers[6].tops == ['dense1']
@@ -1128,13 +1128,13 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[0].shapes == [1, 1, 4, 4]
         assert layers[0].bottoms == []
         assert layers[0].tops ==\
-            ['0_split_conv1_bottom_NCHW>NHWC_conv2_bottom_NCHW>NHWC']
+            ['0_split_conv1_bottom_NCHW-NHWC_conv2_bottom_NCHW-NHWC']
         assert layers[0].target == 'cpu'
         assert layers[0].subgraph is None
 
         assert layers[1].type[0] == 'Transpose'
         assert layers[1].name ==\
-            '0_split_conv1_bottom_NCHW>NHWC_conv2_bottom_NCHW>NHWC'
+            '0_split_conv1_bottom_NCHW-NHWC_conv2_bottom_NCHW-NHWC'
         assert layers[1].shapes == [1, 4, 4, 1]
         assert layers[1].bottoms == ['in1']
         assert layers[1].tops == ['xp0']
@@ -1146,13 +1146,13 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[2].shapes == [1, 1, 4, 4]
         assert layers[2].bottoms == []
         assert layers[2].tops ==\
-            ['1_split_conv1_bottom_NCHW>NHWC_conv2_bottom_NCHW>NHWC']
+            ['1_split_conv1_bottom_NCHW-NHWC_conv2_bottom_NCHW-NHWC']
         assert layers[2].target == 'cpu'
         assert layers[2].subgraph is None
 
         assert layers[3].type[0] == 'Transpose'
         assert layers[3].name ==\
-            '1_split_conv1_bottom_NCHW>NHWC_conv2_bottom_NCHW>NHWC'
+            '1_split_conv1_bottom_NCHW-NHWC_conv2_bottom_NCHW-NHWC'
         assert layers[3].shapes == [1, 4, 4, 1]
         assert layers[3].bottoms == ['in2']
         assert layers[3].tops == ['xp0']
@@ -1163,8 +1163,8 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[4].name == 'xp0'
         assert layers[4].shapes == [[1, 2, 2, 8]]
         assert layers[4].bottoms ==\
-            ['0_split_conv1_bottom_NCHW>NHWC_conv2_bottom_NCHW>NHWC',
-             '1_split_conv1_bottom_NCHW>NHWC_conv2_bottom_NCHW>NHWC']
+            ['0_split_conv1_bottom_NCHW-NHWC_conv2_bottom_NCHW-NHWC',
+             '1_split_conv1_bottom_NCHW-NHWC_conv2_bottom_NCHW-NHWC']
         assert layers[4].tops == ['concat2']
         assert layers[4].target == 'cpu'
         assert layers[4].subgraph is None
@@ -1176,16 +1176,16 @@ class TestSubgraphBuildFunc(unittest.TestCase):
         assert layers[4].attrs['input_layers']['xinput1'] == ['concat1']
         assert layers[4].attrs['output_layers']['concat2'] == ['concat2']
         assert(layers[4].attrs['__bottom_tensors'] ==
-               {'xinput0': ['0_split_conv1_bottom_NCHW>NHWC_conv2_bottom'
-                            '_NCHW>NHWC'],
-                'xinput1': ['1_split_conv1_bottom_NCHW>NHWC_conv2_bottom'
-                            '_NCHW>NHWC']})
+               {'xinput0': ['0_split_conv1_bottom_NCHW-NHWC_conv2_bottom'
+                            '_NCHW-NHWC'],
+                'xinput1': ['1_split_conv1_bottom_NCHW-NHWC_conv2_bottom'
+                            '_NCHW-NHWC']})
         assert(layers[4].attrs['orig_bottom_tensors'] ==
                {'xinput0': ['in1'],
                 'xinput1': ['in2']})
         assert layers[4].attrs['__top_tensors'] ==\
             {'concat2':
-                ['merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW']}
+                ['merge_pool1_top_NHWC-NCHW_conv2_top_NHWC-NCHW']}
         assert layers[4].attrs['orig_top_tensors'] ==\
             {'concat2': ['dense1']}
 
@@ -1197,7 +1197,7 @@ class TestSubgraphBuildFunc(unittest.TestCase):
 
         # assert layers[6].type[0] == 'Transpose'
         # assert layers[6].name ==\
-        #     'merge_pool1_top_NHWC>NCHW_conv2_top_NHWC>NCHW'
+        #     'merge_pool1_top_NHWC-NCHW_conv2_top_NHWC-NCHW'
         # assert layers[6].shapes == [1, 8, 2, 2]
         # assert layers[6].bottoms == ['concat2']
         # assert layers[6].tops == ['dense1']

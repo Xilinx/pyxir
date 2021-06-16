@@ -114,21 +114,21 @@ class TestLayoutTransformationPass(unittest.TestCase):
         assert xlayers[3].type[0] == 'Transpose'
 
         assert xlayers[0].bottoms == []
-        assert xlayers[0].tops == ['conv1_bottom_NCHW>NHWC']
+        assert xlayers[0].tops == ['conv1_bottom_NCHW-NHWC']
         assert xlayers[0].shapes == [1, 1, 4, 4]
         assert xlayers[1].bottoms == ['in1']
         assert xlayers[1].tops == ['conv1']
         assert xlayers[1].shapes == [1, 4, 4, 1]
-        assert xlayers[2].bottoms == ['conv1_bottom_NCHW>NHWC']
-        assert xlayers[2].tops == ['conv1_top_NHWC>NCHW']
+        assert xlayers[2].bottoms == ['conv1_bottom_NCHW-NHWC']
+        assert xlayers[2].tops == ['conv1_top_NHWC-NCHW']
         assert xlayers[2].shapes == [1, 3, 3, 2]
         assert xlayers[3].bottoms == ['conv1']
         assert xlayers[3].tops == []
         assert xlayers[3].shapes == [1, 2, 3, 3]
 
-        # NCHW -> NHWC
+        # NCHW -- NHWC
         assert xlayers[1].attrs['axes'] == [0, 2, 3, 1]
-        # NHWC -> NCHW
+        # NHWC -- NCHW
         assert xlayers[3].attrs['axes'] == [0, 3, 1, 2]
 
         assert xlayers[2].attrs['data_layout'] == 'NHWC'
@@ -260,11 +260,11 @@ class TestLayoutTransformationPass(unittest.TestCase):
         assert xlayers[0].type[0] == 'Input'
         assert xlayers[0].name == 'in1'
         assert xlayers[0].bottoms == []
-        assert xlayers[0].tops == ['conv1_bottom_NCHW>NHWC']
+        assert xlayers[0].tops == ['conv1_bottom_NCHW-NHWC']
         assert xlayers[0].shapes == [1, 1, 4, 4]
-
+        
         assert xlayers[1].type[0] == 'Transpose'
-        assert xlayers[1].name == 'conv1_bottom_NCHW>NHWC'
+        assert xlayers[1].name == 'conv1_bottom_NCHW-NHWC'
         assert xlayers[1].bottoms == ['in1']
         assert xlayers[1].tops == ['conv1']
         assert xlayers[1].shapes == [1, 4, 4, 1]
@@ -272,7 +272,7 @@ class TestLayoutTransformationPass(unittest.TestCase):
 
         assert xlayers[2].type[0] == 'Convolution'
         assert xlayers[2].name == 'conv1'
-        assert xlayers[2].bottoms == ['conv1_bottom_NCHW>NHWC']
+        assert xlayers[2].bottoms == ['conv1_bottom_NCHW-NHWC']
         assert xlayers[2].tops == ['pool1']
         assert xlayers[2].shapes == [1, 3, 3, 2]
         assert xlayers[2].attrs['data_layout'] == 'NHWC'
@@ -440,11 +440,11 @@ class TestLayoutTransformationPass(unittest.TestCase):
         assert xlayers[0].type[0] == 'Input'
         assert xlayers[0].name == 'in1'
         assert xlayers[0].bottoms == []
-        assert xlayers[0].tops == ['conv1_bottom_NCHW>NHWC']
+        assert xlayers[0].tops == ['conv1_bottom_NCHW-NHWC']
         assert xlayers[0].shapes == [1, 1, 4, 4]
 
         assert xlayers[1].type[0] == 'Transpose'
-        assert xlayers[1].name == 'conv1_bottom_NCHW>NHWC'
+        assert xlayers[1].name == 'conv1_bottom_NCHW-NHWC'
         assert xlayers[1].bottoms == ['in1']
         assert xlayers[1].tops == ['conv1']
         assert xlayers[1].shapes == [1, 4, 4, 1]
@@ -452,14 +452,14 @@ class TestLayoutTransformationPass(unittest.TestCase):
 
         assert xlayers[2].type[0] == 'Convolution'
         assert xlayers[2].name == 'conv1'
-        assert xlayers[2].bottoms == ['conv1_bottom_NCHW>NHWC']
-        assert xlayers[2].tops == ['conv1_top_NHWC>NCHW']
+        assert xlayers[2].bottoms == ['conv1_bottom_NCHW-NHWC']
+        assert xlayers[2].tops == ['conv1_top_NHWC-NCHW']
         assert xlayers[2].shapes == [1, 3, 3, 2]
         assert xlayers[2].attrs['data_layout'] == 'NHWC'
         assert xlayers[2].attrs['padding'] == [[0, 0], [1, 1], [1, 1], [0, 0]]
 
         assert xlayers[3].type[0] == 'Transpose'
-        assert xlayers[3].name == 'conv1_top_NHWC>NCHW'
+        assert xlayers[3].name == 'conv1_top_NHWC-NCHW'
         assert xlayers[3].bottoms == ['conv1']
         assert xlayers[3].tops == ['pool1']
         assert xlayers[3].shapes == [1, 2, 3, 3]
@@ -467,7 +467,7 @@ class TestLayoutTransformationPass(unittest.TestCase):
 
         assert xlayers[4].type[0] == 'Pooling'
         assert xlayers[4].name == 'pool1'
-        assert xlayers[4].bottoms == ['conv1_top_NHWC>NCHW']
+        assert xlayers[4].bottoms == ['conv1_top_NHWC-NCHW']
         assert xlayers[4].tops == ['0_split_concat1_transpose']
         assert xlayers[4].shapes == [1, 2, 2, 2]
         assert xlayers[4].attrs['data_layout'] == 'NCHW'

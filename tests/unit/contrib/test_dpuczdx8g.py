@@ -600,7 +600,7 @@ class TestDPUCZDX8G(unittest.TestCase):
         assert layers[1].tops == ["xp0"]
 
         assert layers[2].type[0] == "DPU"
-        assert layers[2].bottoms == ["conv1_bottom_NCHW>NHWC"]
+        assert layers[2].bottoms == ["conv1_bottom_NCHW-NHWC"]
         assert layers[2].tops == ["pool1"]
         assert layers[2].shapes == [[1, 2, 2, 2]]
         assert layers[2].attrs["target"] == "dpuv2-zcu104"
@@ -608,10 +608,10 @@ class TestDPUCZDX8G(unittest.TestCase):
         assert layers[2].attrs["output_names"] == ["pool1"]
         assert layers[2].attrs["input_layers"]["xinput0"] == ["conv1"]
         assert layers[2].attrs["output_layers"]["pool1"] == ["pool1"]
-        assert layers[2].attrs["__top_tensors"] == {"pool1": ["pool1_top_NHWC>NCHW"]}
+        assert layers[2].attrs["__top_tensors"] == {"pool1": ["pool1_top_NHWC-NCHW"]}
         assert layers[2].attrs["orig_top_tensors"] == {"pool1": ["dense1"]}
         assert layers[2].attrs["__bottom_tensors"] == {
-            "xinput0": ["conv1_bottom_NCHW>NHWC"]
+            "xinput0": ["conv1_bottom_NCHW-NHWC"]
         }
         assert layers[2].attrs["orig_bottom_tensors"] == {"xinput0": ["in1"]}
 

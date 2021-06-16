@@ -16,6 +16,7 @@
 
 import json
 import numpy as np
+import pyxir as px
 import libpyxir as lpx
 
 from collections import namedtuple
@@ -129,7 +130,8 @@ class XLayer(object):
 
     @name.setter
     def name(self, name_: str):
-        self._xlayer.name = name_
+        # Stringify for TF quantizer
+        self._xlayer.name = px.stringify(name_)
 
     @property
     def type(self):
@@ -185,7 +187,7 @@ class XLayer(object):
 
     @tops.setter
     def tops(self, tops_: list):
-        self._xlayer.tops = lpx.StrVector(tops_)
+        self._xlayer.tops = lpx.StrVector([px.stringify(t) for t in tops_])
 
     @property
     def bottoms(self):
@@ -193,7 +195,7 @@ class XLayer(object):
 
     @bottoms.setter
     def bottoms(self, bottoms_: list):
-        self._xlayer.bottoms = lpx.StrVector(bottoms_)
+        self._xlayer.bottoms = lpx.StrVector([px.stringify(b) for b in bottoms_])
 
     @property
     def layer(self):
