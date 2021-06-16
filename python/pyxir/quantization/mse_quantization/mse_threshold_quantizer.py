@@ -97,7 +97,7 @@ class XGraphMSEThresholdQuantizer(XGraphBaseQuantizer):
                 self._quant_param.save_to_dpu_v1_json(self._quant_layers[qkey],
                                                       quant_file)
 
-                self.q_output.add(qkey, quant_file, q_info=None, orig_pb=None)
+                self.q_output.add(qkey, orig_pb=None, q_eval=quant_file)
 
                 # TODO Add scaling layers
                 # TODO Move adding scaling layer to before optimization

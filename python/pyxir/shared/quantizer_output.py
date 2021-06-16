@@ -17,10 +17,8 @@
 
 class QuantizerOutputElem(object):
 
-    def __init__(self, q_key: str, q_file: str, q_info: str, orig_pb: str, q_eval: str = ''):
+    def __init__(self, q_key: str,  orig_pb: str, q_eval: str = ''):
         self.q_key = q_key
-        self.q_file = q_file
-        self.q_info = q_info
         self.orig_pb = orig_pb
         self.q_eval = q_eval
 
@@ -61,14 +59,8 @@ class QuantizerOutput(object):
     def keys(self):
         return self.data.keys()
 
-    def add(self, q_key: str, q_file: str, q_info: str, orig_pb: str, q_eval: str = '') -> None:
-        self.data[q_key] = QuantizerOutputElem(q_key, q_file, q_info, orig_pb, q_eval)
-
-    def get_q_file(self, q_key: str) -> str:
-        return self.data[q_key].get_q_file()
-
-    def get_q_info(self, q_key: str) -> str:
-        return self.data[q_key].get_q_info()
+    def add(self, q_key: str, orig_pb: str, q_eval: str) -> None:
+        self.data[q_key] = QuantizerOutputElem(q_key, orig_pb, q_eval)
 
     def get_orig_pb(self, q_key: str) -> str:
         return self.data[q_key].get_orig_pb()
