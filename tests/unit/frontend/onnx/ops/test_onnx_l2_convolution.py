@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""
-Module for testing the pyxir ONNX frontend
-
-
-"""
+"""Module for testing the pyxir ONNX frontend L2 ops"""
 
 import onnx
 import unittest
@@ -25,6 +21,8 @@ import numpy as np
 from pyxir.graph.layer import xlayer_factory as xlf
 from pyxir.frontend.onnx.onnx_tools import NodeWrapper
 from pyxir.frontend.onnx.ops import onnx_l2_convolution as ol2c
+
+from .onnx_ops_infra import pool_test, conv_test
 
 
 class TestONNXL2Convolutions(unittest.TestCase):
@@ -61,39 +59,34 @@ class TestONNXL2Convolutions(unittest.TestCase):
             assert X.shapes.tolist() == [-1, 2, 3, 3]
 
     def test_avg_pool_node(self):
-        x = np.array([[[[1, 2, 3],
-                        [4, 5, 6],
-                        [7, 8, 9]]]]).astype(np.float32)
-
-        node = onnx.helper.make_node(
-            'AveragePool',
-            inputs=['x'],
-            outputs=['y'],
-            kernel_shape=[2, 2],
-            pads=[0, 1, 0, 1],
-            strides=[2, 2]
+        pool_test(
+            in_shape=(1, 1, 3, 3),
+            pool_type="AveragePool",
+            kernel_size=[2, 2],
+            padding=[0, 1, 0, 1],
+            strides=[2, 2],
+            expected_out_shape=[-1, 1, 2, 2],
+            expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
         )
-
-        wrapped_node = NodeWrapper(node)
-
-        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
-                                               dtype='float32')
-        xmap = {'x': iX}
-        params = {}
-
-        Xs = ol2c.avg_pool(wrapped_node, params, xmap)
-
-        assert len(Xs) == 1
-        X = Xs[0]
-
-        assert X.name == 'y'
-        assert 'Pooling' in X.type
-        assert X.shapes.tolist() == [-1, 1, 2, 2]
-        assert X.attrs['padding'] == [[0, 0], [0, 0], [0, 1], [0, 1]]
-        assert X.attrs['strides'] == [2, 2]
-        assert X.attrs['kernel_size'] == [2, 2]
-        assert X.attrs['data_layout'] == 'NCHW'
-        assert X.attrs['type'] == 'Avg'
+        pool_test(
+            in_shape=(1, 1, 3, 3),
+            pool_type="AveragePool",
+            kernel_size=[2, 2],
+            padding="SAME_UPPER",
+            strides=[2, 2],
+            expected_out_shape=[-1, 1, 2, 2],
+            expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
+        )
+        pool_test(
+            in_shape=(1, 1, 3, 3),
+            pool_type="AveragePool",
+            kernel_size=[2, 2],
+            padding="SAME_LOWER",
+            strides=[2, 2],
+            expected_out_shape=[-1, 1, 2, 2],
+            expected_padding=[[0, 0], [0, 0], [1, 0], [1, 0]],
+        )
+        
 
     def test_avg_pool_node_ceil_mode(self):
         x = np.array([[[[1, 2, 3, 4],
@@ -131,195 +124,256 @@ class TestONNXL2Convolutions(unittest.TestCase):
         assert X.attrs['data_layout'] == 'NCHW'
         assert X.attrs['type'] == 'Avg'
 
-    def test_conv_node_0(self):
-        x = np.array([[[[1, 2, 3],
-                        [4, 5, 6],
-                        [7, 8, 9]]]]).astype(np.float32)
-        W = np.array([[[[1, 1],
-                        [1, 1]]],
-                      [[[1, -1],
-                        [1, 1]]]]).astype(np.float32)
-        B = np.array([1, -1]).astype(np.float32)
-
-        node = onnx.helper.make_node(
-            'Conv',
-            inputs=['x', 'W', 'B'],
-            outputs=['y'],
-            kernel_shape=[2, 2],
-            pads=[1, 1, 0, 0]
+    def test_conv_node(self):
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 3, 3),
+            w_shape=(2, 1, 2, 2),
+            padding=[1, 1, 0, 0],
+            strides=[1, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
         )
-
-        wrapped_node = NodeWrapper(node)
-
-        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
-                                               dtype='float32')
-        wX = xlf.get_xop_factory_func('Constant')('W', W, onnx_id='W')
-        bX = xlf.get_xop_factory_func('Constant')('B', B, onnx_id='B')
-
-        xmap = {'x': iX, 'W': wX, 'B': bX}
-        params = {}
-
-        Xs = ol2c.conv(wrapped_node, params, xmap)
-
-        assert len(Xs) == 2
-        X, baX = Xs
-
-        assert X.name == 'y_Conv'
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
-        assert X.attrs['padding'] == [(0, 0), (0, 0), (1, 0), (1, 0)]
-        assert X.attrs['strides'] == [1, 1]
-        assert X.attrs['dilation'] == [1, 1]
-        assert X.attrs['kernel_size'] == [2, 2]
-        assert X.attrs['channels'] == [1, 2]
-        assert X.attrs['data_layout'] == 'NCHW'
-        assert X.attrs['kernel_layout'] == 'OIHW'
-        assert X.attrs['groups'] == 1
-        assert X.attrs['onnx_id'] == 'y'
-
-        assert baX.name == 'y'
-        assert baX.shapes == [-1, 2, 3, 3]
-        assert baX.attrs['axis'] == 1
-        assert baX.attrs['onnx_id'] == 'y'
-
-    def test_conv_node_1(self):
-        x = np.array([[[[1, 2, 3],
-                        [4, 5, 6],
-                        [7, 8, 9]]]]).astype(np.float32)
-        W = np.array([[[[1, 1],
-                        [1, 1]]],
-                      [[[1, -1],
-                        [1, 1]]]]).astype(np.float32)
-        B = np.array([1, -1]).astype(np.float32)
-
-        node = onnx.helper.make_node(
-            'Conv',
-            inputs=['x', 'W', 'B'],
-            outputs=['y'],
-            kernel_shape=[2, 2],
-            pads=[1, 1, 0, 0]
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 3, 3),
+            w_shape=(2, 1, 2, 2),
+            padding=[1, 1, 1, 1],
+            strides=[1, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 2, 4, 4],
+            expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
         )
-
-        wrapped_node = NodeWrapper(node)
-
-        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
-                                               dtype='float32')
-        wX = xlf.get_xop_factory_func('Constant')('W', W, onnx_id='W')
-        bX = xlf.get_xop_factory_func('Constant')('B', B, onnx_id='B')
-
-        xmap = {'x': iX, 'W': wX, 'B': bX}
-        params = {}
-
-        Xs = ol2c.conv(wrapped_node, params, xmap)
-
-        assert len(Xs) == 2
-        X, baX = Xs
-
-        assert X.name == 'y_Conv'
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
-        assert X.attrs['padding'] == [(0, 0), (0, 0), (1, 0), (1, 0)]
-        assert X.attrs['strides'] == [1, 1]
-        assert X.attrs['dilation'] == [1, 1]
-        assert X.attrs['kernel_size'] == [2, 2]
-        assert X.attrs['channels'] == [1, 2]
-        assert X.attrs['data_layout'] == 'NCHW'
-        assert X.attrs['kernel_layout'] == 'OIHW'
-        assert X.attrs['groups'] == 1
-        assert X.attrs['onnx_id'] == 'y'
-
-        assert baX.name == 'y'
-        assert baX.shapes == [-1, 2, 3, 3]
-        assert baX.attrs['axis'] == 1
-        assert baX.attrs['onnx_id'] == 'y'
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 3, 3),
+            w_shape=(2, 1, 2, 2),
+            padding=[1, 1, 1, 1],
+            strides=[1, 1],
+            dilations=[2, 2],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
+        )
 
     def test_depth_conv_node(self):
-        x = np.ones((1,16,4,4)).astype(np.float32)
-        W = np.ones((8,4,2,2)).astype(np.float32)
-        B = np.ones((8,)).astype(np.float32)
-
-        node = onnx.helper.make_node(
-            'Conv',
-            inputs=['x', 'W', 'B'],
-            outputs=['y'],
-            kernel_shape=[2, 2],
-            pads=[1, 1, 0, 0],
-            group=4
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 16, 4, 4),
+            w_shape=(8, 4, 2, 2),
+            padding=[1, 1, 0, 0],
+            strides=[1, 1],
+            dilations=[1, 1],
+            groups=4,
+            expected_out_shape=[-1, 8, 4, 4],
+            expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
+        )
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 16, 4, 4),
+            w_shape=(8, 4, 2, 2),
+            padding=[1, 1, 1, 1],
+            strides=[1, 1],
+            dilations=[2, 2],
+            groups=4,
+            expected_out_shape=[-1, 8, 4, 4],
+            expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
         )
 
-        wrapped_node = NodeWrapper(node)
+    def test_conv_node_autopad_same_upper(self):
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 5, 5),
+            w_shape=(2, 1, 2, 2),
+            padding="SAME_UPPER",
+            strides=[2, 2],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
+        )
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 3, 3),
+            w_shape=(2, 1, 2, 2),
+            padding="SAME_UPPER",
+            strides=[1, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
+        )
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 5, 5),
+            w_shape=(2, 1, 2, 2),
+            padding="SAME_UPPER",
+            strides=[2, 2],
+            dilations=[2, 2],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
+        )
+        # Grouped Conv
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 8, 3, 3),
+            w_shape=(4, 2, 2, 2),
+            padding="SAME_UPPER",
+            strides=[2, 2],
+            dilations=[1, 1],
+            groups=4,
+            expected_out_shape=[-1, 4, 2, 2],
+            expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
+        )
 
-        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
-                                               dtype='float32')
-        wX = xlf.get_xop_factory_func('Constant')('W', W, onnx_id='W')
-        bX = xlf.get_xop_factory_func('Constant')('B', B, onnx_id='B')
-
-        xmap = {'x': iX, 'W': wX, 'B': bX}
-        params = {}
-
-        Xs = ol2c.conv(wrapped_node, params, xmap)
-
-        assert len(Xs) == 2
-        X, baX = Xs
-        assert X.name == 'y_Conv'
-        assert X.shapes.tolist() == [-1, 8, 4, 4]
-        assert X.attrs['padding'] == [(0, 0), (0, 0), (1, 0), (1, 0)]
-        assert X.attrs['strides'] == [1, 1]
-        assert X.attrs['dilation'] == [1, 1]
-        assert X.attrs['kernel_size'] == [2, 2]
-        assert X.attrs['channels'] == [16, 8]
-        assert X.attrs['data_layout'] == 'NCHW'
-        assert X.attrs['kernel_layout'] == 'OIHW'
-        assert X.attrs['groups'] == 4
-        assert X.attrs['onnx_id'] == 'y'
-
-        assert baX.name == 'y'
-        assert baX.shapes == [-1, 8, 4, 4]
-        assert baX.attrs['axis'] == 1
-        assert baX.attrs['onnx_id'] == 'y'
+    def test_conv_node_autopad_same_lower(self):
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 5, 5),
+            w_shape=(2, 1, 2, 2),
+            padding="SAME_LOWER",
+            strides=[2, 2],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
+        )
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 3, 3),
+            w_shape=(2, 1, 2, 2),
+            padding="SAME_LOWER",
+            strides=[1, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
+        )
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 1, 5, 5),
+            w_shape=(2, 1, 2, 2),
+            padding="SAME_LOWER",
+            strides=[2, 2],
+            dilations=[2, 2],
+            groups=1,
+            expected_out_shape=[-1, 2, 3, 3],
+            expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
+        )
+        # Grouped Conv
+        conv_test(
+            conv_type="Conv",
+            in_shape=(1, 8, 3, 3),
+            w_shape=(4, 2, 2, 2),
+            padding="SAME_LOWER",
+            strides=[2, 2],
+            dilations=[1, 1],
+            groups=4,
+            expected_out_shape=[-1, 4, 2, 2],
+            expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
+        )
 
     def test_conv_transpose_node(self):
-        x = np.zeros((1, 2, 3, 3))
-        W = np.zeros((4, 2, 3, 3))
-        B = np.array([1, -1]).astype(np.float32)
-
-        node = onnx.helper.make_node(
-            'ConvTranspose',
-            inputs=['x', 'W', 'B'],
-            outputs=['y'],
-            kernel_shape=[3, 3],
-            pads=[0, 0, 0, 0]
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 2, 3, 3),
+            w_shape=(4, 2, 3, 3),
+            padding=[0, 0, 0, 0],
+            strides=[1, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 4, 5, 5],
+            expected_padding=[(0, 0), (0, 0), (0, 0), (0, 0)],
+        )
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 32, 128, 1),
+            w_shape=(8, 32, 31, 1),
+            padding=[14, 15, 0, 0],
+            strides=[2, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 8, 256, 1],
+            expected_padding=[(0, 0), (0, 0), (14, 15), (0, 0)],
         )
 
-        wrapped_node = NodeWrapper(node)
+    def test_conv_transpose_node_out_shape(self):
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 2, 3, 3),
+            w_shape=(4, 2, 3, 3),
+            padding=None,
+            strides=[1, 1],
+            dilations=[1, 1],
+            groups=1,
+            conv_transpose_out_shape=[1, 4, 5, 5],
+            expected_out_shape=[-1, 4, 5, 5],
+            expected_padding=[(0, 0), (0, 0), (0, 0), (0, 0)],
+        )
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 32, 128, 1),
+            w_shape=(8, 32, 31, 1),
+            padding=None,
+            strides=[2, 1],
+            dilations=[1, 1],
+            groups=1,
+            conv_transpose_out_shape=[1, 8, 256, 1],
+            expected_out_shape=[-1, 8, 256, 1],
+            expected_padding=[(0, 0), (0, 0), (14, 15), (0, 0)],
+        )
 
-        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
-                                               dtype='float32')
-        wX = xlf.get_xop_factory_func('Constant')('W', W, onnx_id='W')
-        bX = xlf.get_xop_factory_func('Constant')('B', B, onnx_id='B')
+    def test_conv_transpose_node_autopad_same_upper(self):
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 2, 3, 3),
+            w_shape=(4, 2, 3, 3),
+            padding="SAME_UPPER",
+            strides=[2, 2],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 4, 6, 6],
+            expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
+        )
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 32, 128, 1),
+            w_shape=(8, 32, 31, 1),
+            padding="SAME_UPPER",
+            strides=[2, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 8, 256, 1],
+            expected_padding=[(0, 0), (0, 0), (14, 15), (0, 0)],
+        )
 
-        xmap = {'x': iX, 'W': wX, 'B': bX}
-        params = {}
-
-        Xs = ol2c.conv_transpose(wrapped_node, params, xmap)
-
-        assert len(Xs) == 2
-        X, baX = Xs
-
-        assert X.name == 'y_Conv'
-        assert X.shapes.tolist() == [-1, 4, 5, 5]
-        assert X.attrs['padding'] == [(0, 0), (0, 0), (0, 0), (0, 0)]
-        assert X.attrs['strides'] == [1, 1]
-        assert X.attrs['dilation'] == [1, 1]
-        assert X.attrs['kernel_size'] == [3, 3]
-        assert X.attrs['channels'] == [2, 4]
-        assert X.attrs['data_layout'] == 'NCHW'
-        assert X.attrs['kernel_layout'] == 'OIHW'
-        assert X.attrs['groups'] == 1
-        assert X.attrs['onnx_id'] == 'y'
-
-        assert baX.name == 'y'
-        assert baX.shapes == [-1, 4, 5, 5]
-        assert baX.attrs['axis'] == 1
-        assert baX.attrs['onnx_id'] == 'y'
+    def test_conv_transpose_node_autopad_same_lower(self):
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 2, 3, 3),
+            w_shape=(4, 2, 3, 3),
+            padding="SAME_LOWER",
+            strides=[2, 2],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 4, 6, 6],
+            expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
+        )
+        conv_test(
+            conv_type="ConvTranspose",
+            in_shape=(1, 32, 128, 1),
+            w_shape=(8, 32, 31, 1),
+            padding="SAME_LOWER",
+            strides=[2, 1],
+            dilations=[1, 1],
+            groups=1,
+            expected_out_shape=[-1, 8, 256, 1],
+            expected_padding=[(0, 0), (0, 0), (15, 14), (0, 0)],
+        )
 
     def test_flatten_2_flatten(self):
         x = np.array([[[[1, 2, 3],
@@ -453,39 +507,33 @@ class TestONNXL2Convolutions(unittest.TestCase):
         assert X.attrs['onnx_id'] == 'y'
 
     def test_max_pool_node(self):
-        x = np.array([[[[1, 2, 3],
-                        [4, 5, 6],
-                        [7, 8, 9]]]]).astype(np.float32)
-
-        node = onnx.helper.make_node(
-            'MaxPool',
-            inputs=['x'],
-            outputs=['y'],
-            kernel_shape=[2, 2],
-            pads=[0, 1, 0, 1],
-            strides=[1, 1]
+        pool_test(
+            in_shape=(1, 1, 3, 3),
+            pool_type="MaxPool",
+            kernel_size=[2, 2],
+            padding=[0, 1, 0, 1],
+            strides=[1, 1],
+            expected_out_shape=[-1, 1, 3, 3],
+            expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
         )
-
-        wrapped_node = NodeWrapper(node)
-
-        iX = xlf.get_xop_factory_func('Input')('x', list(x.shape),
-                                               dtype='float32')
-        xmap = {'x': iX}
-        params = {}
-
-        Xs = ol2c.max_pool(wrapped_node, params, xmap)
-
-        assert len(Xs) == 1
-        X = Xs[0]
-
-        assert X.name == 'y'
-        assert 'Pooling' in X.type
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
-        assert X.attrs['padding'] == [[0, 0], [0, 0], [0, 1], [0, 1]]
-        assert X.attrs['strides'] == [1, 1]
-        assert X.attrs['kernel_size'] == [2, 2]
-        assert X.attrs['data_layout'] == 'NCHW'
-        assert X.attrs['type'] == 'Max'
+        pool_test(
+            in_shape=(1, 1, 3, 3),
+            pool_type="MaxPool",
+            kernel_size=[2, 2],
+            padding="SAME_UPPER",
+            strides=[2, 2],
+            expected_out_shape=[-1, 1, 2, 2],
+            expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
+        )
+        pool_test(
+            in_shape=(1, 1, 3, 3),
+            pool_type="MaxPool",
+            kernel_size=[2, 2],
+            padding="SAME_LOWER",
+            strides=[2, 2],
+            expected_out_shape=[-1, 1, 2, 2],
+            expected_padding=[[0, 0], [0, 0], [1, 0], [1, 0]],
+        )
 
     def test_max_roi_pool_node(self):
         x = np.array([[[[1, 2, 3],
