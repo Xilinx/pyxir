@@ -122,17 +122,20 @@ class XGraph {
 
     bool contains(const std::string &xl_name)
     {
-      return xlayers.find(xl_name) != xlayers.end();
+      const std::string xl_name_str = pyxir::stringify(xl_name);
+      return xlayers.find(xl_name_str) != xlayers.end();
     }
 
     bool is_input(const std::string &xl_name)
-    { 
-      return std::find(heads.begin(), heads.end(), xl_name) != heads.end();
+    {
+      const std::string xl_name_str = pyxir::stringify(xl_name);
+      return std::find(heads.begin(), heads.end(), xl_name_str) != heads.end();
     }
 
     bool is_output(const std::string &xl_name)
     { 
-      return std::find(tails.begin(), tails.end(), xl_name) != tails.end();
+      const std::string xl_name_str = pyxir::stringify(xl_name);
+      return std::find(tails.begin(), tails.end(), xl_name_str) != tails.end();
     }
 
     // GRAPH MANIPULATION //
@@ -151,17 +154,19 @@ class XGraph {
 
     void remove_head(const std::string &xl_name)
     {
+      const std::string xl_name_str = pyxir::stringify(xl_name);
       for (std::vector<std::string>::iterator it = heads.begin(); 
            it != heads.end(); ++it) {
-        if (*it == xl_name) { heads.erase(it); break; }
+        if (*it == xl_name_str) { heads.erase(it); break; }
       }
     }
     
     void remove_tail(const std::string &xl_name)
     {
+      const std::string xl_name_str = pyxir::stringify(xl_name);
       for (std::vector<std::string>::iterator it = tails.begin(); 
            it != tails.end(); ++it) {
-        if (*it == xl_name) { tails.erase(it); break; }
+        if (*it == xl_name_str) { tails.erase(it); break; }
       }
     }
 

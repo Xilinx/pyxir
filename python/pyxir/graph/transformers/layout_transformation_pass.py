@@ -103,7 +103,7 @@ class XGraphLayoutTransformationPass(XGraphBasePass):
                     # Bottom transpose
                     axes_b = [data_layout.index(e)
                               for e in self.target_data_layout]
-                    tb_name = "{}_bottom_{}>{}".format(
+                    tb_name = "{}_bottom_{}-{}".format(
                         X.name,
                         data_layout,
                         self.target_data_layout
@@ -144,7 +144,7 @@ class XGraphLayoutTransformationPass(XGraphBasePass):
                     #     data_layout,
                     #     X.name.split("-")[-1]
                     # )
-                    tt_name = "{}_top_{}>{}".format(
+                    tt_name = "{}_top_{}-{}".format(
                         X.name,
                         self.target_data_layout,
                         data_layout

@@ -143,7 +143,10 @@ def strided_slice(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
             all remaining elements in that dimension are included in the slice.
     """
     begin = [int(e) for e in list(expr.attrs.begin)]
-    end = [int(e) for e in list(expr.attrs.end)]
+    attrs_end = [int(e) for e in list(expr.attrs.end)]
+    expr_shape = [int(s) for s in expr.type_args[0].shape]
+    end = [ s if e==0x7FFFFFFF else e for e,s in zip (attrs_end,expr_shape)]
+
     expr_strides = list(expr.attrs.strides)
     if expr_strides is None:
         strides = [1] * len(begin)

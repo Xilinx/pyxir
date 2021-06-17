@@ -25,6 +25,7 @@
 #include <unordered_map>
 
 #include "../common/xbuffer.hpp"
+#include "../common/util.hpp"
 #include "xattr.hpp"
 
 namespace pyxir {
@@ -154,38 +155,42 @@ struct XLayer {
 
   bool has_top(const std::string &top_name)
   {
-    return std::find(tops.begin(), tops.end(), top_name) != tops.end();
+    const std::string top_name_str = pyxir::stringify(top_name);
+    return std::find(tops.begin(), tops.end(), top_name_str) != tops.end();
   }
 
   void add_top(const std::string &top_name)
   {
-    tops.push_back(top_name);
+    tops.push_back(pyxir::stringify(top_name));
   }
 
   void remove_top(const std::string &top_name) 
   {
+    const std::string top_name_str = pyxir::stringify(top_name);
     for (std::vector<std::string>::iterator it = tops.begin(); 
           it != tops.end(); ++it) {
-      if (*it == top_name) { tops.erase(it); break; }
+      if (*it == top_name_str) { tops.erase(it); break; }
     }
   }
 
   bool has_bottom(const std::string &bottom_name)
   {
-    return std::find(bottoms.begin(), bottoms.end(), bottom_name) 
+    const std::string bottom_name_str = pyxir::stringify(bottom_name);
+    return std::find(bottoms.begin(), bottoms.end(), bottom_name_str) 
       != bottoms.end();
   }
 
   void add_bottom(const std::string &bottom_name)
   {
-    bottoms.push_back(bottom_name);
+    bottoms.push_back(pyxir::stringify(bottom_name));
   }
 
   void remove_bottom(const std::string &bottom_name) 
   {
+    const std::string bottom_name_str = pyxir::stringify(bottom_name);
     for (std::vector<std::string>::iterator it = bottoms.begin(); 
           it != bottoms.end(); ++it) {
-      if (*it == bottom_name) { bottoms.erase(it); break; }
+      if (*it == bottom_name_str) { bottoms.erase(it); break; }
     }
   }
 
