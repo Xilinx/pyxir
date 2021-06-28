@@ -103,7 +103,7 @@ class TestDPUCAHX8H(unittest.TestCase):
             [1, 1],
             [0, 0],
             conv_groups=8,
-            expected_nb_subgraphs=4,
+            expected_nb_subgraphs=2,
         )
 
     def test_compile_scale_conv2d(self):
