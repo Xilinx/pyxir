@@ -60,7 +60,7 @@ class VAICompilerDNNC(XGraphBaseCompiler):
                              " architectures are: 'arm64'")
 
         q_output = self.xgraph.get_quantizer_output()
-        self.netcfgs = {q_key: q_output.get_q_file(q_key)
+        self.netcfgs = {q_key: q_output.get_q_eval(q_key)
                         for q_key in q_output.keys()}
         assert(len(self.netcfgs) == 1)
         self.arch = arch

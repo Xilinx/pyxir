@@ -201,14 +201,17 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
         quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
         q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
         opt_xgraph = px.optimize(q_xgraph, target)
+
         c_xgraph = px.compile(
             opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
         )
         c_output = c_xgraph.get_compiler_output()
-
+        # print(get_child_subgraphs(xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel")))[-1])
         assert list(c_output.keys()) == ["xp0"]
         assert c_output.get_in_map("xp0") == {"xinput0": "xinput0"}
-        assert c_output.get_out_map("xp0") == {"pool1": "pool1"}
+        assert c_output.get_out_map("xp0") == {"pool1": "pool1"}, "out_map: {}".format(
+            c_output.get_out_map("xp0")
+        )
         assert len(c_output.get_code_files("xp0")) == 1
 
         g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
