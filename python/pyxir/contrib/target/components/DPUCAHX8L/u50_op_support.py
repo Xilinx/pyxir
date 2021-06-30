@@ -1,4 +1,4 @@
-# Copyright 2020 Xilinx Inc.
+# Copyright 2021 Xilinx Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,278 +13,183 @@
 # limitations under the License.
 
 """
-Module for declaring and specifying supported operations for
-DPUAHX8H U50 target.
+Module for declaring and specifying supported operations for the DPUCAHX8L-u50 target.
+See https://www.xilinx.com/html_docs/vitis_ai/1_3/compiling_model.html#ztl1570696058091
 """
 
 import math
 import logging
 import pyxir
 
-logger = logging.getLogger('pyxir')
+from typing import List
+
+from pyxir.graph import XLayer
+from pyxir.contrib.target.components.common.op_support import (
+    is_batch_norm_supported,
+    is_bias_add_supported,
+    is_concat_supported,
+    is_conv2d_supported,
+    is_conv2d_transpose_supported,
+    is_padding_supported,
+    is_pooling_supported,
+    is_scale_supported,
+)
+
+logger = logging.getLogger("pyxir")
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'BatchNorm')
-def batchnorm_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "BatchNorm")
+def batchnorm_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided BatchNorm operator
-        on the zcu104 target """
-
-    axis = X.attrs['axis']
-    channels = X.shapes[axis]
-
-    return channels >= 1 and channels <= 4096
+        on the DPUCAHX8L-u50 target """
+    return is_batch_norm_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'BiasAdd')
-def biasadd_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "BiasAdd")
+def biasadd_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided BiasAdd operator
-        on the zcu104 target """
-
-    axis = X.attrs['axis']
-    channels = X.shapes[axis]
-
-    return channels >= 1 and channels <= 4096
+        on the DPUCAHX8L-u50 target """
+    return is_bias_add_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Cast')
-def cast_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Cast")
+def cast_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Cast operator
         on the DPUCAHX8L-u50 target """
-
-    dtype = X.attrs['dtype']
-
-    return dtype == 'float32'
+    dtype = X.attrs["dtype"]
+    return dtype == "float32"
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Concat')
-def concat_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Concat")
+def concat_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Concat operator
-        on the zcu104 target """
-
-    axis = X.attrs['axis']
-    channels = X.shapes[axis]
-
-    return channels >= 1 and channels <= 4096
+        on the DPUCAHX8L-u50 target """
+    return is_concat_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Convolution')
-def conv2d_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Convolution")
+def conv2d_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Conv2D operator
-        on the zcu104 target """
-
-    data_layout = X.attrs['data_layout']
-
-    kernel_h, kernel_w = X.attrs['kernel_size']
-    stride_h, stride_w = X.attrs['strides']
-    dilation_h, dilation_w = X.attrs['dilation']
-    padding_h, padding_w = X.attrs['padding'][data_layout.index('H')],\
-        X.attrs['padding'][data_layout.index('W')]
-    padding_h_top, padding_h_bot = padding_h
-    padding_w_left, padding_w_right = padding_w
-    ch_in, ch_out = X.attrs['channels']
-    groups = X.attrs['groups']
-
-    return kernel_h >= 1 and kernel_h <= 16 and\
-        kernel_w >= 1 and kernel_w <= 16 and\
-        stride_h >= 1 and stride_h <= 4 and\
-        stride_w >= 1 and stride_w <= 4 and\
-        padding_h_top >= 0 and padding_h_top <= kernel_h - 1 and\
-        padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
-        padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
-        padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in >= 1 and ch_in <= 4096 and\
-        ch_out >= 1 and ch_out <= 4096 and\
-        dilation_h * ch_in <= 4096 and\
-        (dilation_h == 1 or stride_h == 1) and\
-        dilation_w * ch_in <= 4096 and\
-        (dilation_w == 1 or stride_w == 1)
+        on the DPUCAHX8L-u50 target """
+    return is_conv2d_supported(
+        X,
+        bXs,
+        tXs,
+        channel_parallel=32,
+        bank_depth=4096,
+        max_stride=4,
+        min_stride=1,
+        depthwise_supported=False,
+    )
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Conv2DTranspose')
-def conv2d_transpose_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided Conv2DTranspose operator
-        on the zcu104 target """
-
-    data_layout = X.attrs['data_layout']
-
-    kernel_h, kernel_w = X.attrs['kernel_size']
-    stride_h, stride_w = X.attrs['strides']
-    dilation_h, dilation_w = X.attrs['dilation']
-    padding_h, padding_w = X.attrs['padding'][data_layout.index('H')],\
-        X.attrs['padding'][data_layout.index('W')]
-    padding_h_top, padding_h_bot = padding_h
-    padding_w_left, padding_w_right = padding_w
-    ch_in, ch_out = X.attrs['channels']
-    groups = X.attrs['groups']
-
-    return kernel_h >= 1 and kernel_h <= 16 and\
-        kernel_w >= 1 and kernel_w <= 16 and\
-        stride_w * ch_out >= 1 and stride_w * ch_out <= 4096 and\
-        stride_h >= 1 and\
-        padding_h_top >= 0 and padding_h_top <= kernel_h - 1 and\
-        padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
-        padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
-        padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in >= 1 and ch_in <= 4096 and\
-        ch_out >= 1 and ch_out <= 4096 and\
-        dilation_h * ch_in <= 4096 and\
-        (dilation_h == 1 or stride_h == 1) and\
-        dilation_w * ch_in <= 4096 and\
-        (dilation_w == 1 or stride_w == 1)
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Conv2DTranspose")
+def conv2d_transpose_op_support(
+    X: XLayer, bXs: List[XLayer], tXs: List[XLayer]
+) -> bool:
+    """Check whether we can execute the provided Conv2DTranspose operator
+       on the DPUCAHX8L-u50 target"""
+    return is_conv2d_transpose_supported(
+        X, bXs, tXs, channel_parallel=32, bank_depth=4096, max_stride=16, min_stride=1
+    )
 
 
-#@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Dense')
-#def dense_op_support(X, bXs, tXs):
-#    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-#    """ Check whether we can execute the provided Dense operator
-#        on the zcu104 target """
-#
-#    # TODO out_ch
-#
-#    return True
-
-
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'DPU')
-def DPUCZDX8G_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "DPU")
+def DPUCZDX8G_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided DPU operator
-        on the zcu104 target """
-
-    # TODO out_ch
-
+        on the DPUCAHX8L-u50 target """
     return True
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Eltwise')
-def eltwise_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided Eltwise operator
-        on the zcu104 target """
-
-    # TODO in_ch
-
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Eltwise")
+def eltwise_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
+    """Check whether we can execute the provided Eltwise operator
+       on the DPUCAHX8L-u50 target"""
     return True
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Pad')
-def pad_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Maximum")
+def maximum_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
+    """Check whether we can execute the provided Maximum operator
+        on the DPUCAHX8L-u50 target
+    Return true if part of leaky relu pattern    
+    """
+    # check whether part of leaky relu
+    return "patterns" in X.attrs and "LeakyReLU" in X.attrs["patterns"]
+
+
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Pad")
+def pad_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
+    """ Check whether we can execute the provided Padding operator
+        on the DPUCAHX8L-u50 target """
+    return is_padding_supported(X, bXs, tXs)
+
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Pooling")
+def pooling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Pooling operator
-        on the zcu104 target """
-
-    if len(tXs) == 1 and tXs[0].type[0] in ['Pooling', 'Convolution']:
-        t_data_layout = tXs[0].attrs['data_layout']
-        t_type = tXs[0].type[0]
-
-        padding_h, padding_w = X.attrs['padding'][t_data_layout.index('H')],\
-            X.attrs['padding'][t_data_layout.index('W')]
-        padding_h_top, padding_h_bot = padding_h
-        padding_w_left, padding_w_right = padding_w
-
-        if t_type == 'Pooling':
-            return padding_h_top >= 0 and padding_h_top <= 4 and\
-                padding_h_bot >= 0 and padding_h_bot <= 4 and\
-                padding_w_left >= 0 and padding_w_left <= 4 and\
-                padding_w_right >= 0 and padding_w_right <= 4
-        elif t_type == 'Convolution':
-            t_kernel_h, t_kernel_w = tXs[0].attrs['kernel_size']
-
-            return padding_h_top >= 0 and padding_h_top <= t_kernel_h - 1 and\
-                padding_h_bot >= 0 and padding_h_bot <= t_kernel_h - 1 and\
-                padding_w_left >= 0 and padding_w_left <= t_kernel_w - 1 and\
-                padding_w_right >= 0 and padding_w_right <= t_kernel_w - 1
-
-        return False
-
-    return False
+        on the DPUCAHX8L-u50 target """
+    return is_pooling_supported(
+        X=X,
+        bXs=bXs,
+        tXs=tXs,
+        channel_parallel=32,
+        bank_depth=4096,
+        max_pool_min_kernel=2,
+        max_pool_max_kernel=8,
+        max_pool_min_stride=1,
+        max_pool_max_stride=8,
+        avg_pool_min_kernel=1,
+        avg_pool_max_kernel=8,
+        avg_pool_min_stride=1,
+        avg_pool_max_stride=8,
+        max_pool_kernel_valid=[ 2, 3, 5, 7, 8],
+        avg_pool_kernel_valid=[2, 3, 5, 7, 8],
+    )
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Pooling')
-def pooling_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided Pooling operator
-        on the zcu104 target """
-
-    data_layout = X.attrs['data_layout']
-
-    kernel_h, kernel_w = X.attrs['kernel_size']
-    stride_h, stride_w = X.attrs['strides']
-    padding_h, padding_w = X.attrs['padding'][data_layout.index('H')],\
-        X.attrs['padding'][data_layout.index('W')]
-    padding_h_top, padding_h_bot = padding_h
-    padding_w_left, padding_w_right = padding_w
-
-    channels = X.shapes[data_layout.index('C')]
-
-    return kernel_h >= 1 and kernel_h <= 8 and\
-        kernel_w >= 1 and kernel_w <= 8 and\
-        stride_h >= 1 and stride_h <= 4 and\
-        stride_w >= 1 and stride_w <= 4 and\
-        padding_h_top >= 0 and padding_h_top <= 4 and\
-        padding_h_bot >= 0 and padding_h_bot <= 4 and\
-        padding_w_left >= 0 and padding_w_left <= 4 and\
-        padding_w_right >= 0 and padding_w_right <= 4 and\
-        channels >= 1 and channels <= 4096
-
-
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Mean')
-def mean_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Mean")
+def mean_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Mean operator
-        on the zcu104 target """
-
-    axes = X.attrs['axes']
-    keepdims = X.attrs['keepdims']
-
+        on the DPUCAHX8L-u50 target """
+    axes = X.attrs["axes"]
+    keepdims = X.attrs["keepdims"]
     return len(axes) == 2 and keepdims
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'LeakyReLU')
-def leaky_relu_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "LeakyReLU")
+def leaky_relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided LeakyRelu operator
-        on the zcu104 target """
+        on the DPUCAHX8L-u50 target """
+    assert len(bXs) == 1
+    bX = bXs[0]
+    alpha = X.attrs["alpha"]
+    # LeakyRelu not supported after depthwise conv2d
+    return math.isclose(alpha, 0.1, rel_tol=1e-5) and bX.type[0] in [
+        "Convolution",
+        "Conv2DTranspose",
+        "BatchNorm",
+        "Scale",
+    ]
 
-    # TODO: position?
 
-    # Only LeakyReLU: alpha == 0.1 supported
-    alpha = X.attrs['alpha']
-
-    return math.isclose(alpha, 0.1, rel_tol=1e-5)
-
-
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'pReLU')
-def prelu_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "pReLU")
+def prelu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided pRelu operator
-        on the zcu104 target """
-
-    # TODO: position?
-
+        on the DPUCAHX8L-u50 target """
     # Only LeakyReLU: alpha == 0.1 supported
-    alpha = X.attrs['alpha']
-
-    return math.isclose(alpha, 0.1, rel_tol=1e-5)
+    assert len(bXs) == 1
+    bX = bXs[0]
+    alpha = X.attrs["alpha"]
+    # LeakyRelu not supported after depthwise conv2d
+    return math.isclose(alpha, 0.1, rel_tol=1e-5) and bX.type[0] in [
+        "Convolution",
+        "Conv2DTranspose",
+        "BatchNorm",
+        "Scale",
+    ]
 
 
 @pyxir.register_op_support_check('DPUCAHX8L-u50', 'ReLU')
-def relu_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided ReLU operator
-        on the zcu104 target """
-
-    # TODO always?
-
-    return True
-
-
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'ReLU6')
 def relu6_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
@@ -295,24 +200,24 @@ def relu6_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Scale')
-def scale_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "ReLU6")
+def relu6_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
+    """ Check whether we can execute the provided ReLU6 operator
+        on the DPUCAHX8L-u50 target """
+    return False
+
+
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Scale")
+def scale_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Scale operator
-        on the zcu104 target """
-
-    axis = X.attrs['axis']
-    channels = X.shapes[axis]
-
-    return channels > 1 and channels <= 4096
+        on the DPUCAHX8L-u50 target """
+    return is_scale_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
-@pyxir.register_op_support_check('DPUCAHX8L-u50', 'Upsampling2D')
-def scale_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+@pyxir.register_op_support_check("DPUCAHX8L-u50", "Upsampling2D")
+def upsampling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Upsampling2D operator
-        on the zcu104 target """
-
-    method = X.attrs['method']
+        on the DPUCAHX8L-u50 target """
     # TODO
-    return method == 'nearest_neighbor'
+    method = X.attrs["method"]
+    return method == "nearest_neighbor"

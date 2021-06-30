@@ -12,39 +12,65 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Module for registering DPUCZDX8G u50 target """
+"""Module for registering DPUCAHX8L-u50 target"""
 
 import os
 import json
 import pyxir
 import logging
 
+from pyxir.generator.tensorflow import XGraphTfGeneratorOptimizer
+from pyxir.graph.optimization.optimizers import ExternalQOptimizer
+from pyxir.graph.transformers.layout_transformation_pass import (
+    XGraphLayoutTransformationPass,
+)
 from pyxir.graph.transformers import subgraph
+from pyxir.quantization.decent_quantizer import DECENTQuantizer
+from pyxir.quantization.external_quantizer import ExternalQuantizerDecentOutput
+from pyxir.contrib.target.components.common.vai_c import VAICompiler
 
-from .common import xgraph_dpu_optimizer, xgraph_dpu_quantizer
-from .vai_c import VAICompiler
 
-logger = logging.getLogger('pyxir')
 
-FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+logger = logging.getLogger("pyxir")
+
+
+def xgraph_dpu_optimizer(xgraph, target=None, **kwargs):
+    layout_transform_pass = XGraphLayoutTransformationPass("NHWC", target=target)
+    dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
+    optimizer = XGraphTfGeneratorOptimizer(dpu_xgraph)
+    optimizer.optimize()
+    return dpu_xgraph
+
+
+def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
+    quantizer = DECENTQuantizer(
+        xgraph, inputs_func, compiler_target="xcompiler", **kwargs
+    )
+    q_xgraph = quantizer.quantize()
+    return q_xgraph
+
+
+def xgraph_dpu_external_quantizer_optimizer(xgraph, target=None, **kwargs):
+    layout_transform_pass = XGraphLayoutTransformationPass("NHWC", target=target)
+    dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
+    optimizer = ExternalQOptimizer(dpu_xgraph)
+    optimizer.optimize()
+    return dpu_xgraph
+
+
+def xgraph_dpu_external_quantizer(xgraph, inputs_func, **kwargs):
+    quantizer = ExternalQuantizerDecentOutput(xgraph, inputs_func, **kwargs)
+    q_xgraph = quantizer.quantize()
+    return q_xgraph
+
+
 def xgraph_dpu_u50_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
-
-    # TODO here or in optimizer, both?
-    # DPU layers are in NHWC format because of the tensorflow
-    #   intemediate structure we use to communicate with
-    #   DECENT/DNNC
-
     return subgraph.xgraph_build_func(
-        xgraph=xgraph,
-        target='DPUCAHX8L-u50',
-        xtype='DPU',
-        layout='NHWC',
-        work_dir=work_dir
+        xgraph=xgraph, target="DPUCAHX8L-u50", xtype="DPU", layout="NHWC", work_dir=work_dir
     )
 
 
 def xgraph_dpu_u50_compiler(xgraph, **kwargs):
-
     # Vitis-AI 1.3 - ...
     new_arch = "/opt/vitis_ai/compiler/arch/DPUCAHX8L/U50/arch.json"
 

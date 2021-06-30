@@ -11,4 +11,4 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Module for DPUCAHX8H (former DPUv3me) components """
+""" Module for DPUCAHX8L (former DPUv3me) components """

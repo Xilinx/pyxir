@@ -24,6 +24,7 @@ from pyxir.graph.optimization.optimizers import ExternalQOptimizer
 from pyxir.graph.transformers.layout_transformation_pass import (
     XGraphLayoutTransformationPass,
 )
+from pyxir.graph.transformers import subgraph
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
 from pyxir.quantization.external_quantizer import ExternalQuantizerDecentOutput
 from pyxir.contrib.target.components.common.vai_c import VAICompiler

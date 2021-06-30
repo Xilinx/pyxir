@@ -15,8 +15,8 @@
 
 import pyxir
 
-from .components.DPUCAHX8L.common import xgraph_dpu_quantizer
-from .components.DPUCAHX8L.common import xgraph_dpu_optimizer
+from .components.DPUCAHX8L.u50 import xgraph_dpu_quantizer
+from .components.DPUCAHX8L.u50 import xgraph_dpu_optimizer
 from .components.DPUCAHX8L.u50 import xgraph_dpu_u50_build_func
 from .components.DPUCAHX8L.u50 import xgraph_dpu_u50_compiler
 from .components.DPUCAHX8L.u280 import xgraph_dpu_u280_build_func
