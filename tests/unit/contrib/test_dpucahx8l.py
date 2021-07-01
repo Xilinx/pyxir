@@ -71,15 +71,18 @@ class TestDPUCAHX8H(unittest.TestCase):
              targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"],
         )
         # Padded
-        #xcompiler_conv2d_pool2d_nhwc_oihw_test(
-        #    (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [1, 1], "Max", [4, 4], [0, 0],
-        #     targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"],
-        #     expected_nb_subgraphs=5,
-        #)
-        #xcompiler_conv2d_pool2d_nhwc_oihw_test(
-        #    (1, 8, 8, 1), (2, 1, 3, 3), [2, 2], [1, 1], [1, 1], "Avg", [4, 4], [0, 0],
-        #     targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"]
-        #)
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [1, 1], "Max", [4, 4], [0, 0],
+             targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"],
+             expected_nb_subgraphs=3,
+             expected_name={'conv1': 'conv1'},
+        )
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 8, 8, 1), (2, 1, 3, 3), [2, 2], [1, 1], [1, 1], "Avg", [4, 4], [0, 0],
+             targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"],
+             expected_nb_subgraphs=3,
+             expected_name={'conv1': 'conv1'},
+        )
         # Dilated
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [2, 2], "Max", [2, 2], [0, 0],
@@ -101,20 +104,21 @@ class TestDPUCAHX8H(unittest.TestCase):
             targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"]
         )
 
-    #def test_compile_depthwise_conv2d_pool2d(self):
-    #    xcompiler_conv2d_pool2d_nhwc_oihw_test(
-    #        (1, 3, 3, 8),
-    #        (8, 1, 3, 3),
-    #        [0, 0],
-    #        [1, 1],
-    #        [1, 1],
-    #        "Max",
-    #        [1, 1],
-    #        [0, 0],
-    #        conv_groups=8,
-    #        targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"],
-    #        expected_nb_subgraphs=2,
-    #    )
+    def test_compile_depthwise_conv2d_pool2d(self):
+       xcompiler_conv2d_pool2d_nhwc_oihw_test(
+           (1, 3, 3, 8),
+           (8, 1, 3, 3),
+           [0, 0],
+           [1, 1],
+           [1, 1],
+           "Max",
+           [1, 1],
+           [0, 0],
+           conv_groups=8,
+           targets=["DPUCAHX8L-u280", "DPUCAHX8L-u50"],
+           expected_nb_subgraphs=3,  
+           expected_name={'conv1': 'conv1'},
+       )
 
     def test_compile_scale_conv2d(self):
         # Standalone scale/batchnorm unsupported in DPUCAHX8H compiler
