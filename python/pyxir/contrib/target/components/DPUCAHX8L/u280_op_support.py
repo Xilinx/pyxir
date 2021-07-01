@@ -79,7 +79,7 @@ def conv2d_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
         bank_depth=4096,
         max_stride=4,
         min_stride=1,
-        depthwise_supported=False,
+        depthwise_supported=True,
     )
 
 
@@ -142,7 +142,7 @@ def pooling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
         avg_pool_max_kernel=8,
         avg_pool_min_stride=1,
         avg_pool_max_stride=8,
-        max_pool_kernel_valid=[ 2, 3, 5, 7, 8],
+        max_pool_kernel_valid=[2, 3, 5, 7, 8],
         avg_pool_kernel_valid=[2, 3, 5, 7, 8],
     )
 
@@ -160,34 +160,13 @@ def mean_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 def leaky_relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided LeakyRelu operator
         on the DPUCAHX8L-u280 target """
-    assert len(bXs) == 1
-    bX = bXs[0]
-    alpha = X.attrs["alpha"]
-    # LeakyRelu not supported after depthwise conv2d
-    return math.isclose(alpha, 0.1, rel_tol=1e-5) and bX.type[0] in [
-        "Convolution",
-        "Conv2DTranspose",
-        "BatchNorm",
-        "Scale",
-    ]
-
+    return False
 
 @pyxir.register_op_support_check("DPUCAHX8L-u280", "pReLU")
 def prelu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided pRelu operator
         on the DPUCAHX8L-u280 target """
-    # Only LeakyReLU: alpha == 0.1 supported
-    assert len(bXs) == 1
-    bX = bXs[0]
-    alpha = X.attrs["alpha"]
-    # LeakyRelu not supported after depthwise conv2d
-    return math.isclose(alpha, 0.1, rel_tol=1e-5) and bX.type[0] in [
-        "Convolution",
-        "Conv2DTranspose",
-        "BatchNorm",
-        "Scale",
-    ]
-
+    return False
 
 @pyxir.register_op_support_check('DPUCAHX8L-u280', 'ReLU')
 def relu6_op_support(X, bXs, tXs):
@@ -204,7 +183,7 @@ def relu6_op_support(X, bXs, tXs):
 def relu6_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided ReLU6 operator
         on the DPUCAHX8L-u280 target """
-    return False
+    return True
 
 
 @pyxir.register_op_support_check("DPUCAHX8L-u280", "Scale")
