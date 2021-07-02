@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module for registering DPUCAHX8L-u50 target"""
+"""Module for registering DPUCAHX8L (U50, U280) target"""
 
 import os
 import json
