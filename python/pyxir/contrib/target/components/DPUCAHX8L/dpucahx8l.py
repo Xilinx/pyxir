@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module for registering DPUCVDX8H target"""
+"""Module for registering DPUCAHX8L (U50, U280) target"""
 
 import os
 import json
@@ -28,6 +28,7 @@ from pyxir.graph.transformers import subgraph
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
 from pyxir.quantization.external_quantizer import ExternalQuantizerDecentOutput
 from pyxir.contrib.target.components.common.vai_c import VAICompiler
+
 
 
 logger = logging.getLogger("pyxir")
@@ -65,13 +66,13 @@ def xgraph_dpu_external_quantizer(xgraph, inputs_func, **kwargs):
 
 def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
     return subgraph.xgraph_build_func(
-        xgraph=xgraph, target="DPUCVDX8H", xtype="DPU", layout="NHWC", work_dir=work_dir
+        xgraph=xgraph, target="DPUCAHX8L", xtype="DPU", layout="NHWC", work_dir=work_dir
     )
 
 
 def xgraph_dpu_compiler(xgraph, **kwargs):
     # Vitis-AI 1.3 - ...
-    new_arch = "/opt/vitis_ai/compiler/arch/DPUCVDX8H/VCK5000/arch.json"
+    new_arch = "/opt/vitis_ai/compiler/arch/DPUCAHX8L/U50/arch.json"
 
     if os.path.exists(new_arch):
         arch_path = new_arch

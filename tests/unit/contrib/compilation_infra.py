@@ -172,7 +172,8 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
     conv_invalid=False,
     kernel_layout="OIHW",
     targets=["DPUCAHX8H-u50"],
-    expected_nb_subgraphs=3,
+    expected_nb_subgraphs=3, 
+    expected_name={"pool1": "pool1"},
 ):
 
     for target in targets:
@@ -209,7 +210,7 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
         # print(get_child_subgraphs(xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel")))[-1])
         assert list(c_output.keys()) == ["xp0"]
         assert c_output.get_in_map("xp0") == {"xinput0": "xinput0"}
-        assert c_output.get_out_map("xp0") == {"pool1": "pool1"}, "out_map: {}".format(
+        assert c_output.get_out_map("xp0") == expected_name, "out_map: {}".format(
             c_output.get_out_map("xp0")
         )
         assert len(c_output.get_code_files("xp0")) == 1

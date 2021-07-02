@@ -192,7 +192,7 @@ def is_padding_supported(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> boo
             )
         elif t_type == "Convolution":
             t_kernel_h, t_kernel_w = tXs[0].attrs["kernel_size"]
-            t_dilation_h, t_dilation_w = X.attrs["dilation"]
+            t_dilation_h, t_dilation_w = tXs[0].attrs["dilation"]
 
             return (
                 padding_h_top >= 0
