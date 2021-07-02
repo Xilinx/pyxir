@@ -15,31 +15,19 @@
 
 import pyxir
 
-from .components.DPUCAHX8L.u50 import xgraph_dpu_quantizer
-from .components.DPUCAHX8L.u50 import xgraph_dpu_optimizer
-from .components.DPUCAHX8L.u50 import xgraph_dpu_u50_build_func
-from .components.DPUCAHX8L.u50 import xgraph_dpu_u50_compiler
-from .components.DPUCAHX8L.u280 import xgraph_dpu_u280_build_func
-from .components.DPUCAHX8L.u280 import xgraph_dpu_u280_compiler
+from .components.DPUCAHX8L.dpucahx8l import xgraph_dpu_quantizer
+from .components.DPUCAHX8L.dpucahx8l import xgraph_dpu_optimizer
+from .components.DPUCAHX8L.dpucahx8l import xgraph_dpu_build_func
+from .components.DPUCAHX8L.dpucahx8l import xgraph_dpu_compiler
 
 
 
-# Register target
-pyxir.register_target('DPUCAHX8L-u50',
+# Register DPUCAHX8L target
+pyxir.register_target('DPUCAHX8L',
                       xgraph_dpu_optimizer,
                       xgraph_dpu_quantizer,
-                      xgraph_dpu_u50_compiler,
-                      xgraph_dpu_u50_build_func)
-
-# Register op support
-from .components.DPUCAHX8L import u50_op_support
-
-# Register U280 target
-pyxir.register_target('DPUCAHX8L-u280',
-                      xgraph_dpu_optimizer,
-                      xgraph_dpu_quantizer,
-                      xgraph_dpu_u280_compiler,
-                      xgraph_dpu_u280_build_func)
+                      xgraph_dpu_compiler,
+                      xgraph_dpu_build_func)
 
 # Register op support
 from .components.DPUCAHX8L import u280_op_support

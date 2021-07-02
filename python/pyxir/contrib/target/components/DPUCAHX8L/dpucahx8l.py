@@ -64,13 +64,13 @@ def xgraph_dpu_external_quantizer(xgraph, inputs_func, **kwargs):
     return q_xgraph
 
 
-def xgraph_dpu_u50_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
+def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
     return subgraph.xgraph_build_func(
-        xgraph=xgraph, target="DPUCAHX8L-u50", xtype="DPU", layout="NHWC", work_dir=work_dir
+        xgraph=xgraph, target="DPUCAHX8L", xtype="DPU", layout="NHWC", work_dir=work_dir
     )
 
 
-def xgraph_dpu_u50_compiler(xgraph, **kwargs):
+def xgraph_dpu_compiler(xgraph, **kwargs):
     # Vitis-AI 1.3 - ...
     new_arch = "/opt/vitis_ai/compiler/arch/DPUCAHX8L/U50/arch.json"
 
