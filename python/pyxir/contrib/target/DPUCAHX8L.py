@@ -30,4 +30,4 @@ pyxir.register_target('DPUCAHX8L',
                       xgraph_dpu_build_func)
 
 # Register op support
-from .components.DPUCAHX8L import u280_op_support
+from .components.DPUCAHX8L import op_support
