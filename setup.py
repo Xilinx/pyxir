@@ -50,7 +50,7 @@ if '--debug' in sys.argv:
 else:
    	debug = False
 
-# DPUCADX8G/DPUv1 build
+# DPUCADX8G/DPUv1 build [DEPRECATED]
 if '--use_vai_rt' in sys.argv:
     use_vai_rt_dpucadx8g = True
     sys.argv.remove('--use_vai_rt')
@@ -89,6 +89,14 @@ elif '--use_vart_cloud_dpu' in sys.argv:
 else:
     use_vai_rt_dpucahx8h = False
     use_vart_cloud_dpu = False
+
+# EDGE DPU with VART runtime build (for Zynq and VCK190)
+# NOTE The Zynq specific flags are still here for backward compatibility
+if '--use_vart_edge_dpu' in sys.argv:
+    use_vart_edge_dpu = True
+    sys.argv.remove('--use_vart_edge_dpu')  
+else:
+    use_vart_edge_dpu = False
 
 ###############
 # STATIC DATA #
@@ -191,6 +199,8 @@ class CMakeBuild(build_ext):
             cmake_args.append('-DUSE_VAI_RT_DPUCAHX8H=ON')
         if use_vart_cloud_dpu:
             cmake_args.append('-DUSE_VART_CLOUD_DPU=ON')
+        if use_vart_edge_dpu:
+            cmake_args.append('-DUSE_VART_EDGE_DPU=ON')
         if use_dpuczdx8g_vart:
             cmake_args.append('-DUSE_DPUCZDX8G_VART=ON')
         if self.debug:

@@ -245,10 +245,8 @@ def is_pooling_supported(
             and kernel_h <= max_pool_max_kernel
             and kernel_w >= max_pool_min_kernel
             and kernel_w <= max_pool_max_kernel
-            and max_pool_kernel_valid is None
-            or kernel_h in max_pool_kernel_valid
-            and max_pool_kernel_valid is None
-            or kernel_w in max_pool_kernel_valid
+            and (max_pool_kernel_valid is None or kernel_h in max_pool_kernel_valid)
+            and (max_pool_kernel_valid is None or kernel_w in max_pool_kernel_valid)
             and stride_h >= max_pool_min_stride
             and stride_h <= max_pool_max_stride
             and stride_w >= max_pool_min_stride
@@ -269,10 +267,8 @@ def is_pooling_supported(
             kernel_h == kernel_w
             and kernel_h >= avg_pool_min_kernel
             and kernel_h <= avg_pool_max_kernel
-            and avg_pool_kernel_valid is None
-            or kernel_h in avg_pool_kernel_valid
-            and avg_pool_kernel_valid is None
-            or kernel_w in avg_pool_kernel_valid
+            and (avg_pool_kernel_valid is None or kernel_h in avg_pool_kernel_valid)
+            and (avg_pool_kernel_valid is None or kernel_w in avg_pool_kernel_valid)
             and stride_h >= avg_pool_min_stride
             and stride_h <= avg_pool_max_stride
             and stride_w >= avg_pool_min_stride
