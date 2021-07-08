@@ -47,7 +47,7 @@ if (USE_VAI_RT_DPUCADX8G)
   file(GLOB_RECURSE vitisai_default_SOURCES "src/pyxir/runtime/backends/vai_rt/xir_api/*.cpp")
   list(REMOVE_ITEM SOURCES ${vitisai_default_SOURCES})
 
-elseif (USE_VAI_RT_DPUCAHX8H OR USE_VART_CLOUD_DPU OR (USE_VAI_RT_DPUCZDX8G AND USE_DPUCZDX8G_VART))
+elseif (USE_VAI_RT_DPUCAHX8H OR USE_VART_CLOUD_DPU OR USE_VART_EDGE_DPU OR (USE_VAI_RT_DPUCZDX8G AND USE_DPUCZDX8G_VART))
   set(vitisai_LIBRARIES /usr/lib)
   set(VITISAI_SHARED_LIB libvart-runner.so)  
   add_library(vitisai_rt SHARED IMPORTED)
