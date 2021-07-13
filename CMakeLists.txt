@@ -57,6 +57,8 @@ elseif (USE_VAI_RT_DPUCAHX8H OR USE_VART_CLOUD_DPU OR USE_VART_EDGE_DPU OR (USE_
     add_definitions(-DUSE_VAI_RT_DPUCAHX8H=1)
   elseif (USE_VART_CLOUD_DPU)
     add_definitions(-DUSE_VART_CLOUD_DPU=1)
+  elseif (USE_VART_EDGE_DPU)
+    add_definitions(-DUSE_VART_EDGE_DPU=1)
   else()
     add_definitions(-DUSE_VAI_RT_DPUCZDX8G=1)
   endif()
