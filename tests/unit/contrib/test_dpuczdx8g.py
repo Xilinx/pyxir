@@ -74,6 +74,7 @@ class TestDPUCZDX8G(unittest.TestCase):
         TestDPUCZDX8G.target_registry.unregister_target("DPUCZDX8G-ultra96")
         TestDPUCZDX8G.target_registry.unregister_target("dpuv2-som")
         TestDPUCZDX8G.target_registry.unregister_target("DPUCZDX8G-som")
+        TestDPUCZDX8G.target_registry.unregister_target("DPUCZDX8G-kv260")
 
     # @unittest.skipIf(skip_tf, "Skipping Tensorflow related test because tensorflow is"
     #                 "not available")
@@ -101,6 +102,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -118,6 +120,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -134,6 +137,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -151,6 +155,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -167,6 +172,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -184,6 +190,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -200,6 +207,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -216,6 +224,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -235,6 +244,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -252,6 +262,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -268,6 +279,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -285,6 +297,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -301,6 +314,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -318,6 +332,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -334,6 +349,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -350,6 +366,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -367,7 +384,12 @@ class TestDPUCZDX8G(unittest.TestCase):
             [2, 2],
             [0, 0],
             conv_groups=8,
-            targets=["DPUCZDX8G-zcu104", "DPUCZDX8G-zcu102", "DPUCZDX8G-som"],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-som",
+            ],
             expected_nb_subgraphs=3,
         )
 
@@ -409,6 +431,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -425,6 +448,7 @@ class TestDPUCZDX8G(unittest.TestCase):
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
                 "DPUCZDX8G-ultra96",
                 "DPUCZDX8G-som",
             ],
@@ -565,6 +589,7 @@ class TestDPUCZDX8G(unittest.TestCase):
                 tops=["dense1"],
                 layer=["pool1"],
                 attrs={
+                    "pool_type": "Avg",
                     "data_layout": "NCHW",
                     "padding": [[0, 0], [0, 0], [1, 1], [1, 1]],
                     "kernel_size": [3, 3],

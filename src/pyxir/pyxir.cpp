@@ -82,7 +82,7 @@ PX_API std::shared_ptr<graph::XGraph> load(
 REGISTER_OPAQUE_FUNC("pyxir.use_dpuczdx8g_vart")
     ->set_func([](pyxir::OpaqueArgs &args) 
     {
-      #ifdef USE_DPUCZDX8G_VART
+      #if defined(USE_DPUCZDX8G_VART) || defined(USE_VART_EDGE_DPU)
         args[0]->get_str_container()->set_string("True");
       #else
         args[0]->get_str_container()->set_string("False");
