@@ -12,6 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.3.0 ////////////////
+NEW FEATURES:
+    - Add DPUCADF8G (U200/U250) target
+    - Add DPUCVDX8H (VCK5000) target
+    - Add DPUCVDX8G (VCK190) target
+    - Add DPUCAHX8L (U50/U280) target
+    - Add DPUCZDX8G-kv260 (Kria SOM) target
+UPDATES:
+    - Add support for auto pad attributes in ONNX pooling translation to XLayer
+    - Compile with -O3 optimization level
+BUG FIXES:
+    - Fix ONNX Conv2D auto pad attribute translation to XLayer
+    - Fix Relay strided_slice op translation to XLayer
+    - Aanitize XLayer names to avoid unsupported TF naming characters
+    - Use RTLD_DEEPBIND dlopen for Tensorflow to avoid error due to different protobuf versions in AKS flow
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.2.1 ////////////////
 NEW FEATURES:
     - /
