@@ -172,7 +172,7 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
     conv_invalid=False,
     kernel_layout="OIHW",
     targets=["DPUCAHX8H-u50"],
-    expected_nb_subgraphs=3, 
+    expected_nb_subgraphs=3,
     expected_name={"pool1": "pool1"},
 ):
 
