@@ -17,6 +17,8 @@
 import unittest
 import numpy as np
 
+from typing import List, Tuple
+
 # ! To import tvm
 import pyxir
 
@@ -35,8 +37,12 @@ if not skip:
 
 
 class TestRelayL5VisionOperationConversions(unittest.TestCase):
-    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    @unittest.skipIf(
+        skip or not hasattr(relay.image, "resize"),
+        "Could not import TVM and/or TVM frontend",
+    )
     def test_image_resize_to_upsampling2d(self):
+        # [DEPRECATED]
         data = relay.var("data", relay.TensorType((1, 20, 20, 32), "float32"))
 
         net = relay.image.resize(
@@ -60,8 +66,12 @@ class TestRelayL5VisionOperationConversions(unittest.TestCase):
         assert layers[3].type[0] == "Transpose"
         assert layers[3].shapes == [-1, 40, 40, 32]
 
-    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    @unittest.skipIf(
+        skip or not hasattr(relay.image, "resize"),
+        "Could not import TVM and/or TVM frontend",
+    )
     def test_image_resize(self):
+        # [DEPRECATED]
         data = relay.var("data", relay.TensorType((1, 20, 20, 32), "float32"))
 
         net = relay.image.resize(
@@ -80,6 +90,83 @@ class TestRelayL5VisionOperationConversions(unittest.TestCase):
 
         assert layers[1].type[0] == "AnyOp"
         assert layers[1].shapes == [-1, 40, 40, 32]
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_image_resize2d(self):
+        def _test_image_resize2d(
+            in_shape: Tuple[int],
+            size: List[int],
+            layout: str = "NHWC",
+            method: str = "nearest_neighbor",
+            coordinate_transformation_mode="asymmetric",
+            rounding_method: str = "",
+            cubic_alpha: float = -0.5,
+            cubic_exclude: int = 0,
+            supported: bool = True,
+        ):
+            n, h_in, w_in, c = [in_shape[layout.index(e)] for e in "NHWC"]
+            h_out, w_out = size
+
+            data = relay.var("data", relay.TensorType(in_shape, "float32"))
+            net = relay.image.resize2d(
+                data,
+                size=size,
+                layout=layout,
+                method=method,
+                coordinate_transformation_mode=coordinate_transformation_mode,
+                rounding_method=rounding_method,
+                cubic_alpha=cubic_alpha,
+                cubic_exclude=cubic_exclude,
+            )
+
+            mod = tvm.IRModule.from_expr(net)
+            mod = relay.transform.InferType()(mod)
+            params = {}
+            xgraph = xf_relay.from_relay(mod, params)
+            layers = xgraph.get_layers()
+
+            if supported:
+                assert layers[1].type[0] == "Transpose"
+                assert layers[1].shapes == [-1, c, h_in, w_in]
+                assert layers[2].type[0] == "Upsampling2D"
+                assert layers[2].shapes == [-1, c, h_out, w_out]
+                assert layers[3].type[0] == "Transpose"
+                assert layers[3].shapes == [-1, h_out, w_out, c]
+            else:
+                assert len(layers) == 2
+                assert layers[1].type[0] == "AnyOp"
+                assert layers[1].shapes == [-1, h_out, w_out, c]
+
+        _test_image_resize2d((1, 20, 20, 32), [40, 40])
+        _test_image_resize2d((1, 20, 20, 32), [10, 10])
+        _test_image_resize2d((1, 15, 15, 32), [40, 40])
+
+        # Unsupported
+        _test_image_resize2d(
+            (1, 20, 20, 32),
+            [40, 40],
+            coordinate_transformation_mode="half_pixel",
+            supported=False,
+        )
+        _test_image_resize2d(
+            (1, 20, 20, 32),
+            [40, 40],
+            coordinate_transformation_mode="align_corners",
+            supported=False,
+        )
+        _test_image_resize2d(
+            (1, 20, 20, 32), [40, 40], rounding_method="floor", supported=False
+        )
+        _test_image_resize2d(
+            (1, 20, 20, 32), [40, 40], rounding_method="ceil", supported=False
+        )
+        _test_image_resize2d(
+            (1, 20, 20, 32), [40, 40], rounding_method="round", supported=False
+        )
+        _test_image_resize2d((1, 20, 20, 32), [40, 40], cubic_alpha=-1, supported=False)
+        _test_image_resize2d(
+            (1, 20, 20, 32), [40, 40], cubic_exclude=1, supported=False
+        )
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_yolo_reorg(self):
