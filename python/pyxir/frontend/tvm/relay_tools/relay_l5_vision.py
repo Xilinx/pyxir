@@ -32,54 +32,15 @@ from pyxir import graph
 from pyxir.graph.layer import XLayer
 from pyxir.graph.layer import xlayer_factory as xlf
 
-from .relay_2_xlayer_registry import register_relay_2_xlayer_converter,\
-    register_relay_2_xlayer_converter_base
+from .relay_2_xlayer_registry import (
+    register_relay_2_xlayer_converter,
+    register_relay_2_xlayer_converter_base,
+)
 
 logger = logging.getLogger("pyxir")
 
 
-# @register_relay_2_xlayer_converter_base('image.resize')
-# def image_resize(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
-#     """
-#     TVM full to XLayer
-#     Relay
-#     -----
-#     Type: tvm.relay.image
-#     Ref: https://tvm.apache.org/docs/api/python/relay/index.html#tvm.relay.image.resize
-#     Parameters:
-#         - size
-#             The out size to which the image will be resized
-#         - layout
-#             Input layout
-#     """
-
-#     assert len(in_xlayers) == 1
-#     assert expr.type_args  != [], "data shape should be populated for operation {}. Use relay.transform.InferType() to resolve".format(op_name)
-    
-#     layout = expr.attrs.layout
-#     if layout == 'NCHW':
-#         n,c,h,w = [int(d) for d in expr.type_args[0].shape]
-#     elif layout == 'NHWC':
-#         n,h,w,c = [int(d) for d in expr.type_args[0].shape]
-#     else:
-#         raise ValueError("The image.resize operation has an unexpected layout."
-#                          "provided image layout {} is not supported".format(layout))
-
-#     new_h,new_w = [int(d) for d in expr.attrs.size]
-
-#     if layout == 'NCHW':
-#         newshape = [n,c,new_h,new_w]
-#     else:
-#         newshape = [n,new_h,new_w,c]
-        
-#     logger.debug("tile: {}".format(op_name))    
-#     X = px.ops.any_op(op_name, in_xlayers, any_shape=newshape, relay_id=[hash(expr)])
-#     logger.debug("-- outshape: {}".format(list(X.shapes)))
-
-#     return X
-
-
-@register_relay_2_xlayer_converter_base('image.resize')
+@register_relay_2_xlayer_converter_base("image.resize")
 def image_resize(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     Conversion of Relay 'image.resize' layer to upsampling2d layer
@@ -113,7 +74,7 @@ def image_resize(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     coordinate_transformation_mode = str(expr.attrs.coordinate_transformation_mode)
     out_dtype = str(expr.attrs.out_dtype) if expr.attrs.out_dtype is not None else None
 
-    h_index, w_index = layout.index('H'), layout.index('W')
+    h_index, w_index = layout.index("H"), layout.index("W")
     in_h, in_w = in_shape[h_index], in_shape[w_index]
     if coordinate_transformation_mode == "asymmetric":
         scale_h, scale_w = out_h / in_h, out_w / in_w
@@ -124,20 +85,98 @@ def image_resize(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
             scale_w=scale_w,
             data_layout=layout,
             method=method,
-            relay_id=[hash(expr)]
+            relay_id=[hash(expr)],
         )
     else:
         # AnyOp
         out_shape = in_shape.tolist()
         out_shape[h_index] = out_h
         out_shape[w_index] = out_w
-        X = px.ops.any_op(op_name, in_xlayers, any_shape=out_shape[:], relay_id=[hash(expr)])
+        X = px.ops.any_op(
+            op_name, in_xlayers, any_shape=out_shape[:], relay_id=[hash(expr)]
+        )
 
     logger.debug("-- outshape: {}".format(list(X.shapes)))
     return X
 
 
-@register_relay_2_xlayer_converter_base('vision.yolo_reorg')
+@register_relay_2_xlayer_converter_base("image.resize2d")
+def image_resize2d(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+    """
+    Conversion of Relay 'image.resize2d' layer to upsampling2d layer
+
+    Relay
+    -----
+    Type: tvm.relay.image.resize2d
+    Ref: https://docs.tvm.ai/langref/relay_op.html
+    Parameters:
+        - data (relay.Expr)
+            The input data tensor.
+        - size (Tuple of Int or Expr)
+            The out size to which the image will be resized.
+        - layout (str, optional)
+            Layout of the input.
+        - method (str, optional)
+            Scale method to used [nearest_neighbor, bilinear, bicubic].
+        - coordinate_transformation_mode (string, optional)
+            Describes how to transform the coordinate in the resized tensor to the coordinate
+            in the original tensor. Refer to the ONNX Resize operator specification for details.
+            [half_pixel, align_corners, asymmetric]
+        - rounding_method: string, optional
+            indicates how to find the "nearest" pixel in nearest_neighbor method
+            [round, floor, ceil]
+        - cubic_alpha: float
+            Spline Coefficient for bicubic interpolation
+        - cubic_exclude: int
+            Flag to exclude exterior of the image during bicubic interpolation
+        - out_dtype (str, optional)
+            Type to return. If left None returns the same type as input.
+    """
+    assert len(in_xlayers) == 1
+    in_shape = in_xlayers[0].shapes[:]
+
+    out_h, out_w = [int(e) for e in expr.attrs.size]
+    layout = str(expr.attrs.layout)
+    method = str(expr.attrs.method)
+    coordinate_transformation_mode = str(expr.attrs.coordinate_transformation_mode)
+    rounding_method = str(expr.attrs.rounding_method)
+    cubic_alpha = float(expr.attrs.cubic_alpha)
+    cubic_exclude = int(expr.attrs.cubic_exclude)
+
+    out_dtype = str(expr.attrs.out_dtype) if expr.attrs.out_dtype is not None else None
+
+    h_index, w_index = layout.index("H"), layout.index("W")
+    in_h, in_w = in_shape[h_index], in_shape[w_index]
+    if (
+        coordinate_transformation_mode == "asymmetric"
+        and rounding_method == ""
+        and cubic_alpha == -0.5
+        and cubic_exclude == 0
+    ):
+        scale_h, scale_w = out_h / in_h, out_w / in_w
+        X = px.ops.upsampling2d(
+            op_name,
+            in_xlayers,
+            scale_h=scale_h,
+            scale_w=scale_w,
+            data_layout=layout,
+            method=method,
+            relay_id=[hash(expr)],
+        )
+    else:
+        # AnyOp
+        out_shape = in_shape.tolist()
+        out_shape[h_index] = out_h
+        out_shape[w_index] = out_w
+        X = px.ops.any_op(
+            op_name, in_xlayers, any_shape=out_shape[:], relay_id=[hash(expr)]
+        )
+
+    logger.debug("-- outshape: {}".format(list(X.shapes)))
+    return X
+
+
+@register_relay_2_xlayer_converter_base("vision.yolo_reorg")
 def yolo_reorg(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     Conversion of Relay 'yolo_reorg' layer
@@ -153,13 +192,15 @@ def yolo_reorg(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
             The stride value for reorganisation.
     """
     stride = int(expr.attrs.stride)
-    X = px.ops.yolo_reorg(op_name, in_xlayers[0], stride, 'NCHW', relay_id=[hash(expr)])
+    X = px.ops.yolo_reorg(op_name, in_xlayers[0], stride, "NCHW", relay_id=[hash(expr)])
     logger.debug("-- outshape: {}".format(list(X.shapes)))
     return X
 
 
-@register_relay_2_xlayer_converter_base('vision.get_valid_counts')
-def vision_get_valid_counts(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
+@register_relay_2_xlayer_converter_base("vision.get_valid_counts")
+def vision_get_valid_counts(
+    op_name: str, expr: Expr, in_xlayers: List[XLayer]
+) -> XLayer:
     """
     TVM: Get valid count of bounding boxes given a score threshold. Also moves valid boxes
     to the top of input data.
@@ -183,13 +224,16 @@ def vision_get_valid_counts(op_name: str, expr: Expr, in_xlayers: List[XLayer]) 
     out_tensor_shape = in_shape
     out_indices_shape = in_shape[:2]
 
-    X = px.ops.any_op(op_name, in_xlayers,
-                      any_shape=[valid_count_shape, out_tensor_shape, out_indices_shape],
-                      relay_id=[hash(expr)])
+    X = px.ops.any_op(
+        op_name,
+        in_xlayers,
+        any_shape=[valid_count_shape, out_tensor_shape, out_indices_shape],
+        relay_id=[hash(expr)],
+    )
     return X
 
 
-@register_relay_2_xlayer_converter_base('vision.non_max_suppression')
+@register_relay_2_xlayer_converter_base("vision.non_max_suppression")
 def vision_nms(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     Non-max suppression operation
@@ -239,7 +283,7 @@ def vision_nms(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     """
     data_shape = list(in_xlayers[0].shapes[:])
     return_indices = bool(expr.attrs.return_indices)
-    
+
     if not return_indices:
         newshape = data_shape[:]
     else:
