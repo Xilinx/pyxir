@@ -20,7 +20,6 @@ from pyxir.generator.tensorflow import XGraphTfGeneratorOptimizer
 from pyxir.graph.optimization.optimizers import ExternalQOptimizer
 from pyxir.graph.transformers.layout_transformation_pass import XGraphLayoutTransformationPass
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
-from pyxir.quantization.external_quantizer import ExternalQuantizerDecentOutput
 
 logger = logging.getLogger('pyxir')
 
