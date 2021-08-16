@@ -1,7 +1,7 @@
 import pyxir
 
-from .components.DPUCZDX8G.common import xgraph_dpu_external_quantizer
-from .components.DPUCZDX8G.common import xgraph_dpu_external_quantizer_optimizer
+from .components.DPUCZDX8G.external_quantizer_tools import xgraph_dpu_external_quantizer
+from .components.DPUCZDX8G.external_quantizer_tools import xgraph_dpu_external_quantizer_optimizer
 from .components.DPUCZDX8G.u50 import xgraph_dpu_u50_build_func
 from .components.DPUCZDX8G.u50 import xgraph_dpu_u50_compiler
 from .components.DPUCZDX8G.u280 import xgraph_dpu_u280_build_func

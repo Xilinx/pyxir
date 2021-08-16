@@ -50,20 +50,6 @@ def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
     return q_xgraph
 
 
-def xgraph_dpu_external_quantizer_optimizer(xgraph, target=None, **kwargs):
-    layout_transform_pass = XGraphLayoutTransformationPass("NHWC", target=target)
-    dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
-    optimizer = ExternalQOptimizer(dpu_xgraph)
-    optimizer.optimize()
-    return dpu_xgraph
-
-
-def xgraph_dpu_external_quantizer(xgraph, inputs_func, **kwargs):
-    quantizer = ExternalQuantizerDecentOutput(xgraph, inputs_func, **kwargs)
-    q_xgraph = quantizer.quantize()
-    return q_xgraph
-
-
 def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
     return subgraph.xgraph_build_func(
         xgraph=xgraph, target="DPUCAHX8L", xtype="DPU", layout="NHWC", work_dir=work_dir
