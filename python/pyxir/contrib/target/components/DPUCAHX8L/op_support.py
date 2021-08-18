@@ -124,6 +124,7 @@ def pad_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
         on the DPUCAHX8L target """
     return is_padding_supported(X, bXs, tXs)
 
+
 @pyxir.register_op_support_check("DPUCAHX8L", "Pooling")
 def pooling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided Pooling operator
@@ -142,7 +143,7 @@ def pooling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
         avg_pool_max_kernel=8,
         avg_pool_min_stride=1,
         avg_pool_max_stride=8,
-        max_pool_kernel_valid=[ 2, 3, 5, 7, 8],
+        max_pool_kernel_valid=[2, 3, 5, 7, 8],
         avg_pool_kernel_valid=[2, 3, 5, 7, 8],
     )
 
@@ -162,21 +163,24 @@ def leaky_relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bo
         on the DPUCAHX8L target """
     return False
 
+
 @pyxir.register_op_support_check("DPUCAHX8L", "pReLU")
 def prelu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided pRelu operator
         on the DPUCAHX8L target """
     return False
 
-@pyxir.register_op_support_check('DPUCAHX8L', 'ReLU')
-def relu6_op_support(X, bXs, tXs):
+
+@pyxir.register_op_support_check("DPUCAHX8L", "ReLU")
+def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
         on the zcu104 target """
-
-    # TODO always?
-
-    return True
+    assert len(bXs) == 1
+    bX = bXs[0]
+    return bX.type[0] in set(
+        ["Convolution", "Conv2DTranspose", "Eltwise", "BatchNorm", "Scale"]
+    )
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "ReLU6")
