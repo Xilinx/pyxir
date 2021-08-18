@@ -126,21 +126,38 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
         assert layers[1].type[0] == "LeakyReLU"
         assert layers[1].attrs["alpha"] == 0.1
 
-    # @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
-    # def test_prelu(self):
-    #     data = relay.var("data", relay.TensorType((-1, 2, 4, 4), "float32"))
-    #     c = relay.expr.const(np.array([0.1, 0.2], dtype=np.float32))
-    #     net = relay.nn.prelu(data, alpha=c)
-    #     net = relay.Function([data], net)
-    #     mod = tvm.IRModule.from_expr(net)
-    #     mod = relay.transform.InferType()(mod)
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_prelu(self):
+        def _test_prelu(in_shape, alpha, axis=None):
+            data = relay.var("data", relay.TensorType(in_shape, "float32"))
+            c = relay.expr.const(alpha)
+            net = (
+                relay.nn.prelu(data, alpha=c)
+                if axis is None
+                else relay.nn.prelu(data, alpha=c, axis=axis)
+            )
+            net = relay.Function([data], net)
+            mod = tvm.IRModule.from_expr(net)
+            mod = relay.transform.InferType()(mod)
 
-    #     xgraph = xf_relay.from_relay(mod, {})
-    #     layers = xgraph.get_layers()
+            xgraph = xf_relay.from_relay(mod, {})
+            layers = xgraph.get_layers()
 
-    #     assert layers[0].type[0] == 'Input'
-    #     assert layers[1].type[0] == 'pReLU'
-    #     assert layers[1].attrs['alpha'] == .1
+            assert layers[0].type[0] == 'Input'
+            assert layers[1].type[0] == 'Constant'
+            np.testing.assert_array_equal(layers[1].data[0], alpha)
+            assert layers[2].type[0] == 'pReLU'
+            assert layers[2].shapes == in_shape
+        
+        _test_prelu(
+            (-1, 2, 4, 4),
+            np.array([0.1, 0.1], dtype=np.float32),
+        )
+        _test_prelu(
+            (-1, 4, 4, 2),
+            np.array([0.1, 0.2], dtype=np.float32),
+            axis=3
+        )
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_repeat(self):

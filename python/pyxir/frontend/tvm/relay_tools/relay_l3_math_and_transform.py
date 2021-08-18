@@ -242,16 +242,13 @@ def nn_prelu(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     Parameters:
         - data (tvm.relay.Expr)
             The input data to the operator.
-        - alpha (tvm.relay.Expr)
-            Slope coefficient for the negative half axis.
         - axis (int, optional)
             Specify which shape axis the channel is specified.
     """
-    # assert len(in_xlayers) == 2
-    # axis = int(expr.attrs.axis) if expr.attrs.axis is not None else 1
-    # X = px.ops.prelu(op_name, in_xlayers[0], alpha, axis, relay_id=[hash(expr)])
-    # return X
-    raise NotImplementedError("Relay Parametric ReLU to XLayer not implemented")
+    assert len(in_xlayers) == 2
+    axis = int(expr.attrs.axis) if expr.attrs.axis is not None else 1
+    X = px.ops.prelu(op_name, in_xlayers, axis=axis, relay_id=[hash(expr)])
+    return X
 
 
 @register_relay_2_xlayer_converter_base('repeat')

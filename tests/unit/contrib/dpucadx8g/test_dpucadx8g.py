@@ -78,7 +78,6 @@ class TestDPUContrib(unittest.TestCase):
         assert "Pad" in dpuv1_ops
         assert "Pooling" in dpuv1_ops
         assert "Mean" in dpuv1_ops
-        assert "pReLU" in dpuv1_ops
         assert "ReLU" in dpuv1_ops
         assert "Scale" in dpuv1_ops
 

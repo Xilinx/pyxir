@@ -446,35 +446,6 @@ class TestUltra96OpSupport(unittest.TestCase):
 
         assert not mean_op_support(X, [], [])
 
-    def test_mean_support(self):
-        from pyxir.contrib.dpuv2.ultra96_op_support import prelu_op_support
-
-        X = XLayer(
-            type=["pReLU"],
-            name="layer1",
-            shapes=[-1, 2, 1, 1],
-            sizes=[2],
-            bottoms=[],
-            tops=[],
-            targets=[],
-            attrs={"alpha": 0.1},
-        )
-
-        assert prelu_op_support(X, [], [])
-
-        X = XLayer(
-            type=["pReLU"],
-            name="layer1",
-            shapes=[-1, 1, 4, 4],
-            sizes=[16],
-            bottoms=[],
-            tops=[],
-            targets=[],
-            attrs={"alpha": 0.2},
-        )
-
-        assert not prelu_op_support(X, [], [])
-
     def test_relu_support(self):
         from pyxir.contrib.dpuv2.ultra96_op_support import relu_op_support
 

@@ -165,53 +165,25 @@ def leaky_relu_transpose_transform(X: XLayer, axes: List[int]) -> None:
 # pReLU #
 #########
 
-
-@xop_register_factory('pReLU')
-def prelu(op_name: str, input_layer: XLayer, alpha: float, axis: int, **kwargs) -> XLayer:
+@xop_register('pReLU')
+def prelu(attrs: Dict[str, Any], in_xlayers: List[XLayer]) -> XLayer:
     """
-    Create a parametric ReLU Xlayer
+    Create a parametric ReLU XLayer
 
-    Arguments
-    ---------
-    op_name: str
-        The name of this relu layer operation
-    alpha: float
-        The slope coefficient for negative input
-    axis: int
-        The axis of the channel
-    input_layer: XLayer
-        The input layer to this relu layer
+    Returns PReLU registration information (shape)
     """
+    assert len(in_xlayers) == 2
 
-    bottoms = [input_layer.name]
-
-    attrs = kwargs
-    attrs.update({
-        'alpha': alpha,
-        'axis': axis
-    })
-
-    X = XLayer()
-    X = X._replace(
-        name=op_name,
-        type=['pReLU'],
-        shapes=input_layer.shapes[:],
-        sizes=input_layer.sizes[:],
-        layer=[op_name],
-        tops=[],
-        bottoms=bottoms,
-        attrs=attrs,
-        targets=[]
-    )
-
-    return X
+    shape = in_xlayers[0].shapes[:]
+    return {'shape': shape}
 
 
 @xop_register_op_transpose_transform('pReLU')
 def prelu_transpose_transform(X: XLayer, axes: List[int]) -> None:
-    """ Transform pReLU layer with transpose according to provided axes """
+    """ Transform LeakyReLU layer with transpose according to provided axes """
     new_shape = TensorShape([X.shapes[i] for i in axes])
     X.shapes = new_shape
+    X.attrs['axis'] = axes.index(X.attrs['axis'])
 
 
 ###########

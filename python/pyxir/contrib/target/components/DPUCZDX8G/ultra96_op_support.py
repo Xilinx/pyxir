@@ -258,20 +258,6 @@ def leaky_relu_op_support(X, bXs, tXs):
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'pReLU')
-def prelu_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided pRelu operator
-        on the ultra96 target """
-
-    # TODO: position?
-
-    # Only LeakyReLU: alpha == 0.1 supported
-    alpha = X.attrs['alpha']
-
-    return math.isclose(alpha, 0.1, rel_tol=1e-5)
-
-
 @pyxir.register_op_support_check('DPUCZDX8G-ultra96', 'ReLU')
 def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
