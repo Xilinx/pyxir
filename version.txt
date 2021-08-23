@@ -12,6 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.3.1 ////////////////
+NEW FEATURES:
+    - Add Relay resize2d op translation to XLayer
+UPDATES:
+    - Decouple external quantizer flow for DPUCAHX8H/L and DPUCVDX8G/H
+BUG FIXES:
+    - Put tighter previous layer constraints on DPU ReLU support checks
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.3.0 ////////////////
 NEW FEATURES:
     - Add DPUCADF8G (U200/U250) target
