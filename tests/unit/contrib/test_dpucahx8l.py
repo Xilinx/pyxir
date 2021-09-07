@@ -29,6 +29,7 @@ from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
+    xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
 )
 
 try:
@@ -39,7 +40,7 @@ except ModuleNotFoundError:
     skip_tf = True
 
 
-class TestDPUCAHX8H(unittest.TestCase):
+class TestDPUCAHX8L(unittest.TestCase):
 
     xgraph_partitioner = XGraphPartitioner()
     xgraph_factory = XGraphFactory()
@@ -53,43 +54,92 @@ class TestDPUCAHX8H(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         # Unregister dpu for other tests
-        TestDPUCAHX8H.target_registry.unregister_target("DPUCAHX8L")
+        TestDPUCAHX8L.target_registry.unregister_target("DPUCAHX8L")
 
     def test_compile_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], "Max", [2, 2], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
             targets=["DPUCAHX8L"],
         )
         # Strided
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [2, 2], [1, 1], "Max", [2, 2], [0, 0],
-             targets=["DPUCAHX8L"]
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [2, 2],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=["DPUCAHX8L"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [3, 3], [1, 1], "Avg", [2, 2], [1, 1],
-             targets=["DPUCAHX8L"],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCAHX8L"],
         )
         # Padded
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [1, 1], "Max", [4, 4], [0, 0],
-             targets=["DPUCAHX8L"],
-             expected_nb_subgraphs=3,
-             expected_name={'conv1': 'conv1'},
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [4, 4],
+            [0, 0],
+            targets=["DPUCAHX8L"],
+            expected_nb_subgraphs=3,
+            expected_name={"conv1": "conv1"},
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 8, 8, 1), (2, 1, 3, 3), [2, 2], [1, 1], [1, 1], "Avg", [4, 4], [0, 0],
-             targets=["DPUCAHX8L"],
-             expected_nb_subgraphs=3,
-             expected_name={'conv1': 'conv1'},
+            (1, 8, 8, 1),
+            (2, 1, 3, 3),
+            [2, 2],
+            [1, 1],
+            [1, 1],
+            "Avg",
+            [4, 4],
+            [0, 0],
+            targets=["DPUCAHX8L"],
+            expected_nb_subgraphs=3,
+            expected_name={"conv1": "conv1"},
         )
         # Dilated
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [2, 2], "Max", [2, 2], [0, 0],
-             targets=["DPUCAHX8L"]
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [2, 2],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=["DPUCAHX8L"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 10, 10, 1), (2, 1, 2, 2), [1, 1], [1, 1], [4, 4], "Max", [2, 2], [0, 0],
-             targets=["DPUCAHX8L"]
+            (1, 10, 10, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [4, 4],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=["DPUCAHX8L"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 28, 28, 512),
@@ -100,24 +150,24 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
-            targets=["DPUCAHX8L"]
+            targets=["DPUCAHX8L"],
         )
 
     def test_compile_depthwise_conv2d_pool2d(self):
-       xcompiler_conv2d_pool2d_nhwc_oihw_test(
-           (1, 3, 3, 8),
-           (8, 1, 3, 3),
-           [0, 0],
-           [1, 1],
-           [1, 1],
-           "Max",
-           [1, 1],
-           [0, 0],
-           conv_groups=8,
-           targets=["DPUCAHX8L"],
-           expected_nb_subgraphs=3,  
-           expected_name={'conv1': 'conv1'},
-       )
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 3, 3, 8),
+            (8, 1, 3, 3),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [1, 1],
+            [0, 0],
+            conv_groups=8,
+            targets=["DPUCAHX8L"],
+            expected_nb_subgraphs=3,
+            expected_name={"conv1": "conv1"},
+        )
 
     def test_compile_scale_conv2d(self):
         # Standalone scale/batchnorm unsupported in DPUCAHX8H compiler
@@ -135,6 +185,11 @@ class TestDPUCAHX8H(unittest.TestCase):
         #     (1, 28, 28, 512), (512, 512, 3, 3), [2, 2, 2, 2], [1, 1], [2, 2],
         # )
 
+    def test_compile_conv2d_bias_add_relu(self):
+        xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
+            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], targets=["DPUCAHX8L"],
+        )
+
     def test_compile_resnetv1_block(self):
         xcompiler_resnetv1_block_test(
             in_shape=(1, 112, 112, 64),
@@ -147,5 +202,3 @@ class TestDPUCAHX8H(unittest.TestCase):
             c3_padding=[1, 1, 1, 1],
             target="DPUCAHX8L",
         )
-
-
