@@ -478,10 +478,14 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
 
     def quant_func():
         opt_xgraph = optimize(xgraph, target)
-        q_xgraph = _quantize(opt_xgraph, target, inputs_func, work_dir=work_dir)
-        # TODO
+        q_xgraph = _quantize(
+            opt_xgraph,
+            target,
+            inputs_func,
+            work_dir=work_dir,
+            out_tensor_names=out_tensor_names
+        )
         xgraph.meta_attrs = q_xgraph.meta_attrs.to_dict()
-        # xgraph.copy_from(q_xgraph)
 
     quantization_callback.set_func(quant_func, [])
 
