@@ -135,6 +135,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
             input_shapes=input_shapes,
             output_dir=self.work_dir,
             simulate_dpu="1",
+            adjust_shift_bias ="1",
+            adjust_shift_cut="1",
             method="1",
             calib_iter=nb_quant_iters,
         )
