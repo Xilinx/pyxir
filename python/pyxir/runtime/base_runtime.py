@@ -71,12 +71,14 @@ class BaseRuntime(object):
                  device: str = 'cpu',
                  batch_size: int = -1,
                  placeholder: bool = False,
-                 last_layers: List[str] = None):
+                 last_layers: List[str] = None,
+                 hidden_out_tensor_names: List[str] = None):
         self.name = name
         self.device = device
         self.batch_size = batch_size
         self.placeholder = placeholder
         self.xgraph = xgraph
+        self.hidden_out_tensor_names = hidden_out_tensor_names
 
         network, params = self._get_net_and_params(xgraph, last_layers)
         self.params = params

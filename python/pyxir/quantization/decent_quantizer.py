@@ -21,7 +21,7 @@ import warnings
 import subprocess
 import numpy as np
 
-from typing import List, Dict
+from typing import List, Dict, Callable
 
 from pyxir.graph import XGraph
 from pyxir.contrib.tools import classification
@@ -64,11 +64,12 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
     def __init__(
         self,
-        xgraph,
-        inputs_func,
-        work_dir=os.path.join(os.getcwd(), "work"),
-        quant_iter=1,
-        compiler_target=None,
+        xgraph: XGraph,
+        inputs_func: Callable,
+        work_dir: str = os.path.join(os.getcwd(), "work"),
+        quant_iter: int = 1,
+        compiler_target: str = None,
+        out_tensor_names: List[str] = None,
         **kwargs
     ):
 
@@ -76,6 +77,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
         self.quant_iter = quant_iter
         self.compiler_target = compiler_target
+        self.out_tensor_names = out_tensor_names
         self.gen = TfGenerator()
         self.partition_graphs = {}
         self.res = {}
@@ -135,7 +137,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
             input_shapes=input_shapes,
             output_dir=self.work_dir,
             simulate_dpu="1",
-            adjust_shift_bias ="1",
+            adjust_shift_bias="1",
             adjust_shift_cut="1",
             method="1",
             calib_iter=nb_quant_iters,
@@ -143,11 +145,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         self.decent_q.quantize_frozen(input_graph_def, inputs_func, q_config)
         q_eval_file = os.path.join(self.work_dir, "quantize_eval_model.pb")
 
-        self.q_output.add(
-            xgraph.get_name(), frozen_graph, q_eval_file
-        )
-
-
+        self.q_output.add(xgraph.get_name(), frozen_graph, q_eval_file)
 
     def quantize(self) -> XGraph:
         """Quantize the XGraph model using the decent_q quantizer
@@ -169,6 +167,7 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
             batch_size=batch_size,
             out_dir=self.work_dir,
             compiler_target=self.compiler_target,
+            out_tensor_names=self.out_tensor_names,
             **self.kwargs
         )
 
@@ -200,8 +199,6 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
             }
 
         return q_xgraph
-
-
 
     def eval(
         self,

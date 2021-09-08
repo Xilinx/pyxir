@@ -17,6 +17,8 @@
 import abc
 import numpy as np
 
+from typing import Dict, List, Tuple, Union
+
 from pyxir.shapes import TupleShape, TensorShape
 
 
@@ -25,12 +27,14 @@ class RtLayer(object):
     __metaclass__ = abc.ABCMeta
 
     """
-    A generic layer for an xfDNN neural network graph
+    The base runtime layer class
 
     Arguments
     ---------
     name: str
         the name of this layer
+    op_type: str
+        the type of this layer
     shape: List[int]/Tuple[int]
         the shape of this layer
     dtype: str
@@ -44,13 +48,13 @@ class RtLayer(object):
     """
 
     def __init__(self,
-                 name,
-                 op_type,
-                 shape,
-                 dtype,
-                 inputs,
-                 input_shapes,
-                 subgraph):
+                 name : str,
+                 op_type: str,
+                 shape: Union[List[int], Tuple[int]],
+                 dtype: str,
+                 inputs: List[str],
+                 input_shapes: List[Union[List[int], Tuple[int]]],
+                 subgraph: str):
 
         self.name = name
         self.type = op_type
