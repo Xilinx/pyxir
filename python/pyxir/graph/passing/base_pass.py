@@ -19,6 +19,8 @@ import copy
 import logging
 import warnings
 
+from typing import Union, List
+
 from pyxir.graph import XGraph, XLayer
 from pyxir.graph.xgraph_factory import XGraphFactory
 
@@ -62,19 +64,30 @@ class XGraphMutator(object):
 
     def __call__(self, xgraph: XGraph):
         """Main method to be called on object to start mutation pass"""
-        self.xgraph = xgraph
+        self.xgraph = self.transform(xgraph)
         new_xg = XGraph(self.xgraph.get_name())
         new_xg.copy_meta_attrs(self.xgraph)
         for X in xgraph.get_layers():
             new_X = self.visit(X)
             # if new_X not None
-            if new_X:
+            if isinstance(new_X, list):
+                for nX in new_X:
+                    # Make sure tops are not set
+                    nX.tops = []
+                    new_xg.add(nX)
+            elif new_X:
                 # Make sure tops are not set
                 new_X.tops = []
                 new_xg.add(new_X)
         return new_xg
 
-    def visit(self, X: XLayer) -> XLayer:
+    def transform(self, xgraph: XGraph) -> XGraph:
+        """Transformation method that allows child mutators to access and transform
+        the provided XGraph before the xgraph attribute is being set
+        """
+        return xgraph
+
+    def visit(self, X: XLayer) -> Union[XLayer,List[XLayer]]:
         """Mutate an XLayer"""
         return X
 
