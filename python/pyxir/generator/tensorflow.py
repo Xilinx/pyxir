@@ -17,51 +17,52 @@
 import os
 import logging
 
+from typing import List
+
+from pyxir.graph import XGraph
 from pyxir.graph.optimization import optimizations, conditions
-from pyxir.graph.optimization.xgraph_optimization_pass \
-    import XGraphOptimizationPass
-from pyxir.graph.optimization.optimizers.basic_optimizer \
-    import XGraphBasicOptimizer
+from pyxir.graph.optimization.xgraph_optimization_pass import XGraphOptimizationPass
+from pyxir.graph.optimization.optimizers.basic_optimizer import XGraphBasicOptimizer
 
 from pyxir.runtime.runtime_factory import RuntimeFactory
 from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
+from pyxir.graph.transformers.add_explicit_output_layers import AddExplicitOutputLayers
 
-logger = logging.getLogger('pyxir')
+logger = logging.getLogger("pyxir")
 
 
 class XGraphTfGeneratorOptimizer(XGraphBasicOptimizer):
-
     def __init__(self, xgraph, copy=False):
         super(XGraphTfGeneratorOptimizer, self).__init__(xgraph)
 
         # CONV/BIAS/BN/SCALE merge optimization
         opt_pass = XGraphOptimizationPass(
-            name='XDNN-OptimizationPass-2-Merge_Conv_Bias_BN_Scale',
-            output_png='after_merge_conv_bias_bn_scale.png',
-            repeat_until_stable=True
+            name="XDNN-OptimizationPass-2-Merge_Conv_Bias_BN_Scale",
+            output_png="after_merge_conv_bias_bn_scale.png",
+            repeat_until_stable=True,
         )
 
         logger.info("Add MergeBiasIntoConvDense pass")
         opt_pass.add_optimization(
-            condition_func=lambda bXs, X, tXs:
-                'Eltwise' in X.type and X.data is not None,
+            condition_func=lambda bXs, X, tXs: "Eltwise" in X.type
+            and X.data is not None,
             opt_func=optimizations.merge_bias,
-            name='MergeBiasIntoConvDense'
+            name="MergeBiasIntoConvDense",
         )
 
         logger.info("Add MergeBNIntoConv pass")
         opt_pass.add_optimization(
-            condition_func=lambda bXs, X, tXs: 'BatchNorm' in X.type,
+            condition_func=lambda bXs, X, tXs: "BatchNorm" in X.type,
             opt_func=optimizations.merge_batchnorm_into_conv,
-            name='MergeBNIntoConv'
+            name="MergeBNIntoConv",
         )
 
         logger.info("Add MergeScaleIntoConvBN pass")
         opt_pass.add_optimization(
-            condition_func=lambda bXs, X, tXs: 'Scale' in X.type,
+            condition_func=lambda bXs, X, tXs: "Scale" in X.type,
             opt_func=optimizations.merge_scale_into_conv_bn,
-            name='MergeScaleIntoConvBN'
+            name="MergeScaleIntoConvBN",
         )
         self.add_optimization_pass(20, opt_pass)
 
@@ -77,8 +78,18 @@ class TfGenerator(object):
     xgraph_partitioner = XGraphPartitioner()
 
     @classmethod
-    def generate(cls, xgraph, base_name, subgraphs_only=False, layout='NCHW',
-                 batch_size=-1, placeholder=False, out_dir=os.getcwd(), **kwargs):
+    def generate(
+        cls,
+        xgraph: XGraph,
+        base_name: str,
+        subgraphs_only: bool = False,
+        layout: str = "NCHW",
+        batch_size: int = -1,
+        placeholder: bool = False,
+        out_dir: str = os.getcwd(),
+        out_tensor_names: List[str] = None,
+        **kwargs
+    ):
         # type: (XGraph, str, bool, str, int, bool, str, dict) -> Dict[str, str]
         """
         Generate one or multiple tensorflow pb file from an xgraph and
@@ -89,45 +100,57 @@ class TfGenerator(object):
 
         executors = []
         if not subgraphs_only:
+            # Add explicit identity output layers for outputs to be recognized by
+            #   quantizer and compiler
+            xgraph = AddExplicitOutputLayers(out_tensor_names, layout="NHWC")(xgraph)
+
             executors.append(
-                (base_name, base_name,
-                 TfGenerator.runtime_factory.build_runtime(
-                     xgraph, batch_size=batch_size, placeholder=placeholder))
+                (
+                    base_name,
+                    base_name,
+                    TfGenerator.runtime_factory.build_runtime(
+                        xgraph, batch_size=batch_size, placeholder=placeholder
+                    ),
+                )
             )
         else:
-            for Xp in \
-                    TfGenerator.xgraph_partitioner.get_subgraphs(xgraph):
+            for Xp in TfGenerator.xgraph_partitioner.get_subgraphs(xgraph):
 
-                out_tensor_names = list(Xp.attrs['__top_tensors'].keys())
+                out_tensor_names = list(Xp.attrs["__top_tensors"].keys())
                 sub_xgraph = TfGenerator.xgraph_factory.build_from_xlayer(
-                    Xp.subgraph_data)
+                    Xp.subgraph_data
+                )
+                # Add explicit identity output layers for outputs to be recognized by
+                #   quantizer and compiler
+                sub_xgraph = AddExplicitOutputLayers(out_tensor_names, layout="NHWC")(
+                    sub_xgraph
+                )
                 executors.append(
-                    (base_name + '_' + Xp.name,
-                     Xp.name,
-                     TfGenerator.runtime_factory
-                        .build_runtime(sub_xgraph,
-                                       batch_size=batch_size,
-                                       placeholder=placeholder,
-                                       out_tensor_names=out_tensor_names,
-                                       **kwargs),
-                     out_tensor_names), # sub_xgraph.get_output_names()
+                    (
+                        base_name + "_" + Xp.name,
+                        Xp.name,
+                        TfGenerator.runtime_factory.build_runtime(
+                            sub_xgraph,
+                            batch_size=batch_size,
+                            placeholder=placeholder,
+                            out_tensor_names=out_tensor_names,
+                            **kwargs
+                        ),
+                        out_tensor_names,
+                    ),
                 )
 
         ret = {}
         for file_name, name, executor, output_names in executors:
             graph_def = executor.tf_graph.as_graph_def()
-            # with executor.tf_step_graph.as_default():
-            #    graph_def = tf.get_default_graph().as_graph_def()
 
             with tf.compat.v1.Session(graph=executor.tf_graph) as sess:
                 sess.run(tf.compat.v1.global_variables_initializer())
                 graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
-                    sess,
-                    graph_def,
-                    output_names
+                    sess, graph_def, output_names
                 )
 
-            file_path = os.path.join(out_dir, file_name + '.pb')
+            file_path = os.path.join(out_dir, file_name + ".pb")
 
             with tf.io.gfile.GFile(file_path, "wb") as f:
                 f.write(graph_def.SerializeToString())
@@ -140,7 +163,7 @@ class TfGenerator(object):
     def run(self, xgraph, pb_file, inputs):
         # type: (XGraph, str, dict[str, numpy.ndarray])
         """ Run frozen tensorflow graph for corresponding XGraph """
-       
+
         # Import Tensorflow only when needed
         import tensorflow as tf
 
@@ -149,20 +172,21 @@ class TfGenerator(object):
             input_graph_def.ParseFromString(f.read())
 
         tf.compat.v1.reset_default_graph()
-        tf.import_graph_def(input_graph_def, name='')
+        tf.import_graph_def(input_graph_def, name="")
 
         input_names = xgraph.get_input_names()
         output_names = xgraph.get_output_names()
 
         inputs_tf = {}
         for in_name in input_names:
-            input_tensor = tf.get_default_graph().get_tensor_by_name(
-                                                    in_name + ':0')
+            input_tensor = tf.get_default_graph().get_tensor_by_name(in_name + ":0")
 
             inputs_tf[input_tensor] = inputs[in_name]
 
-        outputs = [tf.get_default_graph().get_tensor_by_name(out_name + ':0')
-                   for out_name in output_names]
+        outputs = [
+            tf.get_default_graph().get_tensor_by_name(out_name + ":0")
+            for out_name in output_names
+        ]
 
         with tf.compat.v1.Session() as sess:
             res = sess.run(outputs, feed_dict=inputs_tf)
