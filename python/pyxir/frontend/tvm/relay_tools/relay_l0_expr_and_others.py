@@ -434,7 +434,8 @@ def relay_op(op_name: str, expr: Expr, in_xlayers: List[XLayer]):
             raise e
         
     if isinstance(ty, relay.ty.TensorType):
-        relay_shape = TensorShape([int(s.value) for s in list(ty.shape)])
+        relay_shape = TensorShape([int(s.value) if not isinstance(s, tvm.tir.expr.Any) else -1 
+                                   for s in list(ty.shape)])
         dtype = str(ty.dtype)
     else:
         relay_shape = TupleShape(

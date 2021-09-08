@@ -24,6 +24,7 @@ try:
     import tvm
     from tvm import relay
     from tvm.relay import testing
+    from tvm.relay.build_module import bind_params_by_name
 
     skip = False
 except Exception as e:
@@ -112,6 +113,46 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
         assert layers[0].type[0] == "Constant"
         assert layers[1].type[0] == "StridedSlice"
         assert layers[1].shapes == [2, 3, 3]
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_strided_slice_dynamic(self):
+        def _create_strided_slice(in_shape, begin, end, strides, slice_mode="end", dtype="int32"):
+            x = relay.var("x", relay.TensorType(in_shape, "float32"))
+            b = relay.var("b", relay.TensorType((len(begin),), dtype))
+            end = relay.const(end, dtype=dtype)
+            z = relay.strided_slice(x, begin=b, end=end, strides=strides, slice_mode=slice_mode)
+            func = relay.Function([x, b], z)
+            mod = tvm.IRModule.from_expr(func)
+            params = {"b": begin}
+            mod["main"] = bind_params_by_name(mod["main"], params)
+            return mod
+        
+        def _test_dyn(in_shape, begin, end, strides, out_shape, slice_mode="end", dtype="int32"):
+            mod = _create_strided_slice(in_shape, begin, end, strides, slice_mode, dtype)
+            mod = relay.transform.InferType()(mod)
+            
+            xgraph = xf_relay.from_relay(mod, {})
+            layers = xgraph.get_layers()
+
+            assert layers[-1].shapes == out_shape
+
+        def _test_dyn_to_static(in_shape, begin, end, strides, out_shape, slice_mode="end", dtype="int32"):
+            mod = _create_strided_slice(in_shape, begin, end, strides, slice_mode, dtype)
+            mod = relay.transform.DynamicToStatic()(mod)
+            mod = relay.transform.InferType()(mod)
+
+            xgraph = xf_relay.from_relay(mod, {})
+            layers = xgraph.get_layers()
+
+            import pdb; pdb.set_trace()
+
+            assert layers[1].type[0] == "StridedSlice"
+            assert layers[1].shapes == out_shape
+        
+        _test_dyn((2, 3, 4), [0, 0, 1], [2, 3, 4], [1, 1, 1], [-1, -1, -1])
+        # _test_dyn_to_static((2, 3, 4), [0, 0, 1], [2, 3, 4], [1, 1, 1], [2, 3, 3])
+        # _test_dyn_to_static((3, 4, 3), [1, 1, 0], [4, 4, 3], [1, 1, 1], [2, 3, 3])
+        # _test_dyn_to_static((2, 3, 4), [0, 0, 1], [0x7FFFFFFF, 3, 0x7FFFFFFF], [1, 1, 1], [2, 3, 3])
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_where_constant(self):
