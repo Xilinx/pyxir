@@ -29,6 +29,7 @@ from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
+    xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
 )
 
 try:
@@ -161,6 +162,11 @@ class TestDPUCVDX8H(unittest.TestCase):
         # xcompiler_scale_conv2d_nhwc_oihw_test(
         #     (1, 28, 28, 512), (512, 512, 3, 3), [2, 2, 2, 2], [1, 1], [2, 2],
         # )
+
+    def test_compile_conv2d_bias_add_relu(self):
+        xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
+            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], targets=["DPUCVDX8H"],
+        )
 
     def test_compile_resnetv1_block(self):
         xcompiler_resnetv1_block_test(

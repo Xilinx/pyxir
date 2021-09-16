@@ -32,6 +32,7 @@ from .compilation_infra import (
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_leaky_relu_nhwc_oihw_test,
+    xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
     conv2d_pool2d_nhwc_oihw_test,
     conv2d_leaky_relu_nhwc_oihw_test,
     conv2d_pool2d_naming_test,
@@ -440,6 +441,23 @@ class TestDPUCZDX8G(unittest.TestCase):
     @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
     def test_compile_conv2d_leaky_relu(self):
         xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_conv2d_bias_add_relu(self):
+        xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
             (1, 4, 4, 1),
             (2, 1, 2, 2),
             [0, 0],

@@ -167,6 +167,7 @@ def leaky_relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bo
         "Convolution",
         "Conv2DTranspose",
         "BatchNorm",
+        "BiasAdd",
         "Scale",
     ]
 
@@ -184,6 +185,7 @@ def prelu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
         "Convolution",
         "Conv2DTranspose",
         "BatchNorm",
+        "BiasAdd",
         "Scale",
     ]
 
@@ -195,7 +197,7 @@ def relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     assert len(bXs) == 1
     bX = bXs[0]
     return bX.type[0] in set(
-        ["Convolution", "Conv2DTranspose", "Eltwise", "BatchNorm", "Scale"]
+        ["Convolution", "Conv2DTranspose", "Eltwise", "BatchNorm", "BiasAdd", "Scale"]
     )
 
 
