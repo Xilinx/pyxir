@@ -85,18 +85,41 @@ class TestRelayL4BroadcastAndReductions(unittest.TestCase):
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_strided_slice(self):
-        c = relay.expr.const(np.ones((2, 3, 4), np.float32))
-        m = relay.strided_slice(c, (0, 0, 1), (2, 3, 4), (1, 1, 1))
-        net = relay.Function([], m)
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
+        def _verify(in_shape, begin, end, strides, slice_mode="end", axes=None):
+            c = relay.expr.const(np.ones(in_shape, np.float32))
+            m = relay.strided_slice(c, begin, end, strides, slice_mode=slice_mode, axes=axes)
+            net = relay.Function([], m)
+            mod = tvm.IRModule.from_expr(net)
+            mod = relay.transform.InferType()(mod)
+            expected_shape = [int(e) for e in mod["main"].body.checked_type.shape]
 
-        xgraph = xf_relay.from_relay(mod, {})
-        layers = xgraph.get_layers()
+            xgraph = xf_relay.from_relay(mod, {})
+            layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == "Constant"
-        assert layers[1].type[0] == "StridedSlice"
-        assert layers[1].shapes == [2, 3, 3]
+            assert layers[0].type[0] == "Constant"
+            assert layers[1].type[0] == "StridedSlice"
+            assert layers[1].shapes == expected_shape
+
+        _verify((2, 3, 4, 5), (1, 2, 1), (2, 3, 4), (1, 2, 2), axes=(1, 2, 3), slice_mode="size")
+        _verify((1, 2, 416, 416), (0, 0, 208, 0), (1, 3, 1000, 1000), (1, 1, 2, 2), slice_mode="size")
+        _verify((1, 2, 416, 416), (0, 208, 415), (3, 1000, 1000), (1, 2, 2), axes=(1, 2, 3), slice_mode="size")
+        _verify((2, 3, 4, 5), (1, 0, 1), (2, 3, 4), (1, 2, 2), axes=(0, 3, 2), slice_mode="size")
+        
+        
+        _verify((2, 3, 4), (1, 0, 1), (2, 3, 4), (1, 2, 2))
+        _verify((2, 3, 4), (1, 2, 1), (2, 3, 4), (1, 2, 2))
+        _verify((2, 3, 4), (1, 2, 3), (2, 3, 4), (1, 1, 1))
+        _verify((2, 3, 4), (0, 0, 1), (2, 3, 4), (1, 1, 1))
+        _verify((2, 3, 4), (0, 0, 1), (2, 3, 4), (2, 3, 4))
+
+        _verify((1, 2, 416, 416), (0, 0, 0, 0), (1, 3, 9223372036854775807, 416), (1, 1, 2, 1))
+        _verify((1, 2, 416, 416), (0, 0, 208, 208), (1, 3, 9223372036854775807, 416), (1, 1, 2, 1))
+        _verify((1, 2, 416, 416), (0, 0, 208, 0), (1, 3, 9223372036854775807, 1000), (1, 1, 2, 2))
+
+        _verify((2, 3, 4, 5), (1,), (2,), (2,), axes=(2,))
+        _verify((2, 3, 4, 5), (0, 1), (2, 3), (1, 2), axes=(0, 2))
+        _verify((2, 3, 4, 5), (1, 0, 1), (2, 3, 4), (1, 2, 2), axes=(1, 0, 3))
+        _verify((2, 3, 4, 5), (1, 0, 1), (2, 3, 4), (1, 2, 2), axes=(0, 1, 2))
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_strided_slice_onnx(self):

@@ -145,7 +145,8 @@ def strided_slice(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
     begin = [int(e) for e in list(expr.attrs.begin)]
     attrs_end = [int(e) for e in list(expr.attrs.end)]
     expr_shape = [int(s) for s in expr.type_args[0].shape]
-    end = [ s if e==0x7FFFFFFF else e for e,s in zip (attrs_end,expr_shape)]
+    axes = [int(e) for e in list(expr.attrs.axes)] if expr.attrs.axes is not None else None
+    # end = [ s if e==0x7FFFFFFF else e for e,s in zip (attrs_end,expr_shape)]
 
     expr_strides = list(expr.attrs.strides)
     if expr_strides is None:
@@ -154,10 +155,10 @@ def strided_slice(op_name: str, expr: Expr, in_xlayers: List[XLayer]) -> XLayer:
         strides = [int(expr_strides[0]) for _ in begin]
     else:
         strides = [int(e) for e in list(expr.attrs.strides)]
-    slice_mode = expr.attrs.slice_mode if expr.attrs.slice_mode is not None else 'end'
+    slice_mode = str(expr.attrs.slice_mode) if expr.attrs.slice_mode is not None else 'end'
 
-    X = px.ops.strided_slice(op_name, in_xlayers, begin=begin, end=end, strides=strides,
-                             slice_mode=slice_mode, relay_id=[hash(expr)])
+    X = px.ops.strided_slice(op_name, in_xlayers, begin=begin, end=attrs_end, strides=strides,
+                             slice_mode=slice_mode, axes=axes, relay_id=[hash(expr)])
 
     return X
 
