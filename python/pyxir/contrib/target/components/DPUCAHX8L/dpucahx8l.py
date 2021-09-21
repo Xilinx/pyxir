@@ -26,7 +26,6 @@ from pyxir.graph.transformers.layout_transformation_pass import (
 )
 from pyxir.graph.transformers import subgraph
 from pyxir.quantization.decent_quantizer import DECENTQuantizer
-from pyxir.quantization.external_quantizer import ExternalQuantizerDecentOutput
 from pyxir.contrib.target.components.common.vai_c import VAICompiler
 
 
@@ -46,20 +45,6 @@ def xgraph_dpu_quantizer(xgraph, inputs_func, **kwargs):
     quantizer = DECENTQuantizer(
         xgraph, inputs_func, compiler_target="xcompiler", **kwargs
     )
-    q_xgraph = quantizer.quantize()
-    return q_xgraph
-
-
-def xgraph_dpu_external_quantizer_optimizer(xgraph, target=None, **kwargs):
-    layout_transform_pass = XGraphLayoutTransformationPass("NHWC", target=target)
-    dpu_xgraph = layout_transform_pass.execute(xgraph, subgraphs_only=False)
-    optimizer = ExternalQOptimizer(dpu_xgraph)
-    optimizer.optimize()
-    return dpu_xgraph
-
-
-def xgraph_dpu_external_quantizer(xgraph, inputs_func, **kwargs):
-    quantizer = ExternalQuantizerDecentOutput(xgraph, inputs_func, **kwargs)
     q_xgraph = quantizer.quantize()
     return q_xgraph
 

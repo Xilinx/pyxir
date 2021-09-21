@@ -189,77 +189,72 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_reshape(self):
-        # 1
-        c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
-        net = relay.reshape(c, (4, 0, 2))
-        net = relay.Tuple([net])
-        net = relay.Function([], net)
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
+        def _verify_const(in_shape, newshape):
+            c = relay.expr.const(np.ones(in_shape, dtype=np.float32))
+            net = relay.reshape(c, newshape)
+            net = relay.Tuple([net])
+            net = relay.Function([], net)
+            mod = tvm.IRModule.from_expr(net)
+            mod = relay.transform.InferType()(mod)
+            expected_shape = [int(e) for e in mod["main"].body.checked_type.fields[0].shape]
 
-        xgraph = xf_relay.from_relay(mod, {})
-        layers = xgraph.get_layers()
+            xgraph = xf_relay.from_relay(mod, {})
+            layers = xgraph.get_layers()
 
-        assert layers[0].type[0] == "Constant"
-        assert layers[0].shapes == [4, 3, 2]
+            assert layers[0].type[0] == "Constant"
+            assert layers[0].shapes == expected_shape
 
-        # 2
-        c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
-        net = relay.reshape(c, (6, 1, -1))
-        net = relay.Tuple([net])
-        net = relay.Function([], net)
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
+        def _verify(in_shape, newshape):
+            # c = relay.expr.const(np.ones(in_shape, dtype=np.float32))
+            data = relay.var("data", relay.TensorType(in_shape, "float32"))
+            net = relay.reshape(data, newshape)
+            # net = relay.Tuple([net])
+            net = relay.Function([data], net)
+            mod = tvm.IRModule.from_expr(net)
+            mod = relay.transform.InferType()(mod)
+            # expected_shape = [int(e) for e in mod["main"].body.checked_type.fields[0].shape]
+            expected_shape = [int(e) for e in mod["main"].body.checked_type.shape]
 
-        xgraph = xf_relay.from_relay(mod, {})
-        layers = xgraph.get_layers()
+            xgraph = xf_relay.from_relay(mod, {})
+            layers = xgraph.get_layers()
+            
+            
+            expected_shape[0] = -1
+            assert layers[1].type[0] == "Reshape"
+            assert layers[1].shapes == expected_shape
 
-        assert layers[0].type[0] == "Constant"
-        assert layers[0].shapes == [6, 1, 4]
+        _verify((1, 85, 52, 52), (1, -1, 52))
+        _verify((1, 85, 52, 52), (1, 85, -1))
+        _verify((1, 85, 52, 52), (1, 85, -2))
+        _verify((1, 85, 52, 52), (1, 85, -3))
+        _verify((1, 85, 52, 52), (1, -3, 52))
+        _verify((1, 85, 52, 52), (1, -4, -1, 5, -2))
 
-        # 3
-        c = relay.expr.const(np.ones((2, 3, 4), dtype=np.float32))
-        net = relay.reshape(c, (-2,))
-        net = relay.Tuple([net])
-        net = relay.Function([], net)
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
+        # 0
+        _verify_const((2, 3, 4), (4, 0, 2))
+        _verify_const((2, 3, 4), (2, 0, 0))
 
-        xgraph = xf_relay.from_relay(mod, {})
-        layers = xgraph.get_layers()
+        # -1
+        _verify_const((2, 3, 4), (6, 1, -1))
+        _verify_const((2, 3, 4), (3, -1, 8))
+        _verify_const((2, 3, 4), (-1,))
+        _verify_const((10, 1), (1, -1))
+        _verify_const((10), (-1, 1))
 
-        assert layers[0].type[0] == "Constant"
-        assert layers[0].shapes == [2, 3, 4]
+        # -2
+        _verify_const((2, 3, 4), (-2,))
+        _verify_const((2, 3, 4), (2, -2,))
+        _verify_const((2, 3, 4), (-2, 1, 1))
 
-        # 4
-        c = relay.expr.const(np.ones((2, 3, 4, 5), dtype=np.float32))
-        net = relay.reshape(c, (-3, -3))
-        net = relay.Tuple([net])
-        net = relay.Function([], net)
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
+        # -3
+        _verify_const((2, 3, 4), (-3, 4))
+        _verify_const((2, 3, 4, 5), (-3, -3))
+        _verify_const((2, 3, 4), (0, -3))
+        _verify_const((2, 3, 4), (-3, -2))
 
-        xgraph = xf_relay.from_relay(mod, {})
-        layers = xgraph.get_layers()
-
-        assert layers[0].type[0] == "Constant"
-        assert layers[0].shapes == [6, 20]
-
-        # 5
-        data = relay.var("data", relay.TensorType((-1, 6, 1, 1), "float32"))
-        net = relay.reshape(data, (-1, 6))
-        net = relay.Function([data], net)
-        mod = tvm.IRModule.from_expr(net)
-        mod = relay.transform.InferType()(mod)
-
-        xgraph = xf_relay.from_relay(mod, {})
-        layers = xgraph.get_layers()
-
-        assert layers[0].type[0] == "Input"
-        assert layers[0].shapes == [-1, 6, 1, 1]
-
-        assert layers[1].type[0] == "Reshape"
-        assert layers[1].shapes == [-1, 6]
+        # -4
+        _verify_const((2, 3, 4), (-4, 1, 2, -2))
+        _verify_const((2, 3, 4), (2, -4, -1, 3, -2))
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_split_int(self):

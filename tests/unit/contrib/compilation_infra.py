@@ -683,6 +683,87 @@ def xcompiler_conv2d_leaky_relu_nhwc_oihw_test(
         )
 
 
+def _create_conv2d_bias_add_relu_nhwc_oihw(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    kernel_layout="OIHW",
+    target="DPUCZDX8G-zcu104",
+) -> XGraph:
+
+    kernel_w, kernel_h = w_shape[2], w_shape[3]
+    channels = w_shape[kernel_layout.index("O")]
+    W = np.random.randint(-10, 10, size=w_shape).astype(np.float32)
+    B = np.random.randint(-10, 10, size=(channels,)).astype(np.float32)
+
+    x1 = px.ops.input("in1", shape=list(in_shape))
+    w1 = px.ops.constant("weight", W)
+    conv1 = px.ops.conv2d(
+        op_name="conv1",
+        input_layer=x1,
+        weights_layer=w1,
+        kernel_size=[kernel_w, kernel_h],
+        strides=list(conv_strides),
+        padding_hw=list(conv_padding),
+        dilation=list(conv_dilation),
+        data_layout="NHWC",
+    )
+    b = px.ops.constant("bias", B)
+    bias_add = px.ops.bias_add("bias_add", conv1, b, axis=3)
+    r1 = px.ops.relu("r1", [bias_add])
+    net = [x1, conv1, bias_add, r1]
+    xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
+    xgraph = px.partition(xgraph, [target])
+    return xgraph
+
+
+def xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    kernel_layout="OIHW",
+    targets=["DPUCZDX8G-zcu104"],
+    expected_nb_subgraphs=3,
+) -> None:
+
+    for target in targets:
+        xgraph = _create_conv2d_bias_add_relu_nhwc_oihw(
+            in_shape,
+            w_shape,
+            conv_padding,
+            conv_strides,
+            conv_dilation,
+            kernel_layout,
+            target,
+        )
+
+        def inputs_func(iter):
+            inputs = np.ones(in_shape, dtype=np.float32)
+            return {"in1": inputs}
+
+        work_dir = os.path.join(FILE_PATH, "work")
+        build_dir = os.path.join(FILE_PATH, "build")
+        quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
+        opt_xgraph = px.optimize(q_xgraph, target)
+        c_xgraph = px.compile(
+            opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
+        )
+
+        g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
+        # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
+        subgraphs = get_child_subgraphs(g)
+        assert (
+            len(subgraphs) == expected_nb_subgraphs
+        ), "Expected {0} subgraphs but got: {1}".format(
+            expected_nb_subgraphs, len(subgraphs)
+        )
+
+
 def _create_multi_output_conv2d_nhwc_oihw(
     in_shape,
     w_shape,

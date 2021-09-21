@@ -187,23 +187,47 @@ def mean_transpose_transform(X: XLayer , axes: List[int]) -> None:
 def strided_slice(attrs, in_xlayers):
     """ Strided slice of an array """
 
-    # assert len(in_xlayers) == 1
     begin = attrs['begin']
     end = attrs['end']
     strides = attrs['strides']
     slice_mode = attrs['slice_mode']
+    axes = attrs["axes"]
 
     in_shape = in_xlayers[0].shapes[:]
+    newshape = []
+
+    if axes is not None:
+        rank = len(in_shape)
+        new_begin = [0] * rank
+        new_end = [in_shape[i] for i in range(rank)]
+        new_strides = [1] * rank
+
+        for i, axis in enumerate(axes):
+            new_begin[axis] = begin[i]
+            new_end[axis] = end[i]
+            if len(strides) > i:
+                new_strides[axis] = strides[i]
+
+        begin = new_begin
+        end = new_end
+        strides = new_strides
+
     assert len(in_shape) == len(begin)
     assert len(in_shape) == len(end)
     assert len(in_shape) == len(strides)
-    newshape = []
 
     if slice_mode == 'end':
         for i in range(len(in_shape)):
-            newshape.append(int((end[i] - begin[i]) / strides[i]))
+            in_dim = in_shape[i]
+            newshape.append(math.ceil((min(end[i], in_dim) - begin[i]) / strides[i]))
     elif slice_mode == 'size':
-        raise ValueError("Slice mode `size` not supported yet in PyXIR")
+        for i in range(len(in_shape)):
+            in_dim = in_shape[i]
+            if end[i] < 0:
+                out_dim = in_dim - begin[i]
+            else:
+                out_dim = min(end[i], in_dim - begin[i])
+            newshape.append(out_dim)
     else:
         raise ValueError("Slice mode `{}` not supported yet in PyXIR".format(slice_mode))
 

@@ -21,122 +21,149 @@ import math
 import logging
 import pyxir
 
-logger = logging.getLogger('pyxir')
+logger = logging.getLogger("pyxir")
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'BatchNorm')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "BatchNorm")
 def batchnorm_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BatchNorm operator
         on the som target """
 
-    axis = X.attrs['axis']
+    axis = X.attrs["axis"]
     channels = X.shapes[axis]
 
     return channels >= 1 and channels <= 3136
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'BiasAdd')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "BiasAdd")
 def biasadd_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided BiasAdd operator
         on the som target """
 
-    axis = X.attrs['axis']
+    axis = X.attrs["axis"]
     channels = X.shapes[axis]
 
     return channels >= 1 and channels <= 3136
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Cast')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Cast")
 def cast_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Cast operator
         on the DPUCZDX8G-som target """
 
-    dtype = X.attrs['dtype']
+    dtype = X.attrs["dtype"]
 
-    return dtype == 'float32'
+    return dtype == "float32"
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Concat')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Concat")
 def concat_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Concat operator
         on the som target """
 
-    axis = X.attrs['axis']
+    axis = X.attrs["axis"]
     channels = X.shapes[axis]
 
     return channels >= 1 and channels <= 3136
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Convolution')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Convolution")
 def conv2d_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2D operator
         on the som target """
 
-    data_layout = X.attrs['data_layout']
+    data_layout = X.attrs["data_layout"]
 
-    kernel_h, kernel_w = X.attrs['kernel_size']
-    stride_h, stride_w = X.attrs['strides']
-    dilation_h, dilation_w = X.attrs['dilation']
-    padding_h, padding_w = X.attrs['padding'][data_layout.index('H')],\
-        X.attrs['padding'][data_layout.index('W')]
+    kernel_h, kernel_w = X.attrs["kernel_size"]
+    stride_h, stride_w = X.attrs["strides"]
+    dilation_h, dilation_w = X.attrs["dilation"]
+    padding_h, padding_w = (
+        X.attrs["padding"][data_layout.index("H")],
+        X.attrs["padding"][data_layout.index("W")],
+    )
     padding_h_top, padding_h_bot = padding_h
     padding_w_left, padding_w_right = padding_w
-    ch_in, ch_out = X.attrs['channels']
-    groups = X.attrs['groups']
+    ch_in, ch_out = X.attrs["channels"]
+    groups = X.attrs["groups"]
 
-    return kernel_h >= 1 and kernel_h <= 16 and\
-        kernel_w >= 1 and kernel_w <= 16 and\
-        stride_h >= 1 and stride_h <= 4 and\
-        stride_w >= 1 and stride_w <= 4 and\
-        padding_h_top >= 0 and padding_h_top <= kernel_h - 1 and\
-        padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
-        padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
-        padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in >= 1 and ch_in <= 3136 and\
-        ch_out >= 1 and ch_out <= 3136 and\
-        dilation_h * ch_in <= 3136 and\
-        (dilation_h == 1 or stride_h == 1) and\
-        dilation_w * ch_in <= 3136 and\
-        (dilation_w == 1 or stride_w == 1)
+    return (
+        kernel_h >= 1
+        and kernel_h <= 16
+        and kernel_w >= 1
+        and kernel_w <= 16
+        and stride_h >= 1
+        and stride_h <= 4
+        and stride_w >= 1
+        and stride_w <= 4
+        and padding_h_top >= 0
+        and padding_h_top <= kernel_h - 1
+        and padding_h_bot >= 0
+        and padding_h_bot <= kernel_h - 1
+        and padding_w_left >= 0
+        and padding_w_left <= kernel_w - 1
+        and padding_w_right >= 0
+        and padding_w_right <= kernel_w - 1
+        and ch_in >= 1
+        and ch_in <= 3136
+        and ch_out >= 1
+        and ch_out <= 3136
+        and dilation_h * ch_in <= 3136
+        and (dilation_h == 1 or stride_h == 1)
+        and dilation_w * ch_in <= 3136
+        and (dilation_w == 1 or stride_w == 1)
+    )
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Conv2DTranspose')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Conv2DTranspose")
 def conv2d_transpose_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Conv2DTranspose operator
         on the som target """
 
-    data_layout = X.attrs['data_layout']
+    data_layout = X.attrs["data_layout"]
 
-    kernel_h, kernel_w = X.attrs['kernel_size']
-    stride_h, stride_w = X.attrs['strides']
-    dilation_h, dilation_w = X.attrs['dilation']
-    padding_h, padding_w = X.attrs['padding'][data_layout.index('H')],\
-        X.attrs['padding'][data_layout.index('W')]
+    kernel_h, kernel_w = X.attrs["kernel_size"]
+    stride_h, stride_w = X.attrs["strides"]
+    dilation_h, dilation_w = X.attrs["dilation"]
+    padding_h, padding_w = (
+        X.attrs["padding"][data_layout.index("H")],
+        X.attrs["padding"][data_layout.index("W")],
+    )
     padding_h_top, padding_h_bot = padding_h
     padding_w_left, padding_w_right = padding_w
-    ch_in, ch_out = X.attrs['channels']
-    groups = X.attrs['groups']
+    ch_in, ch_out = X.attrs["channels"]
+    groups = X.attrs["groups"]
 
-    return kernel_h >= 1 and kernel_h <= 16 and\
-        kernel_w >= 1 and kernel_w <= 16 and\
-        stride_w * ch_out >= 1 and stride_w * ch_out <= 3136 and\
-        stride_h >= 1 and\
-        padding_h_top >= 0 and padding_h_top <= kernel_h - 1 and\
-        padding_h_bot >= 0 and padding_h_bot <= kernel_h - 1 and\
-        padding_w_left >= 0 and padding_w_left <= kernel_w - 1 and\
-        padding_w_right >= 0 and padding_w_right <= kernel_w - 1 and\
-        ch_in >= 1 and ch_in <= 3136 and\
-        ch_out >= 1 and ch_out <= 3136 and\
-        dilation_h * ch_in <= 3136 and\
-        (dilation_h == 1 or stride_h == 1) and\
-        dilation_w * ch_in <= 3136 and\
-        (dilation_w == 1 or stride_w == 1)
+    return (
+        kernel_h >= 1
+        and kernel_h <= 16
+        and kernel_w >= 1
+        and kernel_w <= 16
+        and stride_w * ch_out >= 1
+        and stride_w * ch_out <= 3136
+        and stride_h >= 1
+        and padding_h_top >= 0
+        and padding_h_top <= kernel_h - 1
+        and padding_h_bot >= 0
+        and padding_h_bot <= kernel_h - 1
+        and padding_w_left >= 0
+        and padding_w_left <= kernel_w - 1
+        and padding_w_right >= 0
+        and padding_w_right <= kernel_w - 1
+        and ch_in >= 1
+        and ch_in <= 3136
+        and ch_out >= 1
+        and ch_out <= 3136
+        and dilation_h * ch_in <= 3136
+        and (dilation_h == 1 or stride_h == 1)
+        and dilation_w * ch_in <= 3136
+        and (dilation_w == 1 or stride_w == 1)
+    )
 
 
 # @pyxir.register_op_support_check('DPUCZDX8G-som', 'Dense')
@@ -150,7 +177,7 @@ def conv2d_transpose_op_support(X, bXs, tXs):
 #     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'DPU')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "DPU")
 def DPUCZDX8G_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided DPU operator
@@ -161,7 +188,7 @@ def DPUCZDX8G_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Eltwise')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Eltwise")
 def eltwise_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Eltwise operator
@@ -172,80 +199,107 @@ def eltwise_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Pad')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Pad")
 def pad_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
         on the som target """
 
-    if len(tXs) == 1 and tXs[0].type[0] in ['Pooling', 'Convolution']:
-        t_data_layout = tXs[0].attrs['data_layout']
+    if len(tXs) == 1 and tXs[0].type[0] in ["Pooling", "Convolution"]:
+        t_data_layout = tXs[0].attrs["data_layout"]
         t_type = tXs[0].type[0]
 
-        padding_h, padding_w = X.attrs['padding'][t_data_layout.index('H')],\
-            X.attrs['padding'][t_data_layout.index('W')]
+        padding_h, padding_w = (
+            X.attrs["padding"][t_data_layout.index("H")],
+            X.attrs["padding"][t_data_layout.index("W")],
+        )
         padding_h_top, padding_h_bot = padding_h
         padding_w_left, padding_w_right = padding_w
 
-        if t_type == 'Pooling':
-            return padding_h_top >= 0 and padding_h_top <= 4 and\
-                padding_h_bot >= 0 and padding_h_bot <= 4 and\
-                padding_w_left >= 0 and padding_w_left <= 4 and\
-                padding_w_right >= 0 and padding_w_right <= 4
-        elif t_type == 'Convolution':
-            t_kernel_h, t_kernel_w = tXs[0].attrs['kernel_size']
+        if t_type == "Pooling":
+            return (
+                padding_h_top >= 0
+                and padding_h_top <= 4
+                and padding_h_bot >= 0
+                and padding_h_bot <= 4
+                and padding_w_left >= 0
+                and padding_w_left <= 4
+                and padding_w_right >= 0
+                and padding_w_right <= 4
+            )
+        elif t_type == "Convolution":
+            t_kernel_h, t_kernel_w = tXs[0].attrs["kernel_size"]
 
-            return padding_h_top >= 0 and padding_h_top <= t_kernel_h - 1 and\
-                padding_h_bot >= 0 and padding_h_bot <= t_kernel_h - 1 and\
-                padding_w_left >= 0 and padding_w_left <= t_kernel_w - 1 and\
-                padding_w_right >= 0 and padding_w_right <= t_kernel_w - 1
+            return (
+                padding_h_top >= 0
+                and padding_h_top <= t_kernel_h - 1
+                and padding_h_bot >= 0
+                and padding_h_bot <= t_kernel_h - 1
+                and padding_w_left >= 0
+                and padding_w_left <= t_kernel_w - 1
+                and padding_w_right >= 0
+                and padding_w_right <= t_kernel_w - 1
+            )
 
         return False
 
     return False
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Pooling')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Pooling")
 def pooling_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Pooling operator
         on the som target """
 
-    data_layout = X.attrs['data_layout']
+    data_layout = X.attrs["data_layout"]
 
-    kernel_h, kernel_w = X.attrs['kernel_size']
-    stride_h, stride_w = X.attrs['strides']
-    padding_h, padding_w = X.attrs['padding'][data_layout.index('H')],\
-        X.attrs['padding'][data_layout.index('W')]
+    kernel_h, kernel_w = X.attrs["kernel_size"]
+    stride_h, stride_w = X.attrs["strides"]
+    padding_h, padding_w = (
+        X.attrs["padding"][data_layout.index("H")],
+        X.attrs["padding"][data_layout.index("W")],
+    )
     padding_h_top, padding_h_bot = padding_h
     padding_w_left, padding_w_right = padding_w
 
-    channels = X.shapes[data_layout.index('C')]
+    channels = X.shapes[data_layout.index("C")]
 
-    return kernel_h >= 1 and kernel_h <= 8 and\
-        kernel_w >= 1 and kernel_w <= 8 and\
-        stride_h >= 1 and stride_h <= 4 and\
-        stride_w >= 1 and stride_w <= 4 and\
-        padding_h_top >= 0 and padding_h_top <= 4 and\
-        padding_h_bot >= 0 and padding_h_bot <= 4 and\
-        padding_w_left >= 0 and padding_w_left <= 4 and\
-        padding_w_right >= 0 and padding_w_right <= 4 and\
-        channels >= 1 and channels <= 3136
+    return (
+        kernel_h >= 1
+        and kernel_h <= 8
+        and kernel_w >= 1
+        and kernel_w <= 8
+        and stride_h >= 1
+        and stride_h <= 4
+        and stride_w >= 1
+        and stride_w <= 4
+        and padding_h_top >= 0
+        and padding_h_top <= 4
+        and padding_h_bot >= 0
+        and padding_h_bot <= 4
+        and padding_w_left >= 0
+        and padding_w_left <= 4
+        and padding_w_right >= 0
+        and padding_w_right <= 4
+        and channels >= 1
+        and channels <= 3136
+    )
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Mean')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Mean")
 def mean_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Mean operator
         on the som target """
 
-    axes = X.attrs['axes']
-    keepdims = X.attrs['keepdims']
+    axes = X.attrs["axes"]
+    keepdims = X.attrs["keepdims"]
 
     return len(axes) == 2 and keepdims
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'LeakyReLU')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "LeakyReLU")
 def leaky_relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided LeakyRelu operator
@@ -254,7 +308,7 @@ def leaky_relu_op_support(X, bXs, tXs):
     # TODO: position?
 
     # Only LeakyReLU: alpha == 0.1 supported
-    alpha = X.attrs['alpha']
+    alpha = X.attrs["alpha"]
 
     return math.isclose(alpha, 0.1, rel_tol=1e-5)
 
@@ -264,13 +318,22 @@ def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
         on the som target """
+    assert len(bXs) == 1
+    bX = bXs[0]
+    return bX.type[0] in set(
+        [
+            "Convolution",
+            "Conv2DTranspose",
+            "Eltwise",
+            "BatchNorm",
+            "BiasAdd",
+            "Scale",
+            "Pooling",
+        ]
+    )
 
-    # TODO always?
 
-    return True
-
-
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'ReLU6')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "ReLU6")
 def relu6_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided ReLU operator
@@ -281,24 +344,24 @@ def relu6_op_support(X, bXs, tXs):
     return True
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Scale')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Scale")
 def scale_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Scale operator
         on the som target """
 
-    axis = X.attrs['axis']
+    axis = X.attrs["axis"]
     channels = X.shapes[axis]
 
     return channels > 1 and channels <= 3136
 
 
-@pyxir.register_op_support_check('DPUCZDX8G-som', 'Upsampling2D')
+@pyxir.register_op_support_check("DPUCZDX8G-som", "Upsampling2D")
 def scale_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """ Check whether we can execute the provided Upsampling2D operator
         on the som target """
 
-    method = X.attrs['method']
+    method = X.attrs["method"]
     # TODO
-    return method == 'nearest_neighbor'
+    return method == "nearest_neighbor"

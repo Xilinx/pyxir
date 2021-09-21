@@ -330,19 +330,13 @@ def reshape(expr: Expr,
     i, j = 0, 0  # i is index in relayshape, j in input_shape
     while i < len(relayshape):
         dim = relayshape[i]
-        if dim == 1 and i == 0: # ex: relayshape -> [1, -1] input_shape -> [10,1]
-            newshape.append(dim)
-            j -=1
-        elif dim > 0:
+
+        if dim > 0:
             newshape.append(dim)
         elif dim == 0:
             newshape.append(input_shape[j])
-        elif dim == -1 and i == 0 and input_shape[0] == -1:
-            newshape.append(-1)
-        elif dim == -1 and i == 0 and len(input_shape) == 1: # ex: relayshape -> [-1,1] input_shape -> [10]
-            newshape.append(input_shape[0])
         elif dim == -1:
-            newshape.append(int(np.prod(input_shape[j:]) / np.prod(relayshape[i+1:])))
+            newshape.append(-1)
         elif dim == -2:
             newshape.extend(input_shape[j:])
         elif dim == -3:
@@ -352,14 +346,6 @@ def reshape(expr: Expr,
             assert(i < (len(relayshape) - 2))
             nxt = relayshape[i+1]
             nxtnxt = relayshape[i+2]
-            if nxt == -1 and nxtnxt == -1:
-                raise ValueError("Invalid sequence in relay reshape operator"
-                                 " newshape attribute: [-4,-1,-1].")
-            elif nxt == -1:
-                nxt = input_shape[j] / nxtnxt
-            elif nxtnxt == -1:
-                nxtnxt = input_shape[j] / nxt
-            assert(input_shape[j] == nxt * nxtnxt)
             newshape.extend([int(nxt), int(nxtnxt)])
             i += 2
         else:
@@ -371,6 +357,14 @@ def reshape(expr: Expr,
         i += 1
         j += 1
 
+    size = abs(int(np.prod(input_shape)))
+    new_size = abs(int(np.prod(newshape)))
+    for i, dim in enumerate(newshape):
+        if dim == -1:
+            newshape[i] = int(size / new_size)
+            break
+
+    assert not any([e in [-1, -2, -3, -4] for e in newshape])
     logger.debug("-- newshape: {}".format(newshape))
     if list(data_layer.shapes)[0] == -1:
         assert abs(np.prod(list(data_layer.shapes))) % np.prod(newshape) == 0
@@ -382,7 +376,6 @@ def reshape(expr: Expr,
 
     # Create XLayer
     op_name = 'reshape-' + str(hash(expr))
-
     X = px.ops.reshape(op_name, data_layer, newshape, relay_id=[hash(expr)])
 
     # Otherwise precompute
