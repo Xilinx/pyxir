@@ -493,7 +493,6 @@ class TestDPUCZDX8G(unittest.TestCase):
         assert "Pad" in ultra96_ops
         assert "Pooling" in ultra96_ops
         assert "Mean" in ultra96_ops
-        assert "pReLU" in ultra96_ops
         assert "ReLU" in ultra96_ops
         assert "ReLU6" in ultra96_ops
         assert "Scale" in ultra96_ops
@@ -512,7 +511,6 @@ class TestDPUCZDX8G(unittest.TestCase):
         assert "Pad" in zcu102_ops
         assert "Pooling" in zcu102_ops
         assert "Mean" in zcu102_ops
-        assert "pReLU" in zcu102_ops
         assert "ReLU" in zcu102_ops
         assert "ReLU6" in zcu102_ops
         assert "Scale" in zcu102_ops
@@ -531,7 +529,6 @@ class TestDPUCZDX8G(unittest.TestCase):
         assert "Pad" in zcu104_ops
         assert "Pooling" in zcu104_ops
         assert "Mean" in zcu104_ops
-        assert "pReLU" in zcu104_ops
         assert "ReLU" in zcu104_ops
         assert "ReLU6" in zcu104_ops
         assert "Scale" in zcu104_ops
@@ -550,7 +547,6 @@ class TestDPUCZDX8G(unittest.TestCase):
         assert "Pad" in som_ops
         assert "Pooling" in som_ops
         assert "Mean" in som_ops
-        assert "pReLU" in som_ops
         assert "ReLU" in som_ops
         assert "ReLU6" in som_ops
         assert "Scale" in som_ops

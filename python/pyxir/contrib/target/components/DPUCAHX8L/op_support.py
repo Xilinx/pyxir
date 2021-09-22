@@ -164,13 +164,6 @@ def leaky_relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bo
     return False
 
 
-@pyxir.register_op_support_check("DPUCAHX8L", "pReLU")
-def prelu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided pRelu operator
-        on the DPUCAHX8L target """
-    return False
-
-
 @pyxir.register_op_support_check("DPUCAHX8L", "ReLU")
 def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean

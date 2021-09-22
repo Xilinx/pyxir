@@ -567,7 +567,7 @@ def merge_relu(xgraph, bottom_Xs, X, top_Xs, **kwargs):
     Convolution/Eltwise/BatchNorm/Scale layer
     """
     changes = False
-    if 'ReLU' in X.type or 'pReLU' in X.type:
+    if 'ReLU' in X.type or 'LeakyReLU' in X.type:
         if len(bottom_Xs) != 1:
             raise ValueError("Impossible to merge (p)ReLU layer."
                              " (p)ReLU layer must always be preceded by"
@@ -581,10 +581,10 @@ def merge_relu(xgraph, bottom_Xs, X, top_Xs, **kwargs):
         changes = True
 
         attrs = bottom_X.attrs
-        if X.type[0] == 'pReLU':
+        if X.type[0] == 'LeakyReLU':
             attrs['alpha'] = P.attrs['alpha']
-            attrs['activation'] = 'pReLU'
-        elif X.type[0] == 'ReLU':
+            attrs['activation'] = 'LeakyReLU'
+        if X.type[0] == 'ReLU':
             attrs['activation'] = 'ReLU'
 
         # bottom_X.attrs = attrs

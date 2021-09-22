@@ -174,24 +174,6 @@ def leaky_relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bo
     ]
 
 
-@pyxir.register_op_support_check("DPUCVDX8H", "pReLU")
-def prelu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided pRelu operator
-        on the DPUCVDX8H target """
-    # Only LeakyReLU: alpha == 0.1 supported
-    assert len(bXs) == 1
-    bX = bXs[0]
-    alpha = X.attrs["alpha"]
-    # LeakyRelu not supported after depthwise conv2d
-    return math.isclose(alpha, 0.1, rel_tol=1e-5) and bX.type[0] in [
-        "Convolution",
-        "Conv2DTranspose",
-        "BatchNorm",
-        "BiasAdd",
-        "Scale",
-    ]
-
-
 @pyxir.register_op_support_check("DPUCVDX8H", "ReLU")
 def relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """ Check whether we can execute the provided ReLU operator

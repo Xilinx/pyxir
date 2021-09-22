@@ -56,7 +56,7 @@ X_2_NP = {
     # NON-LINEARITIES
     'Softmax': base.get_layer(rt_layer_np.SoftmaxLayer),
     'ReLU': base.get_layer(rt_layer_np.ReluLayer),
-    'pReLU': base.get_layer(rt_layer_np.LeakyReluLayer),
+    'LeakyReLU': base.get_layer(rt_layer_np.LeakyReluLayer),
 
     # TRANSFORMATIONS
     'Reshape': base.get_layer(rt_layer_np.ReshapeLayer),

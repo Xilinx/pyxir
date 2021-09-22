@@ -126,14 +126,15 @@ class TestL3MathAndTransformations(unittest.TestCase):
             tops=[],
             targets=[],
         )
-
-        sX = px.ops.prelu("prelu1", iX, alpha=0.2, axis=1)
+        alpha = np.array([.1, .2], dtype=np.float32),
+        alphaX = px.ops.constant("alpha", alpha)
+        sX = px.ops.prelu("prelu1", [iX, alphaX], axis=1)
 
         assert sX.type[0] == "pReLU"
         assert sX.shapes == [1, 2, 4, 4]
         assert sX.sizes == [32]
-        assert sX.attrs["alpha"] == 0.2
-        assert sX.bottoms == ["in1"]
+        assert sX.bottoms == ["in1", "alpha"]
+        assert sX.attrs["axis"] == 1
 
         from pyxir.graph.ops.l3_math_and_transformations import (
             prelu_transpose_transform,
@@ -143,7 +144,7 @@ class TestL3MathAndTransformations(unittest.TestCase):
         assert sX.type[0] == "pReLU"
         assert sX.shapes == [1, 4, 4, 2]
         assert sX.sizes == [32]
-        assert sX.attrs["alpha"] == 0.2
+        assert sX.attrs["axis"] == 3
 
     def test_reshape_layer(self):
 

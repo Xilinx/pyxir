@@ -110,7 +110,7 @@ def get_constant_layer(ConstantLayer):
             name=X.name,
             shape=shapes,
             dtype=X.attrs['dtype'] if 'dtype' in X.attrs else 'float32',
-            inputs=[X.name],
+            inputs=[], # [X.name],
             input_shapes=[],
             subgraph=X.subgraph,
             value=X.data[0]
@@ -494,7 +494,7 @@ def get_conv2d_layer(ConvLayer, ConstantLayer):
         op_name = X.name
         activation = None
         activation_attrs = {}
-        if 'activation' in X.attrs and X.attrs['activation'] == 'pReLU':
+        if 'activation' in X.attrs and X.attrs['activation'] == 'LeakyReLU':
             assert('alpha' in X.attrs)
             activation = 'leaky_relu'
             activation_attrs['alpha'] = X.attrs['alpha']
@@ -596,7 +596,7 @@ def get_conv2d_transpose_layer(Conv2DTransposeLayer, ConstantLayer):
         op_name = X.name
         activation = None
         activation_attrs = {}
-        if 'activation' in X.attrs and X.attrs['activation'] == 'pReLU':
+        if 'activation' in X.attrs and X.attrs['activation'] == 'LeakyReLU':
             assert 'alpha' in X.attrs
             activation = 'leaky_relu'
             activation_attrs['alpha'] = X.attrs['alpha']

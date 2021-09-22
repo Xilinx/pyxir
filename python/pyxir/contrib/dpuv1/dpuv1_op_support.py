@@ -220,24 +220,10 @@ def mean_op_support(X, bXs, tXs):
     return len(axes) == 2 and keepdims
 
 
-@pyxir.register_op_support_check('dpuv1', 'pReLU')
-def prelu_op_support(X, bXs, tXs):
-    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided pRelu operator
-        on the dpuv1 target """
-
-    # TODO: supported ??
-
-    # Only LeakyReLU: alpha == 0.1 supported
-    alpha = X.attrs['alpha']
-
-    return math.isclose(alpha, 0.1, rel_tol=1e-5)
-
-
 @pyxir.register_op_support_check('dpuv1', 'LeakyReLU')
 def leaky_relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided pRelu operator
+    """ Check whether we can execute the provided LeakyRelu operator
         on the dpuv1 target """
 
     # TODO: supported ??

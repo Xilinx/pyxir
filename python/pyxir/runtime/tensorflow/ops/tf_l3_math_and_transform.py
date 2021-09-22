@@ -114,26 +114,38 @@ class PReluLayer(rt_layer.BaseLayer, RtLayerTF):
 
     def init(self) -> None:
         """
-        Initialize a leaky relu layer on top of tf.nn.leaky_relu operation
+        Initialize a prelu layer
 
         y = alpha*x for x < 0
         y = x for x> 0
         """
-        self.alpha = self.attrs['alpha']
-        self.inpt = \
-            tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
-                                     shape=self.input_shapes[0])
+        self.axis = self.attrs["axis"]
+        self.inpt = tf.compat.v1.placeholder(
+            RtLayerTF.dtype_to_tf[self.dtype],
+            shape=self.input_shapes[0]
+        )
+        self.alpha = tf.compat.v1.placeholder(
+            RtLayerTF.dtype_to_tf[self.dtype],
+            shape=self.input_shapes[1]
+        )
 
-        self.res = self.get_output_tensors([self.inpt])[0]
+        self.res = self.get_output_tensors([self.inpt, self.alpha])[0]
 
     def get_output_tensors(self, inpts: List[tf.Tensor], **kwargs) -> tf.Tensor:
-        assert len(inpts) == 1, "PRelu layer expects one input"
-        return [tf.nn.leaky_relu(inpts[0], alpha=self.alpha, name=self.name)]
+        assert len(inpts) == 2, "PRelu layer expects two inputs"
+        inpt, alpha = inpts
+        if self.axis not in [None, -1]:
+            shape = [(1 if i != self.axis else -1) for i in range(len(self.shape))]
+            alpha = tf.reshape(alpha, shape)
+            
+        pos = tf.nn.relu(inpt)
+        neg = alpha * tf.minimum(inpt, 0)
+        return [tf.add(pos, neg, name=self.name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
-        assert len(inputs) == 1, "PRelu layer expects one input"
+        assert len(inputs) == 2, "PRelu layer expects two inputs"
         with tf.compat.v1.Session() as sess:
-            return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
+            return sess.run(self.res, feed_dict={self.inpt: inputs[0], self.alpha: inputs[1]})
 
 ###########
 # Reshape #
