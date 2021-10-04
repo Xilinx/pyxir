@@ -376,6 +376,12 @@ def dropout(op_name: str, input_layer: XLayer, rate: float, **kwargs):
 
     return X
 
+@xop_register_op_transpose_transform('Dropout')
+def dropout_add_transpose_transform(X: XLayer, axes: List[int]):
+    """ Transform Dropout layer with transpose according to
+        provided axes """
+    new_shape = TensorShape([X.shapes[i] for i in axes])
+    X.shapes[:] = new_shape
 
 #######
 # Exp #

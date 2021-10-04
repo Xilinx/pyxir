@@ -651,3 +651,37 @@ class TanhLayer(rt_layer.BaseLayer, RtLayerTF):
         assert len(inputs) == 1, "Tanh layer expects one input"
         with tf.compat.v1.Session() as sess:
             return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
+
+
+########
+# Dropout #
+########
+
+@rt_register_xlayer_2_tf('Dropout')
+class DroputLayer(rt_layer.BaseLayer, RtLayerTF):
+
+    def init(self) -> None:
+        # type: () -> None
+        """
+        Initialize a relu layer on top of tf.relu operation
+        """
+        self.inpt = \
+            tf.compat.v1.placeholder(RtLayerTF.dtype_to_tf[self.dtype],
+                                     shape=self.input_shapes[0])
+
+        self.res = self.get_output_tensors([self.inpt])[0]
+
+    def get_output_tensors(self, inpts, override_name=None, **kwargs):
+
+        assert(len(inpts) == 1)
+        name = self.name if override_name is None else override_name
+        return [tf.nn.dropout(inpts[0], rate = 0.5, name=name)]
+
+    def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
+
+
+        assert(len(inputs) == 1)
+
+        with tf.compat.v1.Session() as sess:
+            return sess.run(self.res, feed_dict={self.inpt: inputs[0]})
+
