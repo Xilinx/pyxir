@@ -31,6 +31,9 @@ from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.quantization.base_subgraph_quantizer import XGraphBaseSubgraphQuantizer
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 
+import tensorflow as tf
+from tensorflow.core.protobuf import config_pb2
+
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 logger = logging.getLogger("pyxir")
@@ -39,7 +42,6 @@ logger = logging.getLogger("pyxir")
 def is_decent_available():
     try:
         import tensorflow as tf
-        from tensorflow.core.protobuf import config_pb2
 
         return hasattr(tf, "contrib") and hasattr(tf.contrib, "decent_q")
     except ImportError:
