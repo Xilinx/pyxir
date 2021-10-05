@@ -31,9 +31,6 @@ from pyxir.graph.xgraph_factory import XGraphFactory
 from pyxir.quantization.base_subgraph_quantizer import XGraphBaseSubgraphQuantizer
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 
-import tensorflow as tf
-from tensorflow.core.protobuf import config_pb2
-
 FILE_PATH = os.path.dirname(os.path.realpath(__file__))
 
 logger = logging.getLogger("pyxir")
@@ -46,16 +43,7 @@ def is_decent_available():
         return hasattr(tf, "contrib") and hasattr(tf.contrib, "decent_q")
     except ImportError:
         return False
-
-def _parse_session_config(gpu_memory_fraction):
-  """Parse session configurations"""
-  s_config = config_pb2.ConfigProto()
-  s_config.gpu_options.per_process_gpu_memory_fraction = gpu_memory_fraction 
-  # Disable graph optimizer and rewiter to make sure every quantize node works correctly 
-  s_config.graph_options.optimizer_options.opt_level = -1 
-  s_config.graph_options.rewrite_options.disable_meta_optimizer = True 
-  return s_config 
-
+        
 
 class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
 
@@ -154,7 +142,18 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
             method="1",
             calib_iter=nb_quant_iters,
         )
-        s_config = _parse_session_config(0.5)
+        def parse_session_config(gpu_memory_fraction):
+            """Parse session configurations"""
+            import tensorflow as tf
+            from tensorflow.core.protobuf import config_pb2
+            s_config = config_pb2.ConfigProto()
+            s_config.gpu_options.per_process_gpu_memory_fraction = gpu_memory_fraction 
+            # Disable graph optimizer and rewiter to make sure every quantize node works correctly 
+            s_config.graph_options.optimizer_options.opt_level = -1 
+            s_config.graph_options.rewrite_options.disable_meta_optimizer = True 
+            return s_config 
+
+        s_config = parse_session_config(0.5)
         self.decent_q.quantize_frozen(input_graph_def, inputs_func, q_config, s_config)
         q_eval_file = os.path.join(self.work_dir, "quantize_eval_model.pb")
 
