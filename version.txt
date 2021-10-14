@@ -12,6 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.3.2 ////////////////
+NEW FEATURES:
+    - /
+UPDATES:
+    - Add default shift bias and shift cut values in decent quantize config
+    - Add Relay PReLU to XLayer and update PReLU to accept a vector alpha
+BUG FIXES:
+    - Fix partitioning bug for BiasAdd followed by ReLU
+    - Fix Relay to XLayer Reshape op
+    - Fix Relay to XLayer strided slice for end > max
+    - Fix for hidden outputs not being recognized; Added exxplicit identity 
+      output in TF generation for hidden outputs
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.3.1 ////////////////
 NEW FEATURES:
     - Add Relay resize2d op translation to XLayer
