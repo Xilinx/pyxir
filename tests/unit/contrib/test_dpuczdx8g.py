@@ -29,6 +29,7 @@ from pyxir.contrib.target.components.common import is_dpuczdx8g_vart_flow_enable
 
 from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
+    xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_leaky_relu_nhwc_oihw_test,
@@ -143,6 +144,20 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-som",
             ],
         )
+        xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+            ],
+        )
+
         # Padded
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 4, 4, 1),
