@@ -30,6 +30,7 @@ from pyxir.contrib.target.components.common import is_dpuczdx8g_vart_flow_enable
 from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
     xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test,
+    xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_leaky_relu_nhwc_oihw_test,
@@ -89,6 +90,43 @@ class TestDPUCZDX8G(unittest.TestCase):
     #     if TestDPUCZDX8G.rt_manager.exists_op('cpu-np', 'DPU'):
     #         TestDPUCZDX8G.rt_manager.unregister_op('cpu-np', 'DPU')
     #     from pyxir.contrib.target import DPUCZDX8G_external_quantizer
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_compile_dropout(self):
+        xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+
+        xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
 
     @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
     def test_compile_conv2d_pool2d(self):
@@ -144,20 +182,6 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-som",
             ],
         )
-        xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1),
-            (2, 1, 2, 2),
-            [0, 0],
-            [3, 3],
-            [1, 1],
-            "Avg",
-            [2, 2],
-            [1, 1],
-            targets=[
-                "DPUCZDX8G-zcu104",
-            ],
-        )
-
         # Padded
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 4, 4, 1),
