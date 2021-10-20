@@ -675,7 +675,7 @@ class DroputLayer(rt_layer.BaseLayer, RtLayerTF):
 
         assert(len(inpts) == 1)
         name = self.name if override_name is None else override_name
-        return [tf.nn.dropout(inpts[0], rate = 0.5, name=name)]
+        return [tf.nn.dropout(inpts[0], rate = 0.5, seed=1, name=name)]
 
     def forward_exec(self, inputs: List[np.ndarray]) -> np.ndarray:
 
