@@ -366,3 +366,10 @@ def scale_op_support(X, bXs, tXs):
     method = X.attrs["method"]
     # TODO
     return method == "nearest_neighbor"
+
+@pyxir.register_op_support_check("DPUCAHX8H-u280", "Dropout")
+def dropout_op_support(X, bXs, tXs):
+    # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
+    """ Check whether we can execute the provided Dropout operator
+        on the DPUCAHX8H-u280 target """
+    return True

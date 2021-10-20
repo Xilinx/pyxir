@@ -28,6 +28,8 @@ from pyxir.runtime.rt_manager import RtManager
 from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
+    xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test,
+    xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
 )
@@ -146,6 +148,31 @@ class TestDPUCVDX8G(unittest.TestCase):
             [2, 2],
             [0, 0],
             targets=["DPUCVDX8G"],
+        )
+
+    def test_compile_dropout(self):
+        xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCVDX8G"]
+        )
+
+        xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCVDX8G"]
         )
 
     def test_compile_scale_conv2d(self):

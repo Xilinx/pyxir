@@ -197,3 +197,9 @@ def upsampling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bo
     # TODO
     method = X.attrs["method"]
     return method == "nearest_neighbor"
+
+@pyxir.register_op_support_check("DPUCAHX8L", "Dropout")
+def dropout_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
+    """ Check whether we can execute the provided Dropout operator
+        on the DPUCAHX8L target """
+    return True
