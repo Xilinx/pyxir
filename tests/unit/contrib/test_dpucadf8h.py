@@ -57,7 +57,7 @@ class TestDPUCADF8H(unittest.TestCase):
     def tearDownClass(cls):
         # Unregister dpu for other tests
         TestDPUCADF8H.target_registry.unregister_target("DPUCADF8H")
-    
+
     def test_compile_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 4, 4, 1),
@@ -169,7 +169,7 @@ class TestDPUCADF8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCADF8H"]
+            targets=["DPUCADF8H"],
         )
 
         xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
@@ -181,7 +181,7 @@ class TestDPUCADF8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCADF8H"]
+            targets=["DPUCADF8H"],
         )
 
     def test_compile_depthwise_conv2d_pool2d(self):

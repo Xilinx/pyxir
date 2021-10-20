@@ -160,7 +160,7 @@ class TestDPUCVDX8G(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCVDX8G"]
+            targets=["DPUCVDX8G"],
         )
 
         xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
@@ -172,7 +172,7 @@ class TestDPUCVDX8G(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCVDX8G"]
+            targets=["DPUCVDX8G"],
         )
 
     def test_compile_scale_conv2d(self):
@@ -192,7 +192,12 @@ class TestDPUCVDX8G(unittest.TestCase):
 
     def test_compile_conv2d_bias_add_relu(self):
         xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], targets=["DPUCVDX8G"],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            targets=["DPUCVDX8G"],
         )
 
     def test_compile_resnetv1_block(self):

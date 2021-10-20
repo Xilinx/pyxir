@@ -101,6 +101,7 @@ def _create_conv2d_pool2d_nhwc_oihw(
     xgraph = px.partition(xgraph, [target])
     return xgraph
 
+
 def _create_conv2d_dropout_pool2d_nhwc_oihw(
     in_shape,
     w_shape,
@@ -136,7 +137,7 @@ def _create_conv2d_dropout_pool2d_nhwc_oihw(
         groups=conv_groups,
         data_layout="NHWC",
     )
-    dropout1 = px.ops.dropout("dropout1", conv1, rate=0.5, data_layout="NHWC" )
+    dropout1 = px.ops.dropout("dropout1", conv1, rate=0.5, data_layout="NHWC")
     pool1 = px.ops.pool2d(
         op_name=pool_name,
         input_layer=dropout1,
@@ -149,6 +150,8 @@ def _create_conv2d_dropout_pool2d_nhwc_oihw(
     xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
     xgraph = px.partition(xgraph, [target])
     return xgraph
+
+
 def _create_conv2d_pool2d_dropout_nhwc_oihw(
     in_shape,
     w_shape,
@@ -192,11 +195,12 @@ def _create_conv2d_pool2d_dropout_nhwc_oihw(
         padding=list(pool_padding),
         layout="NHWC",
     )
-    dropout1 = px.ops.dropout("dropout1", pool1, rate=0.5, data_layout="NHWC" )
+    dropout1 = px.ops.dropout("dropout1", pool1, rate=0.5, data_layout="NHWC")
     net = [x1, conv1, pool1, dropout1]
     xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
     xgraph = px.partition(xgraph, [target])
     return xgraph
+
 
 def conv2d_pool2d_nhwc_oihw_test(
     in_shape,
@@ -322,6 +326,7 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
         shutil.rmtree(work_dir)
         shutil.rmtree(build_dir)
 
+
 def xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
     in_shape,
     w_shape,
@@ -364,7 +369,7 @@ def xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
         work_dir = os.path.join(FILE_PATH, "work")
         build_dir = os.path.join(FILE_PATH, "build")
         quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
-        xgraph =  px.optimize(xgraph, target)
+        xgraph = px.optimize(xgraph, target)
         q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
         opt_xgraph = px.optimize(q_xgraph, target)
 
@@ -390,6 +395,8 @@ def xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
 
         shutil.rmtree(work_dir)
         shutil.rmtree(build_dir)
+
+
 def xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
     in_shape,
     w_shape,
@@ -432,7 +439,7 @@ def xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
         work_dir = os.path.join(FILE_PATH, "work")
         build_dir = os.path.join(FILE_PATH, "build")
         quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
-        xgraph =  px.optimize(xgraph, target)
+        xgraph = px.optimize(xgraph, target)
         q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
         opt_xgraph = px.optimize(q_xgraph, target)
 
@@ -458,6 +465,7 @@ def xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
 
         shutil.rmtree(work_dir)
         shutil.rmtree(build_dir)
+
 
 def conv2d_pool2d_naming_test(conv_names, pool_names) -> None:
 
@@ -1064,7 +1072,14 @@ def multi_output_conv2d_naming_test(out_names) -> None:
     in_shape = (1, 20, 20, 10)
     target = "DPUCZDX8G-zcu104"
     xgraph = _create_multi_output_conv2d_nhwc_oihw(
-        in_shape, (10, 10, 2, 2), [0, 0], [1, 1], [1, 1], "OIHW", target, out_names,
+        in_shape,
+        (10, 10, 2, 2),
+        [0, 0],
+        [1, 1],
+        [1, 1],
+        "OIHW",
+        target,
+        out_names,
     )
 
     def inputs_func(iter):
