@@ -26,6 +26,9 @@ class Schedule(object):
 
     def append(self, value: Any) -> None:
         self.schedule.append(value)
+    
+    def remove(self, value: Any) -> None:
+        self.schedule.remove(value)
 
     def __contains__(self, value):
         return value in self.schedule
