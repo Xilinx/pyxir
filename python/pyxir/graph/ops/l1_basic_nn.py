@@ -359,7 +359,7 @@ def divide(attrs: Dict, in_xlayers: List[XLayer]):
 
 
 @xop_register_factory("Dropout")
-def dropout(op_name: str, input_layer: XLayer, rate: float, **kwargs):
+def dropout(op_name: str, input_layer: XLayer, rate: float, seed = None, **kwargs):
     """
     Create a dropout XLayer
 
@@ -375,6 +375,7 @@ def dropout(op_name: str, input_layer: XLayer, rate: float, **kwargs):
 
     attrs = kwargs
     attrs.update({"rate": rate})
+    attrs.update({"seed": seed})
 
     X = XLayer()
     X = X._replace(

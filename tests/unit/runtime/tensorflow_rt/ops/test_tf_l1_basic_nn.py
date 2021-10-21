@@ -278,7 +278,7 @@ class TestRuntimeTF(unittest.TestCase):
 
     def test_dropout(self):
         iX = px.ops.input('input', shape=[1, 1, 4, 4])
-        dropout = px.ops.dropout("dropout", iX, rate=0.5 )
+        dropout = px.ops.dropout("dropout", iX, rate=0.5, seed=1)
         input_shapes = {'input': TensorShape([1, 1, 4, 4])}
         inputs = [np.reshape(np.array([[1, 1, 0, -4], [5, 1, 0, -8],
                                        [3, -5, 1, 0], [1, 9, 3, 4]],
