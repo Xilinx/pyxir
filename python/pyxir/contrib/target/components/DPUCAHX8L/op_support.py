@@ -40,37 +40,37 @@ logger = logging.getLogger("pyxir")
 
 @pyxir.register_op_support_check("DPUCAHX8L", "BatchNorm")
 def batchnorm_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided BatchNorm operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided BatchNorm operator
+    on the DPUCAHX8L target"""
     return is_batch_norm_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "BiasAdd")
 def biasadd_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided BiasAdd operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided BiasAdd operator
+    on the DPUCAHX8L target"""
     return is_bias_add_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Cast")
 def cast_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Cast operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Cast operator
+    on the DPUCAHX8L target"""
     dtype = X.attrs["dtype"]
     return dtype == "float32"
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Concat")
 def concat_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Concat operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Concat operator
+    on the DPUCAHX8L target"""
     return is_concat_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Convolution")
 def conv2d_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Conv2D operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Conv2D operator
+    on the DPUCAHX8L target"""
     return is_conv2d_supported(
         X,
         bXs,
@@ -88,7 +88,7 @@ def conv2d_transpose_op_support(
     X: XLayer, bXs: List[XLayer], tXs: List[XLayer]
 ) -> bool:
     """Check whether we can execute the provided Conv2DTranspose operator
-       on the DPUCAHX8L target"""
+    on the DPUCAHX8L target"""
     return is_conv2d_transpose_supported(
         X, bXs, tXs, channel_parallel=32, bank_depth=4096, max_stride=16, min_stride=1
     )
@@ -96,15 +96,15 @@ def conv2d_transpose_op_support(
 
 @pyxir.register_op_support_check("DPUCAHX8L", "DPU")
 def DPUCZDX8G_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided DPU operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided DPU operator
+    on the DPUCAHX8L target"""
     return True
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Eltwise")
 def eltwise_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """Check whether we can execute the provided Eltwise operator
-       on the DPUCAHX8L target"""
+    on the DPUCAHX8L target"""
     return True
 
 
@@ -112,7 +112,7 @@ def eltwise_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 def maximum_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """Check whether we can execute the provided Maximum operator
         on the DPUCAHX8L target
-    Return true if part of leaky relu pattern    
+    Return true if part of leaky relu pattern
     """
     # check whether part of leaky relu
     return "patterns" in X.attrs and "LeakyReLU" in X.attrs["patterns"]
@@ -120,15 +120,15 @@ def maximum_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Pad")
 def pad_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Padding operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Padding operator
+    on the DPUCAHX8L target"""
     return is_padding_supported(X, bXs, tXs)
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Pooling")
 def pooling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Pooling operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Pooling operator
+    on the DPUCAHX8L target"""
     return is_pooling_supported(
         X=X,
         bXs=bXs,
@@ -150,8 +150,8 @@ def pooling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Mean")
 def mean_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Mean operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Mean operator
+    on the DPUCAHX8L target"""
     axes = X.attrs["axes"]
     keepdims = X.attrs["keepdims"]
     return len(axes) == 2 and keepdims
@@ -159,16 +159,16 @@ def mean_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 
 @pyxir.register_op_support_check("DPUCAHX8L", "LeakyReLU")
 def leaky_relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided LeakyRelu operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided LeakyRelu operator
+    on the DPUCAHX8L target"""
     return False
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "ReLU")
 def relu_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
-    """ Check whether we can execute the provided ReLU operator
-        on the zcu104 target """
+    """Check whether we can execute the provided ReLU operator
+    on the zcu104 target"""
     assert len(bXs) == 1
     bX = bXs[0]
     return bX.type[0] in set(
@@ -178,22 +178,29 @@ def relu_op_support(X, bXs, tXs):
 
 @pyxir.register_op_support_check("DPUCAHX8L", "ReLU6")
 def relu6_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided ReLU6 operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided ReLU6 operator
+    on the DPUCAHX8L target"""
     return True
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Scale")
 def scale_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Scale operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Scale operator
+    on the DPUCAHX8L target"""
     return is_scale_supported(X, bXs, tXs, channel_parallel=32, bank_depth=4096)
 
 
 @pyxir.register_op_support_check("DPUCAHX8L", "Upsampling2D")
 def upsampling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
-    """ Check whether we can execute the provided Upsampling2D operator
-        on the DPUCAHX8L target """
+    """Check whether we can execute the provided Upsampling2D operator
+    on the DPUCAHX8L target"""
     # TODO
     method = X.attrs["method"]
     return method == "nearest_neighbor"
+
+
+@pyxir.register_op_support_check("DPUCAHX8L", "Dropout")
+def dropout_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
+    """Check whether we can execute the provided Dropout operator
+    on the DPUCAHX8L target"""
+    return True

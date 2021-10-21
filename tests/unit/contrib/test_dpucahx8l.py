@@ -28,6 +28,8 @@ from pyxir.runtime.rt_manager import RtManager
 from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
+    xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test,
+    xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
 )
@@ -153,6 +155,31 @@ class TestDPUCAHX8L(unittest.TestCase):
             targets=["DPUCAHX8L"],
         )
 
+    def test_compile_dropout(self):
+        xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCAHX8L"],
+        )
+
+        xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCAHX8L"],
+        )
+
     def test_compile_depthwise_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 3, 3, 8),
@@ -187,7 +214,12 @@ class TestDPUCAHX8L(unittest.TestCase):
 
     def test_compile_conv2d_bias_add_relu(self):
         xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], targets=["DPUCAHX8L"],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            targets=["DPUCAHX8L"],
         )
 
     def test_compile_resnetv1_block(self):

@@ -276,6 +276,26 @@ class TestRuntimeTF(unittest.TestCase):
                                     (1, 1, 4, 4))
         np.testing.assert_array_equal(outpt, expected_outpt)
 
+    def test_dropout(self):
+        iX = px.ops.input('input', shape=[1, 1, 4, 4])
+        dropout = px.ops.dropout("dropout", iX, rate=0.5, seed=1)
+        input_shapes = {'input': TensorShape([1, 1, 4, 4])}
+        inputs = [np.reshape(np.array([[1, 1, 0, -4], [5, 1, 0, -8],
+                                       [3, -5, 1, 0], [1, 9, 3, 4]],
+                                      dtype=np.float32),
+                             (1, 1, 4, 4))]
+
+        layers = X_2_TF['Dropout'](dropout, input_shapes, {})
+
+        assert len(layers) == 1
+        outpt = layers[0].forward_exec(inputs)
+
+        expected_outpt = np.reshape(np.array([[0, 2, 0, 0], [10, 0, 0, 0],
+                                              [6,-10, 2, 0.], [0, 0,0, 8]],
+                                             dtype=np.float32),
+                                    (1, 1, 4, 4))
+        np.testing.assert_array_equal(outpt, expected_outpt)      
+
     def test_expand_dims(self):
 
         X = xlayer.XLayer(

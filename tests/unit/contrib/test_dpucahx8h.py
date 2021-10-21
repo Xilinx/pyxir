@@ -28,6 +28,8 @@ from pyxir.runtime.rt_manager import RtManager
 from .compilation_infra import (
     xcompiler_conv2d_pool2d_nhwc_oihw_test,
     xcompiler_scale_conv2d_nhwc_oihw_test,
+    xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test,
+    xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
 )
@@ -59,28 +61,77 @@ class TestDPUCAHX8H(unittest.TestCase):
 
     def test_compile_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [1, 1], [1, 1], "Max", [2, 2], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
         )
         # Strided
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [2, 2], [1, 1], "Max", [2, 2], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [2, 2],
+            [1, 1],
+            "Max",
+            [2, 2],
+            [0, 0],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [0, 0], [3, 3], [1, 1], "Avg", [2, 2], [1, 1],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
         )
         # Padded
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [1, 1], "Max", [4, 4], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [4, 4],
+            [0, 0],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 8, 8, 1), (2, 1, 3, 3), [2, 2], [1, 1], [1, 1], "Avg", [4, 4], [0, 0],
+            (1, 8, 8, 1),
+            (2, 1, 3, 3),
+            [2, 2],
+            [1, 1],
+            [1, 1],
+            "Avg",
+            [4, 4],
+            [0, 0],
         )
         # Dilated
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 4, 4, 1), (2, 1, 2, 2), [1, 1], [1, 1], [2, 2], "Max", [2, 2], [0, 0],
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [2, 2],
+            "Max",
+            [2, 2],
+            [0, 0],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
-            (1, 10, 10, 1), (2, 1, 2, 2), [1, 1], [1, 1], [4, 4], "Max", [2, 2], [0, 0],
+            (1, 10, 10, 1),
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [4, 4],
+            "Max",
+            [2, 2],
+            [0, 0],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 28, 28, 512),
@@ -91,6 +142,31 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
+        )
+
+    def test_compile_dropout(self):
+        xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCAHX8H-u50"],
+        )
+
+        xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
+            (1, 4, 4, 1),
+            (2, 1, 2, 2),
+            [0, 0],
+            [3, 3],
+            [1, 1],
+            "Avg",
+            [2, 2],
+            [1, 1],
+            targets=["DPUCAHX8H-u50"],
         )
 
     def test_compile_depthwise_conv2d_pool2d(self):

@@ -102,6 +102,106 @@ def _create_conv2d_pool2d_nhwc_oihw(
     return xgraph
 
 
+def _create_conv2d_dropout_pool2d_nhwc_oihw(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    pool_type,
+    pool_size,
+    pool_padding=[0, 0],
+    pool_strides=[1, 1],
+    conv_groups=1,
+    conv_invalid=False,
+    kernel_layout="OIHW",
+    target="DPUCZDX8G-zcu104",
+    conv_name="conv1",
+    pool_name="pool1",
+) -> XGraph:
+
+    kernel_w, kernel_h = w_shape[2], w_shape[3]
+    W = np.random.randint(-10, 10, size=w_shape).astype(np.float32)
+    # B = np.array([1., -1.], dtype=np.float32)
+
+    x1 = px.ops.input("in1", shape=list(in_shape))
+    w1 = px.ops.constant("weight", W)
+    conv1 = px.ops.conv2d(
+        op_name=conv_name,
+        input_layer=x1,
+        weights_layer=w1,
+        kernel_size=[kernel_w, kernel_h],
+        strides=list(conv_strides),
+        padding_hw=list(conv_padding),
+        dilation=list(conv_dilation),
+        groups=conv_groups,
+        data_layout="NHWC",
+    )
+    dropout1 = px.ops.dropout("dropout1", conv1, rate=0.5, data_layout="NHWC")
+    pool1 = px.ops.pool2d(
+        op_name=pool_name,
+        input_layer=dropout1,
+        pool_type=pool_type,
+        pool_size=list(pool_size),
+        padding=list(pool_padding),
+        layout="NHWC",
+    )
+    net = [x1, conv1, dropout1, pool1]
+    xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
+    xgraph = px.partition(xgraph, [target])
+    return xgraph
+
+
+def _create_conv2d_pool2d_dropout_nhwc_oihw(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    pool_type,
+    pool_size,
+    pool_padding=[0, 0],
+    pool_strides=[1, 1],
+    conv_groups=1,
+    conv_invalid=False,
+    kernel_layout="OIHW",
+    target="DPUCZDX8G-zcu104",
+    conv_name="conv1",
+    pool_name="pool1",
+) -> XGraph:
+
+    kernel_w, kernel_h = w_shape[2], w_shape[3]
+    W = np.random.randint(-10, 10, size=w_shape).astype(np.float32)
+    # B = np.array([1., -1.], dtype=np.float32)
+
+    x1 = px.ops.input("in1", shape=list(in_shape))
+    w1 = px.ops.constant("weight", W)
+    conv1 = px.ops.conv2d(
+        op_name=conv_name,
+        input_layer=x1,
+        weights_layer=w1,
+        kernel_size=[kernel_w, kernel_h],
+        strides=list(conv_strides),
+        padding_hw=list(conv_padding),
+        dilation=list(conv_dilation),
+        groups=conv_groups,
+        data_layout="NHWC",
+    )
+    pool1 = px.ops.pool2d(
+        op_name=pool_name,
+        input_layer=conv1,
+        pool_type=pool_type,
+        pool_size=list(pool_size),
+        padding=list(pool_padding),
+        layout="NHWC",
+    )
+    dropout1 = px.ops.dropout("dropout1", pool1, rate=0.5, data_layout="NHWC")
+    net = [x1, conv1, pool1, dropout1]
+    xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
+    xgraph = px.partition(xgraph, [target])
+    return xgraph
+
+
 def conv2d_pool2d_nhwc_oihw_test(
     in_shape,
     w_shape,
@@ -200,6 +300,146 @@ def xcompiler_conv2d_pool2d_nhwc_oihw_test(
         work_dir = os.path.join(FILE_PATH, "work")
         build_dir = os.path.join(FILE_PATH, "build")
         quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
+        opt_xgraph = px.optimize(q_xgraph, target)
+
+        c_xgraph = px.compile(
+            opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
+        )
+        c_output = c_xgraph.get_compiler_output()
+        # print(get_child_subgraphs(xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel")))[-1])
+        assert list(c_output.keys()) == ["xp0"]
+        assert c_output.get_in_map("xp0") == {"xinput0": "xinput0"}
+        assert c_output.get_out_map("xp0") == expected_name, "out_map: {}".format(
+            c_output.get_out_map("xp0")
+        )
+        assert len(c_output.get_code_files("xp0")) == 1
+
+        g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
+        # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
+        subgraphs = get_child_subgraphs(g)
+        assert len(subgraphs) == expected_nb_subgraphs
+        dpu_subgraph = subgraphs[1]
+        # import pdb; pdb.set_trace()
+        # assert len(dpu_subgraph.get_children()) == 3
+
+        shutil.rmtree(work_dir)
+        shutil.rmtree(build_dir)
+
+
+def xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    pool_type,
+    pool_size,
+    pool_padding=[0, 0],
+    pool_strides=[1, 1],
+    conv_groups=1,
+    conv_invalid=False,
+    kernel_layout="OIHW",
+    targets=["DPUCAHX8H-u50"],
+    expected_nb_subgraphs=3,
+    expected_name={"pool1": "pool1"},
+):
+
+    for target in targets:
+        xgraph = _create_conv2d_dropout_pool2d_nhwc_oihw(
+            in_shape,
+            w_shape,
+            conv_padding,
+            conv_strides,
+            conv_dilation,
+            pool_type,
+            pool_size,
+            pool_padding,
+            pool_strides,
+            conv_groups,
+            conv_invalid,
+            kernel_layout,
+            target,
+        )
+
+        def inputs_func(iter):
+            inputs = np.ones(in_shape, dtype=np.float32)
+            return {"in1": inputs}
+
+        work_dir = os.path.join(FILE_PATH, "work")
+        build_dir = os.path.join(FILE_PATH, "build")
+        quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        xgraph = px.optimize(xgraph, target)
+        q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
+        opt_xgraph = px.optimize(q_xgraph, target)
+
+        c_xgraph = px.compile(
+            opt_xgraph, target, work_dir=work_dir, build_dir=build_dir
+        )
+        c_output = c_xgraph.get_compiler_output()
+        # print(get_child_subgraphs(xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel")))[-1])
+        assert list(c_output.keys()) == ["xp0"]
+        assert c_output.get_in_map("xp0") == {"xinput0": "xinput0"}
+        assert c_output.get_out_map("xp0") == expected_name, "out_map: {}".format(
+            c_output.get_out_map("xp0")
+        )
+        assert len(c_output.get_code_files("xp0")) == 1
+
+        g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
+        # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
+        subgraphs = get_child_subgraphs(g)
+        assert len(subgraphs) == expected_nb_subgraphs
+        dpu_subgraph = subgraphs[1]
+        # import pdb; pdb.set_trace()
+        # assert len(dpu_subgraph.get_children()) == 3
+
+        shutil.rmtree(work_dir)
+        shutil.rmtree(build_dir)
+
+
+def xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
+    in_shape,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    pool_type,
+    pool_size,
+    pool_padding=[0, 0],
+    pool_strides=[1, 1],
+    conv_groups=1,
+    conv_invalid=False,
+    kernel_layout="OIHW",
+    targets=["DPUCAHX8H-u50"],
+    expected_nb_subgraphs=3,
+    expected_name={"pool1": "pool1"},
+):
+
+    for target in targets:
+        xgraph = _create_conv2d_pool2d_dropout_nhwc_oihw(
+            in_shape,
+            w_shape,
+            conv_padding,
+            conv_strides,
+            conv_dilation,
+            pool_type,
+            pool_size,
+            pool_padding,
+            pool_strides,
+            conv_groups,
+            conv_invalid,
+            kernel_layout,
+            target,
+        )
+
+        def inputs_func(iter):
+            inputs = np.ones(in_shape, dtype=np.float32)
+            return {"in1": inputs}
+
+        work_dir = os.path.join(FILE_PATH, "work")
+        build_dir = os.path.join(FILE_PATH, "build")
+        quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        xgraph = px.optimize(xgraph, target)
         q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
         opt_xgraph = px.optimize(q_xgraph, target)
 
@@ -832,7 +1072,14 @@ def multi_output_conv2d_naming_test(out_names) -> None:
     in_shape = (1, 20, 20, 10)
     target = "DPUCZDX8G-zcu104"
     xgraph = _create_multi_output_conv2d_nhwc_oihw(
-        in_shape, (10, 10, 2, 2), [0, 0], [1, 1], [1, 1], "OIHW", target, out_names,
+        in_shape,
+        (10, 10, 2, 2),
+        [0, 0],
+        [1, 1],
+        [1, 1],
+        "OIHW",
+        target,
+        out_names,
     )
 
     def inputs_func(iter):
