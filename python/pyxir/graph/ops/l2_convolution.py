@@ -585,11 +585,11 @@ def pad(
     input_layer: XLayer
         The input layer to this pooling layer
     """
-    if pad_value != 0:
-        raise NotImplementedError(
-            "Unsupported padding value: {}, only 0 is"
-            " supported for now.".format(pad_value)
-        )
+    #if pad_value != 0:
+    #    raise NotImplementedError(
+    #        "Unsupported padding value: {}, only 0 is"
+    #        " supported for now.".format(pad_value)
+    #    )
 
     if not len(input_layer.shapes) == 4:
         raise NotImplementedError(
@@ -606,6 +606,7 @@ def pad(
 
     attrs = kwargs
     attrs.update({"padding": padding})
+    attrs.update({"pad_value": pad_value})
 
     X = XLayer()
     X = X._replace(
