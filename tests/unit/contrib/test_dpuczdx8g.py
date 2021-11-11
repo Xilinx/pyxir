@@ -35,6 +35,7 @@ from .compilation_infra import (
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_leaky_relu_nhwc_oihw_test,
     xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
+    partition_pad_conv2d_pool2d_nhwc_oihw_test,
     conv2d_pool2d_nhwc_oihw_test,
     conv2d_leaky_relu_nhwc_oihw_test,
     conv2d_pool2d_naming_test,
@@ -270,6 +271,24 @@ class TestDPUCZDX8G(unittest.TestCase):
             ],
         )
 
+    @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    def test_pad_conv2d_pool2d_partition(self):
+        partition_pad_conv2d_pool2d_nhwc_oihw_test(
+            (1, 10, 10, 1),
+            [[0, 0], [2, 2], [2, 2], [0, 0]],
+            1,
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [4, 4],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=[
+                "DPUCZDX8G-zcu104",
+            ],
+        )
+        
     @unittest.skipIf(is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G DNNC/DNNDK test")
     def test_compile_conv2d_pool2d_dnnc(self):
         conv2d_pool2d_nhwc_oihw_test(

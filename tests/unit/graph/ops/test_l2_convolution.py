@@ -476,6 +476,38 @@ class TestL2Convolution(unittest.TestCase):
         assert X.shapes == [1, 8, 8, 2]
         assert X.attrs["padding"] == [[0, 0], [1, 0], [1, 0], [0, 0]]
 
+    def test_non_zero_pad_layer(self):
+
+        iX = XLayer(
+            type=["Input"],
+            name="in1",
+            shapes=[1, 2, 7, 7],
+            sizes=[98],
+            bottoms=[],
+            tops=[],
+            targets=[],
+        )
+
+        X = xlf.get_xop_factory_func("Pad")(
+            op_name="pad1",
+            padding=[[0, 0], [0, 0], [1, 0], [1, 0]],
+            pad_value=1,
+            input_layer=iX,
+        )
+
+        assert X.type[0] == "Pad"
+        assert X.shapes == [1, 2, 8, 8]
+        assert X.sizes == [128]
+        assert X.attrs["padding"] == [[0, 0], [0, 0], [1, 0], [1, 0]]
+
+        from pyxir.graph.ops.l2_convolution import padding_transpose_transform
+
+        padding_transpose_transform(X, axes=(0, 2, 3, 1))
+
+        assert X.type[0] == "Pad"
+        assert X.shapes == [1, 8, 8, 2]
+        assert X.attrs["padding"] == [[0, 0], [1, 0], [1, 0], [0, 0]]
+
     def test_pooling_layer(self):
         pool2d_test_util(
             in_shape=(1, 2, 5, 5),
