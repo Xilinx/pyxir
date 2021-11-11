@@ -92,7 +92,7 @@ def add(expr: Expr,
     if is_bias_add_constant(lhs_layer, rhs_layer) and lhs_idx is not None:
         # Remove constant layer from net
         del net[lhs_expr]
-        del schedule[lhs_idx]
+        schedule.remove(lhs_expr)
 
     if rhs_expr not in net and not is_bias_add_constant(rhs_layer, lhs_layer):
         schedule.append(rhs_expr)

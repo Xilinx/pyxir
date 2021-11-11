@@ -87,6 +87,33 @@ class TestRelayL1BasicConversions(unittest.TestCase):
         assert "relay_id" in layers[2].attrs
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
+    def test_multiply_add(self):
+        data = relay.var("data", relay.TensorType((1, 3, 2, 2), "float32"))
+        constant0 = relay.const(np.ones((1), dtype="float32"))
+        left = relay.const(np.zeros((3, 1, 1), dtype="float32"))
+        right = relay.multiply(data, constant0)
+
+        add = relay.add(left, right)
+        net = relay.Function([data], add)
+        mod = tvm.IRModule.from_expr(net)
+        mod = relay.transform.InferType()(mod)
+
+        xgraph = xf_relay.from_relay(mod, {})
+        layers = xgraph.get_layers()
+
+        assert layers[0].type[0] == "Input"
+        assert "relay_id" in layers[0].attrs
+
+        assert layers[1].type[0] == "Scale"
+        assert layers[1].tops[0][:11] == "nn_bias_add"
+        assert layers[1].shapes == [-1, 3, 2, 2]
+        assert "relay_id" in layers[1].attrs
+
+        assert layers[2].type[0] == "BiasAdd"
+        assert layers[2].shapes == [-1, 3, 2, 2]
+        assert "relay_id" in layers[2].attrs
+
+    @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")
     def test_batch_norm(self):
         var = relay.var("var", relay.TensorType((-1, 4, 2, 2), "float32"))
         data_mean = relay.expr.const(np.zeros((4,), dtype=np.float32))
