@@ -1004,52 +1004,6 @@ def xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
         )
 
 
-def partition_pad_conv2d_pool2d_nhwc_oihw_test(
-    in_shape,
-    padding,
-    pad_value,
-    w_shape,
-    conv_padding,
-    conv_strides,
-    conv_dilation,
-    pool_type,
-    pool_size,
-    pool_padding=[0, 0],
-    pool_strides=[1, 1],
-    conv_groups=1,
-    conv_invalid=False,
-    kernel_layout="OIHW",
-    targets=["DPUCZDX8G-zcu104"],
-) -> None:
-
-    for target in targets:
-        xgraph = _create_pad_conv2d_pool2d_nhwc_oihw(
-            in_shape,
-            padding,
-            pad_value,
-            w_shape,
-            conv_padding,
-            conv_strides,
-            conv_dilation,
-            pool_type,
-            pool_size,
-            pool_padding,
-            pool_strides,
-            conv_groups,
-            conv_invalid,
-            kernel_layout,
-            target,
-        )
-
-        assert xgraph.get_layers()[1].type.to_list()[0] == 'Pad'
-        assert xgraph.get_layers()[1].target == 'cpu'
-        assert xgraph.get_layers()[2].type.to_list()[0] == 'Convolution'
-        assert xgraph.get_layers()[2].target == target
-        assert xgraph.get_layers()[3].type.to_list()[0] == 'Pooling'
-        assert xgraph.get_layers()[3].target == target
-
-
-
 def _create_pad_conv2d_pool2d_nhwc_oihw(
     in_shape,
     padding,
@@ -1100,6 +1054,51 @@ def _create_pad_conv2d_pool2d_nhwc_oihw(
     xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
     xgraph = px.partition(xgraph, [target])
     return xgraph
+    
+
+def partition_pad_conv2d_pool2d_nhwc_oihw_test(
+    in_shape,
+    padding,
+    pad_value,
+    w_shape,
+    conv_padding,
+    conv_strides,
+    conv_dilation,
+    pool_type,
+    pool_size,
+    pool_padding=[0, 0],
+    pool_strides=[1, 1],
+    conv_groups=1,
+    conv_invalid=False,
+    kernel_layout="OIHW",
+    targets=["DPUCZDX8G-zcu104"],
+) -> None:
+
+    for target in targets:
+        xgraph = _create_pad_conv2d_pool2d_nhwc_oihw(
+            in_shape,
+            padding,
+            pad_value,
+            w_shape,
+            conv_padding,
+            conv_strides,
+            conv_dilation,
+            pool_type,
+            pool_size,
+            pool_padding,
+            pool_strides,
+            conv_groups,
+            conv_invalid,
+            kernel_layout,
+            target,
+        )
+
+        assert xgraph.get_layers()[1].type.to_list()[0] == 'Pad'
+        assert xgraph.get_layers()[1].target == 'cpu'
+        assert xgraph.get_layers()[2].type.to_list()[0] == 'Convolution'
+        assert xgraph.get_layers()[2].target == target
+        assert xgraph.get_layers()[3].type.to_list()[0] == 'Pooling'
+        assert xgraph.get_layers()[3].target == target
 
 
 def _create_multi_output_conv2d_nhwc_oihw(
