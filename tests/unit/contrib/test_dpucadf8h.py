@@ -32,6 +32,7 @@ from .compilation_infra import (
     xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
+    partition_pad_conv2d_pool2d_nhwc_oihw_test,
 )
 
 try:
@@ -235,4 +236,21 @@ class TestDPUCADF8H(unittest.TestCase):
             c3_padding=[1, 1, 1, 1],
             expected_nb_subgraphs=3,
             target="DPUCADF8H",
+        )
+
+    def test_pad_conv2d_pool2d_partition(self):
+        partition_pad_conv2d_pool2d_nhwc_oihw_test(
+            (1, 10, 10, 1),
+            [[0, 0], [2, 2], [2, 2], [0, 0]],
+            1,
+            (2, 1, 2, 2),
+            [1, 1],
+            [1, 1],
+            [4, 4],
+            "Max",
+            [2, 2],
+            [0, 0],
+            targets=[
+                "DPUCADF8H"
+            ],
         )

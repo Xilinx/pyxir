@@ -286,6 +286,10 @@ class TestDPUCZDX8G(unittest.TestCase):
             [0, 0],
             targets=[
                 "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
             ],
         )
         
