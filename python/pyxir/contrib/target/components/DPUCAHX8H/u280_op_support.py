@@ -206,7 +206,7 @@ def pad_op_support(X, bXs, tXs):
     """Check whether we can execute the provided Pooling operator
     on the zcu104 target"""
 
-    if len(tXs) == 1 and tXs[0].type[0] in ["Pooling", "Convolution"]:
+    if X.attrs["pad_value"] == 0.0 and len(tXs) == 1 and tXs[0].type[0] in ["Pooling", "Convolution"]:
         t_data_layout = tXs[0].attrs["data_layout"]
         t_type = tXs[0].type[0]
 

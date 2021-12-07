@@ -167,7 +167,7 @@ def is_conv2d_transpose_supported(
 
 def is_padding_supported(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 
-    if len(tXs) == 1 and tXs[0].type[0] in ["Pooling", "Convolution"]:
+    if X.attrs["pad_value"] == 0.0 and len(tXs) == 1 and tXs[0].type[0] in ["Pooling", "Convolution"]:
         t_data_layout = tXs[0].attrs["data_layout"]
         t_type = tXs[0].type[0]
 

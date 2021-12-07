@@ -199,13 +199,14 @@ def pooling_op_support(X, bXs, tXs):
     on the DPUCADF8H target"""
 
     padding = X.attrs["padding"]
+    pad_value = X.attrs["pad_value"]
 
     # TODO: padding?
     # padding_h_top >= 0 and padding_h_top <= 4 and\
     # padding_h_bot >= 0 and padding_h_bot <= 4 and\
     # padding_w_left >= 0 and padding_w_left <= 4 and\
     # padding_w_right >= 0 and padding_w_right <= 4 and\
-    return True
+    return pad_value == 0.0
 
 
 @pyxir.register_op_support_check("DPUCADF8H", "Pooling")
