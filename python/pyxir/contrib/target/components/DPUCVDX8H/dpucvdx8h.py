@@ -55,8 +55,8 @@ def xgraph_dpu_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
 
 def xgraph_dpu_compiler(xgraph, **kwargs):
-    # Vitis-AI 1.3 - ...
-    new_arch = "/opt/vitis_ai/compiler/arch/DPUCVDX8H/VCK5000/arch.json"
+    # Vitis-AI 2.0 - ...
+    new_arch = "/opt/vitis_ai/compiler/arch/DPUCVDX8H/VCK50008PE/arch.json"
 
     if os.path.exists(new_arch):
         arch_path = new_arch
