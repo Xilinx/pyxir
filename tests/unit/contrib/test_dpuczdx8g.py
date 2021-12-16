@@ -518,6 +518,7 @@ class TestDPUCZDX8G(unittest.TestCase):
         )
 
     @unittest.skipIf(not is_dpuczdx8g_vart_flow_enabled(), "DPUCZDX8G VART test")
+    @unittest.skip
     def test_compile_conv2d_bias_add_relu(self):
         xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
             (1, 4, 4, 1),

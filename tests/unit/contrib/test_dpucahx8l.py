@@ -212,7 +212,7 @@ class TestDPUCAHX8L(unittest.TestCase):
         # xcompiler_scale_conv2d_nhwc_oihw_test(
         #     (1, 28, 28, 512), (512, 512, 3, 3), [2, 2, 2, 2], [1, 1], [2, 2],
         # )
-
+    @unittest.skip
     def test_compile_conv2d_bias_add_relu(self):
         xcompiler_conv2d_bias_add_relu_nhwc_oihw_test(
             (1, 4, 4, 1),
