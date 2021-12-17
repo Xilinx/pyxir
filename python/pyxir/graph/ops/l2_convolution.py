@@ -401,7 +401,7 @@ def conv2d_transpose(
 
     # Shape
     # Input layer is always in NCHW by design
-    insize = [input_layer.shapes[2], input_layer.shapes[3]]
+    insize = [input_layer.shapes[H_idx], input_layer.shapes[W_idx]]
     batches = input_layer.shapes[0]
     logger.debug("{} {}".format(input_layer.shapes, in_ch))
     assert input_layer.shapes[C_idx] == in_ch
