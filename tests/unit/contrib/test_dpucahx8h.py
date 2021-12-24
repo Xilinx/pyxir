@@ -58,7 +58,8 @@ class TestDPUCAHX8H(unittest.TestCase):
     def tearDownClass(cls):
         # Unregister dpu for other tests
         TestDPUCAHX8H.target_registry.unregister_target("DPUCAHX8H-u50")
-        TestDPUCAHX8H.target_registry.unregister_target("DPUCAHX8H-u55c")
+        TestDPUCAHX8H.target_registry.unregister_target("DPUCAHX8H-u50lv")
+        TestDPUCAHX8H.target_registry.unregister_target("DPUCAHX8H-u50lv_dwc")
         TestDPUCAHX8H.target_registry.unregister_target("DPUCAHX8H-u55c_dwc")
         TestDPUCAHX8H.target_registry.unregister_target("DPUCAHX8H-u280")
 
@@ -73,6 +74,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc", 
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
         # Strided
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -84,6 +92,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 4, 4, 1),
@@ -94,6 +109,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
         # Padded
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -105,6 +127,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [4, 4],
             [0, 0],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 8, 8, 1),
@@ -115,6 +144,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Avg",
             [4, 4],
             [0, 0],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
         # Dilated
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -126,6 +162,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 10, 10, 1),
@@ -136,6 +179,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 28, 28, 512),
@@ -146,6 +196,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
 
     def test_compile_dropout(self):
@@ -158,7 +215,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCAHX8H-u50"],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
 
         xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
@@ -170,7 +233,13 @@ class TestDPUCAHX8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCAHX8H-u50"],
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
         )
 
     def test_compile_depthwise_conv2d_pool2d(self):
@@ -184,7 +253,7 @@ class TestDPUCAHX8H(unittest.TestCase):
             [1, 1],
             [0, 0],
             conv_groups=8,
-            expected_nb_subgraphs=2,           
+            expected_nb_subgraphs=2, 
         )
 
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -197,7 +266,7 @@ class TestDPUCAHX8H(unittest.TestCase):
             [1, 1],
             [0, 0],
             conv_groups=8,
-            targets=["DPUCAHX8H-u55c_dwc"]
+            targets=["DPUCAHX8H-u55c_dwc", "DPUCAHX8H-u50lv_dwc"],
         )
 
     def test_compile_scale_conv2d(self):
@@ -221,7 +290,7 @@ class TestDPUCAHX8H(unittest.TestCase):
             [0, 0],
             [1, 1],
             [1, 1],
-            targets=["DPUCAHX8H-u50", "DPUCAHX8H-u280", "DPUCAHX8H-u55c", "DPUCAHX8H-u55c_dwc",],
+            targets=["DPUCAHX8H-u50", "DPUCAHX8H-u50lv", "DPUCAHX8H-u50lv_dwc", "DPUCAHX8H-u280", "DPUCAHX8H-u55c_dwc",],
         )
 
     def test_compile_resnetv1_block(self):
@@ -250,7 +319,8 @@ class TestDPUCAHX8H(unittest.TestCase):
             [0, 0],
             targets=[
                 "DPUCAHX8H-u50",
-                "DPUCAHX8H-u55c",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
                 "DPUCAHX8H-u55c_dwc",
                 "DPUCAHX8H-u280"
             ],

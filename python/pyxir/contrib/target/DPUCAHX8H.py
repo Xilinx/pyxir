@@ -19,8 +19,10 @@ from .components.DPUCAHX8H.common import xgraph_dpu_quantizer
 from .components.DPUCAHX8H.common import xgraph_dpu_optimizer
 from .components.DPUCAHX8H.u50 import xgraph_dpu_u50_build_func
 from .components.DPUCAHX8H.u50 import xgraph_dpu_u50_compiler
-from .components.DPUCAHX8H.u55c import xgraph_dpu_u55c_build_func
-from .components.DPUCAHX8H.u55c import xgraph_dpu_u55c_compiler
+from .components.DPUCAHX8H.u50lv import xgraph_dpu_u50lv_build_func
+from .components.DPUCAHX8H.u50lv import xgraph_dpu_u50lv_compiler
+from .components.DPUCAHX8H.u50lv_dwc import xgraph_dpu_u50lv_dwc_build_func
+from .components.DPUCAHX8H.u50lv_dwc import xgraph_dpu_u50lv_dwc_compiler
 from .components.DPUCAHX8H.u55c_dwc import xgraph_dpu_u55c_dwc_build_func
 from .components.DPUCAHX8H.u55c_dwc import xgraph_dpu_u55c_dwc_compiler
 from .components.DPUCAHX8H.u280 import xgraph_dpu_u280_build_func
@@ -39,14 +41,24 @@ pyxir.register_target('DPUCAHX8H-u50',
 from .components.DPUCAHX8H import u50_op_support
 
 # Register target
-pyxir.register_target('DPUCAHX8H-u55c',
+pyxir.register_target('DPUCAHX8H-u50lv',
                       xgraph_dpu_optimizer,
                       xgraph_dpu_quantizer,
-                      xgraph_dpu_u55c_compiler,
-                      xgraph_dpu_u55c_build_func)
+                      xgraph_dpu_u50lv_compiler,
+                      xgraph_dpu_u50lv_build_func)
 
 # Register op support
-from .components.DPUCAHX8H import u55c_op_support
+from .components.DPUCAHX8H import u50lv_op_support
+
+# Register target
+pyxir.register_target('DPUCAHX8H-u50lv_dwc',
+                      xgraph_dpu_optimizer,
+                      xgraph_dpu_quantizer,
+                      xgraph_dpu_u50lv_dwc_compiler,
+                      xgraph_dpu_u50lv_dwc_build_func)
+
+# Register op support
+from .components.DPUCAHX8H import u50lv_dwc_op_support
 
 # Register target
 pyxir.register_target('DPUCAHX8H-u55c_dwc',
