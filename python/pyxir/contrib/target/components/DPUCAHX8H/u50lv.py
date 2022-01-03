@@ -29,7 +29,6 @@ logger = logging.getLogger('pyxir')
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 def xgraph_dpu_u50lv_build_func(xgraph, work_dir=os.getcwd(), **kwargs):
 
-    # TODO here or in optimizer, both?
     # DPU layers are in NHWC format because of the tensorflow
     #   intemediate structure we use to communicate with
     #   DECENT/DNNC
