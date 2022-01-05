@@ -33,6 +33,8 @@ from pyxir.contrib.target.components.common.op_support import (
     is_padding_supported,
     is_pooling_supported,
     is_scale_supported,
+    is_upscale_supported,
+
 )
 
 logger = logging.getLogger("pyxir")
@@ -223,10 +225,7 @@ def scale_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 def upsampling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """Check whether we can execute the provided Upsampling2D operator
     on the DPUCAHX8H-u50lv_dwc target"""
-    # TODO
-    method = X.attrs["method"]  
-    return method == "nearest_neighbor"
-
+    return is_upscale_supported(X, bXs, tXs, channel_parallel=16, bank_depth=2048, bank_num=8)
 
 @pyxir.register_op_support_check("DPUCAHX8H-u50lv_dwc", "Dropout")
 def dropout_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
