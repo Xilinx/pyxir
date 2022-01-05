@@ -139,7 +139,7 @@ def pooling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
         max_pool_max_kernel=8,
         max_pool_min_stride=1,
         max_pool_max_stride=8,
-        avg_pool_min_kernel=2,
+        avg_pool_min_kernel=1,
         avg_pool_max_kernel=8,
         avg_pool_min_stride=1,
         avg_pool_max_stride=8,
@@ -197,7 +197,7 @@ def relu_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     assert len(bXs) == 1
     bX = bXs[0]
     return bX.type[0] in set(
-        ["Convolution", "Conv2DTranspose", "Eltwise", "BatchNorm", "BiasAdd", "Scale"]
+        ["Convolution", "Conv2DTranspose", "BatchNorm", "BiasAdd", "Scale"]
     )
 
 
@@ -208,7 +208,7 @@ def relu6_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     assert len(bXs) == 1
     bX = bXs[0]
     return bX.type[0] in set(
-        ["Convolution", "Conv2DTranspose", "Eltwise", "BatchNorm", "Scale"]
+        ["Convolution", "Conv2DTranspose", "BatchNorm", "Scale"]
     )
 
 
@@ -224,7 +224,7 @@ def upsampling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bo
     """Check whether we can execute the provided Upsampling2D operator
     on the DPUCAHX8H-u50lv_dwc target"""
     # TODO
-    method = X.attrs["method"]
+    method = X.attrs["method"]  
     return method == "nearest_neighbor"
 
 
