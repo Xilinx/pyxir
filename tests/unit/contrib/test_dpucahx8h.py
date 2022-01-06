@@ -30,6 +30,7 @@ from .compilation_infra import (
     xcompiler_scale_conv2d_nhwc_oihw_test,
     xcompiler_conv2d_dropout_pool2d_nhwc_oihw_test,
     xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test,
+    xcompiler_upsample_nhwc_test,
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
     partition_pad_conv2d_pool2d_nhwc_oihw_test,
@@ -291,6 +292,26 @@ class TestDPUCAHX8H(unittest.TestCase):
             [1, 1],
             [1, 1],
             targets=["DPUCAHX8H-u50", "DPUCAHX8H-u50lv", "DPUCAHX8H-u50lv_dwc", "DPUCAHX8H-u280", "DPUCAHX8H-u55c_dwc",],
+        )
+    
+    def test_upsample(self):
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=2,
+            scale_w=2,
+            data_layout="NHWC",
+            method="nearest_neighbor",
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
+         
         )
 
     def test_compile_resnetv1_block(self):
