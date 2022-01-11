@@ -12,6 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+//////////////// VERSION 0.3.3 ////////////////
+NEW FEATURES:
+    - Add dropout layer support by skipping it if found
+    - Offload non-zero pad to CPU
+UPDATES:
+    - /
+BUG FIXES:
+    - Fix frontend Schedule object not supporting item deletion
+    - Fix Conv2DTranspose shape
+    - Use correct VCK5000 arch file
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.3.2 ////////////////
 NEW FEATURES:
     - /
