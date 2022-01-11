@@ -297,3 +297,21 @@ def is_scale_supported(
     axis = X.attrs["axis"]
     channels = X.shapes[axis]
     return channels >= 1 and channels <= 256 * channel_parallel
+
+
+def is_upscale_supported(
+    X: XLayer,
+    bXs: List[XLayer],
+    tXs: List[XLayer],
+    channel_parallel: int,
+    bank_depth: int,
+    bank_num: int,
+) -> bool:
+    method = X.attrs["method"] 
+    input_channel = X.shapes[X.attrs["data_layout"].index("C")]
+    scale_h = X.attrs["scale_h"]
+    scale_w = X.attrs["scale_w"]
+    return (math.ceil(scale_h / bank_num) * scale_h * math.ceil(input_channel / channel_parallel) <= bank_depth) \
+            and (math.ceil(scale_w / bank_num) * scale_w * math.ceil(input_channel / channel_parallel) <= bank_depth) \
+            and method == "nearest_neighbor"
+             

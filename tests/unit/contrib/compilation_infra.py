@@ -800,6 +800,113 @@ def xcompiler_resnetv1_block_test(
     shutil.rmtree(work_dir)
     shutil.rmtree(build_dir)
 
+def _create_upsample_nhwc(
+    in_shape,
+    pool_size,
+    pool_strides,
+    w1_shape,
+    c1_padding=[0, 0, 0, 0],
+    c1_strides=[1, 1],
+    c1_dilation=[1, 1],
+    scale_h=2,
+    scale_w=2,
+    data_layout="NHWC",
+    method="nearest_neighbor",
+    kernel_layout="OIHW",
+    target="DPUCZDX8G-zcu104",
+) -> XGraph:
+
+    x1 = px.ops.input("in1", shape=list(in_shape))
+    pool1 = px.ops.pool2d(
+        op_name="pool1",
+        input_layer=x1,
+        pool_type="Max",
+        pool_size=pool_size,
+        padding=[0, 0],
+        strides=pool_strides,
+        layout="NHWC",
+    )
+
+    W1 = np.random.randint(-10, 10, size=w1_shape).astype(np.float32)
+    w1 = px.ops.constant("w1", W1)
+    conv1 = px.ops.conv2d(
+        op_name="conv1",
+        input_layer=pool1,
+        weights_layer=w1,
+        kernel_size=[w1_shape[2], w1_shape[3]],
+        strides=list(c1_strides),
+        padding_hw=list(c1_padding),
+        dilation=list(c1_dilation),
+        groups=1,
+        data_layout="NHWC",
+    )
+    
+    upsample = px.ops.upsampling2d("upsample",[conv1], scale_h=scale_h, \
+                                    scale_w=scale_w, data_layout=data_layout, \
+                                    method=method)
+
+    net = [x1, pool1, conv1, upsample]
+    xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
+    xgraph = px.partition(xgraph, [target])
+    return xgraph
+
+def xcompiler_upsample_nhwc_test(
+    in_shape,
+    pool_size,
+    pool_strides,
+    w1_shape,
+    c1_padding=[0, 0, 0, 0],
+    c1_strides=[1, 1],
+    c1_dilation=[1, 1],
+    scale_h=2,
+    scale_w=2,
+    data_layout="NHWC",
+    method="nearest_neighbor",
+    kernel_layout="OIHW",
+    targets=["DPUCAHX8H-u50"],
+    expected_nb_subgraphs=3,
+):
+    for target in targets:
+
+        xgraph = _create_upsample_nhwc(
+            in_shape,
+            pool_size,
+            pool_strides,
+            w1_shape,
+            c1_padding,
+            c1_strides,
+            c1_dilation,
+            scale_h,
+            scale_w,
+            data_layout,
+            method,
+            kernel_layout,
+            target,
+        )
+
+        def inputs_func(iter):
+            inputs = np.ones(in_shape, dtype=np.float32)
+            return {"in1": inputs}
+
+        work_dir = os.path.join(FILE_PATH, "work")
+        build_dir = os.path.join(FILE_PATH, "build")
+        quantize_func = TARGET_REGISTRY.get_target_quantizer(target)
+        q_xgraph = quantize_func(xgraph, inputs_func, work_dir=work_dir)
+        opt_xgraph = px.optimize(q_xgraph, target)
+        c_xgraph = px.compile(opt_xgraph, target, work_dir=work_dir, build_dir=build_dir)
+        c_output = c_xgraph.get_compiler_output()
+
+        g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
+        # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast
+        subgraphs = get_child_subgraphs(g)
+        assert (
+            len(subgraphs) == expected_nb_subgraphs
+        ), "Expected {0} subgraphs but got: {1}".format(
+            expected_nb_subgraphs, len(subgraphs)
+        )
+
+        shutil.rmtree(work_dir)
+        shutil.rmtree(build_dir)
 
 def _create_conv2d_leaky_relu_nhwc_oihw(
     in_shape,
