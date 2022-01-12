@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module for registering DPUCVDX8H target"""
+"""Module for registering DPUCVDX8H DWC target"""
 
 import os
 import json
@@ -50,7 +50,7 @@ def xgraph_dpu_quantizer_dwc(xgraph, inputs_func, **kwargs):
 
 def xgraph_dpu_build_func_dwc(xgraph, work_dir=os.getcwd(), **kwargs):
     return subgraph.xgraph_build_func(
-        xgraph=xgraph, target="DPUCVDX8H_dwc", xtype="DPU", layout="NHWC", work_dir=work_dir
+        xgraph=xgraph, target="DPUCVDX8H-dwc", xtype="DPU", layout="NHWC", work_dir=work_dir
     )
 
 

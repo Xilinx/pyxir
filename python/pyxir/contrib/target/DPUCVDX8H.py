@@ -39,7 +39,7 @@ from .components.DPUCVDX8H import op_support
 
 # Register target
 pyxir.register_target(
-    "DPUCVDX8H_dwc",
+    "DPUCVDX8H-dwc",
     xgraph_dpu_optimizer_dwc,
     xgraph_dpu_quantizer_dwc,
     xgraph_dpu_compiler_dwc,
