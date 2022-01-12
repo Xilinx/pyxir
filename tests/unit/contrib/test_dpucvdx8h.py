@@ -58,6 +58,7 @@ class TestDPUCVDX8H(unittest.TestCase):
     def tearDownClass(cls):
         # Unregister dpu for other tests
         TestDPUCVDX8H.target_registry.unregister_target("DPUCVDX8H")
+        TestDPUCVDX8H.target_registry.unregister_target("DPUCVDX8H_dwc")
 
     def test_compile_conv2d_pool2d(self):
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -69,7 +70,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
         # Strided
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -81,7 +82,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 4, 4, 1),
@@ -92,7 +93,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
         # Padded
         # xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -111,7 +112,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 10, 10, 1),
@@ -122,7 +123,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
             (1, 28, 28, 512),
@@ -133,7 +134,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Max",
             [2, 2],
             [0, 0],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
 
     def test_compile_dropout(self):
@@ -146,7 +147,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
 
         xcompiler_conv2d_pool2d_dropout_nhwc_oihw_test(
@@ -158,7 +159,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             "Avg",
             [2, 2],
             [1, 1],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
 
     def test_compile_depthwise_conv2d_pool2d(self):
@@ -174,6 +175,19 @@ class TestDPUCVDX8H(unittest.TestCase):
             conv_groups=8,
             expected_nb_subgraphs=2,
             targets=["DPUCVDX8H"],
+        )
+
+        xcompiler_conv2d_pool2d_nhwc_oihw_test(
+            (1, 3, 3, 8),
+            (8, 1, 3, 3),
+            [0, 0],
+            [1, 1],
+            [1, 1],
+            "Max",
+            [1, 1],
+            [0, 0],
+            conv_groups=8,
+            targets=["DPUCVDX8H_dwc"],
         )
 
     def test_compile_scale_conv2d(self):
@@ -198,7 +212,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             [0, 0],
             [1, 1],
             [1, 1],
-            targets=["DPUCVDX8H"],
+            targets=["DPUCVDX8H", "DPUCVDX8H_dwc"],
         )
 
     def test_compile_resnetv1_block(self):
@@ -212,6 +226,18 @@ class TestDPUCVDX8H(unittest.TestCase):
             w4_shape=(256, 64, 1, 1),
             c3_padding=[1, 1, 1, 1],
             target="DPUCVDX8H",
+        )
+
+        xcompiler_resnetv1_block_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            w2_shape=(64, 64, 1, 1),
+            w3_shape=(64, 64, 3, 3),
+            w4_shape=(256, 64, 1, 1),
+            c3_padding=[1, 1, 1, 1],
+            target="DPUCVDX8H_dwc",
         )
     
     def test_pad_conv2d_pool2d_partition(self):
@@ -227,6 +253,7 @@ class TestDPUCVDX8H(unittest.TestCase):
             [2, 2],
             [0, 0],
             targets=[
-                "DPUCVDX8H"
+                "DPUCVDX8H",
+                "DPUCVDX8H_dwc",
             ],
         )
