@@ -19,6 +19,10 @@ from .components.DPUCVDX8H.dpucvdx8h import xgraph_dpu_quantizer
 from .components.DPUCVDX8H.dpucvdx8h import xgraph_dpu_optimizer
 from .components.DPUCVDX8H.dpucvdx8h import xgraph_dpu_build_func
 from .components.DPUCVDX8H.dpucvdx8h import xgraph_dpu_compiler
+from .components.DPUCVDX8H.dpucvdx8h_dwc import xgraph_dpu_quantizer_dwc
+from .components.DPUCVDX8H.dpucvdx8h_dwc import xgraph_dpu_optimizer_dwc
+from .components.DPUCVDX8H.dpucvdx8h_dwc import xgraph_dpu_build_func_dwc
+from .components.DPUCVDX8H.dpucvdx8h_dwc import xgraph_dpu_compiler_dwc
 
 
 # Register target
@@ -32,3 +36,15 @@ pyxir.register_target(
 
 # Register op support
 from .components.DPUCVDX8H import op_support
+
+# Register target
+pyxir.register_target(
+    "DPUCVDX8H_dwc",
+    xgraph_dpu_optimizer_dwc,
+    xgraph_dpu_quantizer_dwc,
+    xgraph_dpu_compiler_dwc,
+    xgraph_dpu_build_func_dwc,
+)
+
+# Register op support
+from .components.DPUCVDX8H import op_support_dwc
