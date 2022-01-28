@@ -99,7 +99,7 @@ def input(op_name, shape, dtype='float32', **kwargs):
         The input data type
     """
 
-    shape[0] = -1
+    # shape[0] = -1
     shape = TensorShape(shape)
 
     attrs = kwargs

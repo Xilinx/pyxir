@@ -853,8 +853,8 @@ def upsampling2d(
     w_idx = layout.index("W")
 
     shape = in_xlayers[0].shapes[:]
-    shape[h_idx] = int(shape[h_idx] * scale_h)
-    shape[w_idx] = int(shape[w_idx] * scale_w)
+    shape[h_idx] = round(shape[h_idx] * scale_h)
+    shape[w_idx] = round(shape[w_idx] * scale_w)
 
     return {"shape": shape}
 

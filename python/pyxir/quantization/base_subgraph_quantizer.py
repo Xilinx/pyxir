@@ -116,15 +116,26 @@ class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
             )
         input_name = input_names[0]
         input_shape = input_shapes[0]
+        
+        
 
         logger.debug("START Compute subgraph inputs for quantization")
-        for it in range(self.quant_iter):
-            inputs = self.inputs_func(it)
+        inputs = self.inputs_func(0)
+        in_size = inputs[input_names[0]].shape[0]
+        batch_size = input_shapes[0][0]
+        subgraph_inpts = [[] * len(self.subgraph_input_names)]
+        for i in range(in_size // batch_size):
+            in_batch = {
+                in_name: vals[i * batch_size : (i + 1) * batch_size]
+                for in_name, vals in inputs.items()
+            }
+            batch_subgraph_inpts = self.runtime.run(in_batch, outputs=self.subgraph_input_names)
+            
+            for i, inpt in enumerate(batch_subgraph_inpts):
+                subgraph_inpts[i].append(inpt)
 
-            subgraph_inpts = self.runtime.run(inputs, outputs=self.subgraph_input_names)
-
-            for in_name, inpt in zip(self.subgraph_input_names, subgraph_inpts):
-                self.subgraph_inputs[in_name] = inpt
+        for in_name, inpt in zip(self.subgraph_input_names, subgraph_inpts):
+            self.subgraph_inputs[in_name] = np.concatenate(inpt)
 
         logger.debug("START Subgraph quantization")
         for Xp in self.subgraph_Xps:

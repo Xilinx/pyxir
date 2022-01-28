@@ -321,6 +321,7 @@ def reshape(expr: Expr,
 
     logger.debug("reshape: {}".format(hash(expr)))
     logger.debug("relay shape: {}".format(relayshape))
+
     # Parse the Relay newshape list because it can contain special numbers
     # (https://docs.tvm.ai/api/python/relay/op.html#tvm.relay.op.transform.reshape)
     # TODO TEST

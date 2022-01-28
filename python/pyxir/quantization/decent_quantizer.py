@@ -111,7 +111,8 @@ class DECENTQuantizer(XGraphBaseSubgraphQuantizer):
         input_shapes = [X.shapes.tolist() for X in xgraph.get_input_layers()]
 
         in_batch_size = inputs[input_names[0]].shape[0]
-        quant_batch_size = min(32, in_batch_size)
+        # quant_batch_size = min(32, in_batch_size)
+        quant_batch_size = min(input_shapes[0][0], in_batch_size)
         nb_quant_iters = in_batch_size // quant_batch_size
 
         def inputs_func(iter):
