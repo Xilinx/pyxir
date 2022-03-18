@@ -22,6 +22,10 @@ import math
 import pyxir
 import logging
 
+from pyxir.contrib.target.components.common.op_support import (
+    is_upscale_supported,
+)
+
 logger = logging.getLogger("pyxir")
 
 
@@ -319,10 +323,15 @@ def upsampling2d_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """Check whether we can execute the provided Upsampling2D operator
     on the DPUCADF8H target"""
-
-    method = X.attrs["method"]
-
-    return method == "nearest_neighbor"
+    return is_upscale_supported(
+        X,
+        bXs,
+        tXs,
+        channel_parallel=16,
+        bank_depth=8192,
+        bank_num=8,
+        bilinear_supported=True
+    )
 
 
 @pyxir.register_op_support_check("DPUCADF8H", "Dropout")

@@ -306,12 +306,16 @@ def is_upscale_supported(
     channel_parallel: int,
     bank_depth: int,
     bank_num: int,
+    bilinear_supported: bool = True
 ) -> bool:
-    method = X.attrs["method"] 
+    method = X.attrs["method"]
     input_channel = X.shapes[X.attrs["data_layout"].index("C")]
-    scale_h = X.attrs["scale_h"]
-    scale_w = X.attrs["scale_w"]
-    return (math.ceil(scale_h / bank_num) * scale_h * math.ceil(input_channel / channel_parallel) <= bank_depth) \
-            and (math.ceil(scale_w / bank_num) * scale_w * math.ceil(input_channel / channel_parallel) <= bank_depth) \
-            and method == "nearest_neighbor"
+    scale_h = float(X.attrs["scale_h"])
+    scale_w = float(X.attrs["scale_w"])
+    return (
+        scale_h.is_integer() and scale_w.is_integer()
+        and math.ceil(scale_h / bank_num) * scale_h * math.ceil(input_channel / channel_parallel) <= bank_depth \
+        and math.ceil(scale_w / bank_num) * scale_w * math.ceil(input_channel / channel_parallel) <= bank_depth \
+        and (method == "nearest_neighbor" or (bilinear_supported and method == "bilinear"))
+    )
              

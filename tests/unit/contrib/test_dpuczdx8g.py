@@ -40,6 +40,7 @@ from .compilation_infra import (
     conv2d_leaky_relu_nhwc_oihw_test,
     conv2d_pool2d_naming_test,
     multi_output_conv2d_naming_test,
+    xcompiler_upsample_nhwc_test,
 )
 
 # logging.basicConfig()
@@ -526,6 +527,60 @@ class TestDPUCZDX8G(unittest.TestCase):
             [0, 0],
             [1, 1],
             [1, 1],
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+
+    def test_upsample(self):
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=2,
+            scale_w=2,
+            data_layout="NHWC",
+            method="bilinear",
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+        )
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=1.9,
+            scale_w=1.9,
+            data_layout="NHWC",
+            method="bilinear",
+            targets=[
+                "DPUCZDX8G-zcu104",
+                "DPUCZDX8G-zcu102",
+                "DPUCZDX8G-kv260",
+                "DPUCZDX8G-ultra96",
+                "DPUCZDX8G-som",
+            ],
+            expected_upsample_target="cpu",
+        )
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=2,
+            scale_w=2,
+            data_layout="NHWC",
+            method="nearest_neighbor",
             targets=[
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",

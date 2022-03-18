@@ -33,6 +33,7 @@ from pyxir.contrib.target.components.common.op_support import (
     is_padding_supported,
     is_pooling_supported,
     is_scale_supported,
+    is_upscale_supported,
 )
 
 logger = logging.getLogger("pyxir")
@@ -204,8 +205,15 @@ def upsampling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bo
     """Check whether we can execute the provided Upsampling2D operator
     on the DPUCVDX8H target"""
     # TODO
-    method = X.attrs["method"]
-    return method == "nearest_neighbor"
+    return is_upscale_supported(
+        X,
+        bXs,
+        tXs,
+        channel_parallel=64,
+        bank_depth=256,
+        bank_num=8,
+        bilinear_supported=False
+    )
 
 
 @pyxir.register_op_support_check("DPUCVDX8H", "Dropout")

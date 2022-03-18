@@ -146,7 +146,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["in1", "in2"]
         assert xp0.tops == []
-        assert xp0.shapes == [[-1, 2, 2, 2]]
+        assert xp0.shapes == [[1, 2, 2, 2]]
         assert xp0.sizes == [8]
 
         assert len(xp0_xgraph) == 5
@@ -243,7 +243,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["in1"]
         assert xp0.tops == ["add", "sigm"]
-        assert xp0.shapes == [[-1, 28, 28, 2048], [-1, 28, 28, 512]]
+        assert xp0.shapes == [[1, 28, 28, 2048], [1, 28, 28, 512]]
         assert xp0.sizes == [28 * 28 * 2048, 28 * 28 * 512]
 
         assert len(xp0_xgraph) == 4
@@ -295,7 +295,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["in1"]
         assert xp0.tops == []
-        assert xp0.shapes == [[-1, 2, 2, 2]]
+        assert xp0.shapes == [[1, 2, 2, 2]]
         assert xp0.sizes == [8]
         assert xp0.attrs["target"] == "test"
         assert xp0.attrs["__bottom_tensors"] == {"xinput0": ["in1"]}
@@ -403,7 +403,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["in1"]
         assert xp0.tops == ["bn1", "concat1"]
-        assert xp0.shapes == [[-1, 2, 3, 3], [-1, 2, 3, 3]]
+        assert xp0.shapes == [[1, 2, 3, 3], [1, 2, 3, 3]]
         assert xp0.sizes == [18, 18]
         assert xp0.attrs["target"] == "test"
         assert xp0.attrs["__bottom_tensors"] == {"xinput0": ["in1"]}
@@ -507,7 +507,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["in1", "in2"]
         assert xp0.tops == ["bn1"]
-        assert xp0.shapes == [[-1, 2, 2, 2]]
+        assert xp0.shapes == [[1, 2, 2, 2]]
         assert xp0.sizes == [8]
 
         assert len(xp0_xgraph) == 5
@@ -588,7 +588,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp1.bottoms == ["t1"]
         assert xp1.tops == []
-        assert xp1.shapes == [[-1, 2, 2, 4]]
+        assert xp1.shapes == [[1, 2, 2, 4]]
         assert xp1.sizes == [16]
 
         assert len(xp1_xgraph) == 3
@@ -668,7 +668,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp2.bottoms == ["in1", "in2"]
         assert xp2.tops == ["reshape1"]
-        assert xp2.shapes == [[-1, 2, 1, 1]]
+        assert xp2.shapes == [[1, 2, 1, 1]]
         assert xp2.sizes == [2]
 
         assert len(xp2_xgraph) == 6
@@ -750,7 +750,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["concat1"]
         assert xp0.tops == ["concat2"]
-        assert xp0.shapes == [[-1, 4, 2, 2]]
+        assert xp0.shapes == [[1, 4, 2, 2]]
         assert xp0.sizes == [16]
 
         assert len(xp0_xgraph) == 3
@@ -810,7 +810,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["in1"]
         assert xp0.tops == ["t1"]
-        assert xp0.shapes == [[-1, 2, 2, 2]]
+        assert xp0.shapes == [[1, 2, 2, 2]]
         assert xp0.sizes == [8]
         assert len(xp0_xgraph) == 3
 
@@ -897,7 +897,7 @@ class TestXGraphPartitioner(unittest.TestCase):
 
         assert xp0.bottoms == ["in1"]
         assert xp0.tops == ["t1", "t2"]
-        assert xp0.shapes == [[-1, 2, 2, 2], [-1, 2, 2, 2]]
+        assert xp0.shapes == [[1, 2, 2, 2], [1, 2, 2, 2]]
         assert xp0.sizes == [8, 8]
         assert len(xp0_xgraph) == 3
 

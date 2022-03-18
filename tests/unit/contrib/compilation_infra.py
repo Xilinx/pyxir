@@ -800,6 +800,7 @@ def xcompiler_resnetv1_block_test(
     shutil.rmtree(work_dir)
     shutil.rmtree(build_dir)
 
+
 def _create_upsample_nhwc(
     in_shape,
     pool_size,
@@ -814,6 +815,7 @@ def _create_upsample_nhwc(
     method="nearest_neighbor",
     kernel_layout="OIHW",
     target="DPUCZDX8G-zcu104",
+    upsample_name="upsample"
 ) -> XGraph:
 
     x1 = px.ops.input("in1", shape=list(in_shape))
@@ -841,14 +843,16 @@ def _create_upsample_nhwc(
         data_layout="NHWC",
     )
     
-    upsample = px.ops.upsampling2d("upsample",[conv1], scale_h=scale_h, \
+    upsample = px.ops.upsampling2d(upsample_name,[conv1], scale_h=scale_h, \
                                     scale_w=scale_w, data_layout=data_layout, \
                                     method=method)
 
     net = [x1, pool1, conv1, upsample]
     xgraph = XGRAPH_FACTORY.build_from_xlayer(net)
     xgraph = px.partition(xgraph, [target])
+    # import pdb; pdb.set_trace()
     return xgraph
+
 
 def xcompiler_upsample_nhwc_test(
     in_shape,
@@ -865,6 +869,7 @@ def xcompiler_upsample_nhwc_test(
     kernel_layout="OIHW",
     targets=["DPUCAHX8H-u50"],
     expected_nb_subgraphs=3,
+    expected_upsample_target=None
 ):
     for target in targets:
 
@@ -895,6 +900,10 @@ def xcompiler_upsample_nhwc_test(
         opt_xgraph = px.optimize(q_xgraph, target)
         c_xgraph = px.compile(opt_xgraph, target, work_dir=work_dir, build_dir=build_dir)
         c_output = c_xgraph.get_compiler_output()
+        assert (
+            expected_upsample_target is None and c_xgraph.get("upsample").target == target
+            or c_xgraph.get("upsample").target == expected_upsample_target
+        )
 
         g = xir.Graph.deserialize(os.path.join(build_dir, "xp0.xmodel"))
         # TODO subgraphs[1].get_attr("device") -> *** RuntimeError: bad any_cast

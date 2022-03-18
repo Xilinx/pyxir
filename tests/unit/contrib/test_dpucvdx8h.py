@@ -33,6 +33,7 @@ from .compilation_infra import (
     xcompiler_resnetv1_block_test,
     xcompiler_conv2d_bias_add_relu_nhwc_oihw_test,
     partition_pad_conv2d_pool2d_nhwc_oihw_test,
+    xcompiler_upsample_nhwc_test,
 )
 
 try:
@@ -213,6 +214,43 @@ class TestDPUCVDX8H(unittest.TestCase):
             [1, 1],
             [1, 1],
             targets=["DPUCVDX8H", "DPUCVDX8H-dwc"],
+        )
+
+    def test_upsample(self):
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=2,
+            scale_w=2,
+            data_layout="NHWC",
+            method="nearest_neighbor",
+            targets=["DPUCVDX8H", "DPUCVDX8H-dwc"],
+        )
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=2,
+            scale_w=2,
+            data_layout="NHWC",
+            method="bilinear",
+            targets=["DPUCVDX8H", "DPUCVDX8H-dwc"],
+            expected_upsample_target="cpu",
+        )
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=1.9,
+            scale_w=1.9,
+            data_layout="NHWC",
+            method="bilinear",
+            targets=["DPUCVDX8H", "DPUCVDX8H-dwc"],
+            expected_upsample_target="cpu",
         )
 
     def test_compile_resnetv1_block(self):

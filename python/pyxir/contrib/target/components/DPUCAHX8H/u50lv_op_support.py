@@ -224,7 +224,15 @@ def scale_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
 def upsampling_op_support(X: XLayer, bXs: List[XLayer], tXs: List[XLayer]) -> bool:
     """Check whether we can execute the provided Upsampling2D operator
     on the DPUCAHX8H-u50lv target"""
-    return is_upscale_supported(X, bXs, tXs, channel_parallel=16, bank_depth=2048, bank_num=8)
+    return is_upscale_supported(
+        X,
+        bXs,
+        tXs,
+        channel_parallel=16,
+        bank_depth=2048,
+        bank_num=8,
+        bilinear_supported=False
+    )
 
 
 @pyxir.register_op_support_check("DPUCAHX8H-u50lv", "Dropout")

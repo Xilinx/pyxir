@@ -868,7 +868,7 @@ class Upsampling2DLayer(rt_layer.BaseLayer, RtLayerTF):
         else:
             h, w = self.input_shapes[0][1], self.input_shapes[0][2]
 
-        new_h, new_w = int(h * self.scale_h), int(w * self.scale_w)
+        new_h, new_w = round(h * self.scale_h), round(w * self.scale_w)
 
         if self.method == 'nearest_neighbor':
             res = tf.compat.v1.image.resize_nearest_neighbor(

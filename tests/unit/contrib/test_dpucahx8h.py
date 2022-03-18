@@ -311,7 +311,42 @@ class TestDPUCAHX8H(unittest.TestCase):
                 "DPUCAHX8H-u55c_dwc",
                 "DPUCAHX8H-u280"
             ],
-         
+        )
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=2,
+            scale_w=2,
+            data_layout="NHWC",
+            method="bilinear",
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
+            expected_upsample_target="cpu",
+        )
+        xcompiler_upsample_nhwc_test(
+            in_shape=(1, 112, 112, 64),
+            pool_size=[3, 3],
+            pool_strides=[2, 2],
+            w1_shape=(256, 64, 1, 1),
+            scale_h=1.9,
+            scale_w=1.9,
+            data_layout="NHWC",
+            method="bilinear",
+            targets=[
+                "DPUCAHX8H-u50",
+                "DPUCAHX8H-u50lv",
+                "DPUCAHX8H-u50lv_dwc",
+                "DPUCAHX8H-u55c_dwc",
+                "DPUCAHX8H-u280"
+            ],
+            expected_upsample_target="cpu",
         )
 
     def test_compile_resnetv1_block(self):

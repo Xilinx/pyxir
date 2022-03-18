@@ -23,6 +23,10 @@ import pyxir
 
 logger = logging.getLogger("pyxir")
 
+from pyxir.contrib.target.components.common.op_support import (
+    is_upscale_supported,
+)
+
 
 @pyxir.register_op_support_check("DPUCAHX8H-u280", "BatchNorm")
 def batchnorm_op_support(X, bXs, tXs):
@@ -361,11 +365,16 @@ def scale_op_support(X, bXs, tXs):
 def scale_op_support(X, bXs, tXs):
     # Type: (XLayer, List[XLayer], List[XLayer]) -> boolean
     """Check whether we can execute the provided Upsampling2D operator
-    on the zcu104 target"""
-
-    method = X.attrs["method"]
-    # TODO
-    return method == "nearest_neighbor"
+    on the DPUCAHX8H-u280 target"""
+    return is_upscale_supported(
+        X,
+        bXs,
+        tXs,
+        channel_parallel=16,
+        bank_depth=2048,
+        bank_num=8,
+        bilinear_supported=False
+    )
 
 
 @pyxir.register_op_support_check("DPUCAHX8H-u280", "Dropout")
