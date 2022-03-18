@@ -76,7 +76,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
             assert X.name == 'y'
             assert 'AnyOp' in X.type
-            assert X.shapes.tolist() == [-1, 2, 3, 3]
+            assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_and(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -104,7 +104,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_cast_float32(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -131,7 +131,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Cast' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
         assert X.attrs['dtype'] == 'float32'
 
     def test_cast_int32(self):
@@ -159,7 +159,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Cast' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
         assert X.attrs['dtype'] == 'int32'
 
     def test_determinant(self):
@@ -210,7 +210,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 18]
+        assert X.shapes.tolist() == [1, 18]
 
     def test_leaky_relu(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -237,7 +237,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'LeakyReLU' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
         assert math.isclose(X.attrs['alpha'], 0.2, rel_tol=1e-5)
 
     def test_leaky_relu_default(self):
@@ -264,7 +264,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'LeakyReLU' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
         assert X.attrs['alpha'] == 0.01
 
     def test_multinomial(self):
@@ -291,7 +291,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 10]
+        assert X.shapes.tolist() == [2, 10]
 
     def test_negative_log_likelihood_loss(self):
         a = np.zeros((2, 3, 2), dtype=np.float32)
@@ -347,7 +347,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 3, 10]
+        assert X.shapes.tolist() == [1, 3, 10]
 
     def test_or(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -375,7 +375,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_prelu(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -402,7 +402,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'LeakyReLU' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
         assert math.isclose(X.attrs['alpha'], 0.2, rel_tol=1e-5)
 
     def test_pow(self):
@@ -431,7 +431,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_random_normal(self):
 
@@ -535,9 +535,9 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
         assert 'Split' in X.type
         assert X.attrs['axis'] == 1
         assert X.attrs['indices'] == [1, 4]
-        assert X.shapes == TupleShape([TensorShape([-1, 1, 4, 4]),
-                                       TensorShape([-1, 3, 4, 4]),
-                                       TensorShape([-1, 1, 4, 4])])
+        assert X.shapes == TupleShape([TensorShape([1, 1, 4, 4]),
+                                       TensorShape([1, 3, 4, 4]),
+                                       TensorShape([1, 1, 4, 4])])
 
         assert Xs[1].name == 'x'
         assert Xs[2].name == 'y'
@@ -570,9 +570,9 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
         assert 'Split' in X.type
         assert X.attrs['axis'] == 1
         assert X.attrs['indices'] == [2, 4]
-        assert X.shapes == TupleShape([TensorShape([-1, 2]),
-                                       TensorShape([-1, 2]),
-                                       TensorShape([-1, 2])])
+        assert X.shapes == TupleShape([TensorShape([1, 2]),
+                                       TensorShape([1, 2]),
+                                       TensorShape([1, 2])])
 
         assert Xs[1].name == 'x'
         assert Xs[2].name == 'y'
@@ -602,7 +602,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Squeeze' in X.type
-        assert X.shapes.tolist() == [-1, 3, 3]
+        assert X.shapes.tolist() == [1, 3, 3]
 
     def test_tile(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -629,7 +629,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 6, 6, 6]
+        assert X.shapes.tolist() == [1, 6, 6, 6]
 
     def test_transpose(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -656,7 +656,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Transpose' in X.type
-        assert X.shapes.tolist() == [-1, 3, 3, 2]
+        assert X.shapes.tolist() == [1, 3, 3, 2]
 
     def test_transpose_default(self):
         # Unspecified transpose reverses the order
@@ -683,7 +683,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Transpose' in X.type
-        assert X.shapes.tolist() == [3, 3, 2, -1]
+        assert X.shapes.tolist() == [3, 3, 2, 1]
 
     def test_unsqueeze(self):
         a = np.zeros((1, 3, 4, 5), dtype=np.float32)
@@ -709,7 +709,7 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 1, 3, 4, 5, 1]
+        assert X.shapes.tolist() == [1, 1, 3, 4, 5, 1]
 
     def test_xor(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -737,4 +737,4 @@ class TestONNXL3MathAndTransform(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]

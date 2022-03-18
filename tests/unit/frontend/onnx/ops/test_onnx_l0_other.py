@@ -55,7 +55,7 @@ class TestONNXL0Other(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_range(self):
         start = np.array([1])
@@ -162,4 +162,4 @@ class TestONNXL0Other(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]

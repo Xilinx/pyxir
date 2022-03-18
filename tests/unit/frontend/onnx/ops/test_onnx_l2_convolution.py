@@ -56,7 +56,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
             assert X.name == 'y'
             assert 'AnyOp' in X.type
-            assert X.shapes.tolist() == [-1, 2, 3, 3]
+            assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_avg_pool_node(self):
         pool_test(
@@ -65,7 +65,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             kernel_size=[2, 2],
             padding=[0, 1, 0, 1],
             strides=[2, 2],
-            expected_out_shape=[-1, 1, 2, 2],
+            expected_out_shape=[1, 1, 2, 2],
             expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
         )
         pool_test(
@@ -74,7 +74,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             kernel_size=[2, 2],
             padding="SAME_UPPER",
             strides=[2, 2],
-            expected_out_shape=[-1, 1, 2, 2],
+            expected_out_shape=[1, 1, 2, 2],
             expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
         )
         pool_test(
@@ -83,7 +83,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             kernel_size=[2, 2],
             padding="SAME_LOWER",
             strides=[2, 2],
-            expected_out_shape=[-1, 1, 2, 2],
+            expected_out_shape=[1, 1, 2, 2],
             expected_padding=[[0, 0], [0, 0], [1, 0], [1, 0]],
         )
         
@@ -117,7 +117,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Pooling' in X.type
-        assert X.shapes.tolist() == [-1, 1, 2, 2]
+        assert X.shapes.tolist() == [1, 1, 2, 2]
         assert X.attrs['padding'] == [[0, 0], [0, 0], [0, 0], [0, 0]]
         assert X.attrs['strides'] == [2, 2]
         assert X.attrs['kernel_size'] == [3, 3]
@@ -133,7 +133,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
         )
         conv_test(
@@ -144,7 +144,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 2, 4, 4],
+            expected_out_shape=[1, 2, 4, 4],
             expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
         )
         conv_test(
@@ -155,7 +155,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[2, 2],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
         )
 
@@ -168,7 +168,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[1, 1],
             groups=4,
-            expected_out_shape=[-1, 8, 4, 4],
+            expected_out_shape=[1, 8, 4, 4],
             expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
         )
         conv_test(
@@ -179,7 +179,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[2, 2],
             groups=4,
-            expected_out_shape=[-1, 8, 4, 4],
+            expected_out_shape=[1, 8, 4, 4],
             expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
         )
 
@@ -192,7 +192,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
         )
         conv_test(
@@ -203,7 +203,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
         )
         conv_test(
@@ -214,7 +214,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[2, 2],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
         )
         # Grouped Conv
@@ -226,7 +226,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[1, 1],
             groups=4,
-            expected_out_shape=[-1, 4, 2, 2],
+            expected_out_shape=[1, 4, 2, 2],
             expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
         )
 
@@ -239,7 +239,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
         )
         conv_test(
@@ -250,7 +250,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
         )
         conv_test(
@@ -261,7 +261,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[2, 2],
             groups=1,
-            expected_out_shape=[-1, 2, 3, 3],
+            expected_out_shape=[1, 2, 3, 3],
             expected_padding=[(0, 0), (0, 0), (1, 1), (1, 1)],
         )
         # Grouped Conv
@@ -273,7 +273,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[1, 1],
             groups=4,
-            expected_out_shape=[-1, 4, 2, 2],
+            expected_out_shape=[1, 4, 2, 2],
             expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
         )
 
@@ -286,7 +286,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[1, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 4, 5, 5],
+            expected_out_shape=[1, 4, 5, 5],
             expected_padding=[(0, 0), (0, 0), (0, 0), (0, 0)],
         )
         conv_test(
@@ -297,7 +297,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 8, 256, 1],
+            expected_out_shape=[1, 8, 256, 1],
             expected_padding=[(0, 0), (0, 0), (14, 15), (0, 0)],
         )
 
@@ -311,7 +311,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             dilations=[1, 1],
             groups=1,
             conv_transpose_out_shape=[1, 4, 5, 5],
-            expected_out_shape=[-1, 4, 5, 5],
+            expected_out_shape=[1, 4, 5, 5],
             expected_padding=[(0, 0), (0, 0), (0, 0), (0, 0)],
         )
         conv_test(
@@ -323,7 +323,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             dilations=[1, 1],
             groups=1,
             conv_transpose_out_shape=[1, 8, 256, 1],
-            expected_out_shape=[-1, 8, 256, 1],
+            expected_out_shape=[1, 8, 256, 1],
             expected_padding=[(0, 0), (0, 0), (14, 15), (0, 0)],
         )
 
@@ -336,7 +336,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 4, 6, 6],
+            expected_out_shape=[1, 4, 6, 6],
             expected_padding=[(0, 0), (0, 0), (0, 1), (0, 1)],
         )
         conv_test(
@@ -347,7 +347,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 8, 256, 1],
+            expected_out_shape=[1, 8, 256, 1],
             expected_padding=[(0, 0), (0, 0), (14, 15), (0, 0)],
         )
 
@@ -360,7 +360,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 2],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 4, 6, 6],
+            expected_out_shape=[1, 4, 6, 6],
             expected_padding=[(0, 0), (0, 0), (1, 0), (1, 0)],
         )
         conv_test(
@@ -371,7 +371,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             strides=[2, 1],
             dilations=[1, 1],
             groups=1,
-            expected_out_shape=[-1, 8, 256, 1],
+            expected_out_shape=[1, 8, 256, 1],
             expected_padding=[(0, 0), (0, 0), (15, 14), (0, 0)],
         )
 
@@ -401,7 +401,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Flatten' in X.type
-        assert X.shapes.tolist() == [-1, 9]
+        assert X.shapes.tolist() == [1, 9]
         assert X.attrs['onnx_id'] == 'y'
 
     def test_flatten_2_reshape(self):
@@ -433,8 +433,8 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Reshape' in X.type
-        assert X.shapes.tolist() == [-2, 9]
-        assert X.attrs['shape'] == [-2, 9]
+        assert X.shapes.tolist() == [2, 9]
+        assert X.attrs['shape'] == [2, 9]
         assert X.attrs['onnx_id'] == 'y'
 
     def test_flatten_2_reshape_axis_0(self):
@@ -466,8 +466,8 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Reshape' in X.type
-        assert X.shapes.tolist() == [1, -18]
-        assert X.attrs['shape'] == [1, -18]
+        assert X.shapes.tolist() == [1, 18]
+        assert X.attrs['shape'] == [1, 18]
         assert X.attrs['onnx_id'] == 'y'
 
     def test_global_avg_pool_node(self):
@@ -498,7 +498,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Pooling' in X.type
-        assert X.shapes.tolist() == [-1, 2, 1, 1]
+        assert X.shapes.tolist() == [1, 2, 1, 1]
         assert X.attrs['padding'] == [(0, 0), (0, 0), (0, 0), (0, 0)]
         assert X.attrs['strides'] == [1, 1]
         assert X.attrs['kernel_size'] == [3, 3]
@@ -513,7 +513,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             kernel_size=[2, 2],
             padding=[0, 1, 0, 1],
             strides=[1, 1],
-            expected_out_shape=[-1, 1, 3, 3],
+            expected_out_shape=[1, 1, 3, 3],
             expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
         )
         pool_test(
@@ -522,7 +522,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             kernel_size=[2, 2],
             padding="SAME_UPPER",
             strides=[2, 2],
-            expected_out_shape=[-1, 1, 2, 2],
+            expected_out_shape=[1, 1, 2, 2],
             expected_padding=[[0, 0], [0, 0], [0, 1], [0, 1]],
         )
         pool_test(
@@ -531,7 +531,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
             kernel_size=[2, 2],
             padding="SAME_LOWER",
             strides=[2, 2],
-            expected_out_shape=[-1, 1, 2, 2],
+            expected_out_shape=[1, 1, 2, 2],
             expected_padding=[[0, 0], [0, 0], [1, 0], [1, 0]],
         )
 
@@ -594,13 +594,13 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_max_unpool_node_output_shape(self):
         x = np.array([[[[1, 2, 3],
                         [4, 5, 6],
                         [7, 8, 9]]]]).astype(np.float32)
-        z = np.array([-1, 1, 4, 4])
+        z = np.array([1, 1, 4, 4])
 
         node = onnx.helper.make_node(
             'MaxUnPool',
@@ -626,7 +626,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 1, 4, 4]
+        assert X.shapes.tolist() == [1, 1, 4, 4]
 
     def test_pad(self):
         x = np.array([[[[1, 2, 3],
@@ -658,7 +658,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Pad' in X.type
-        assert X.shapes.tolist() == [-1, 1, 6, 7]
+        assert X.shapes.tolist() == [1, 1, 6, 7]
 
     def test_upsample_node(self):
         x = np.array([[[[1, 2, 3],
@@ -689,7 +689,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Upsampling2D' in X.type
-        assert X.shapes.tolist() == [-1, 1, 6, 9]
+        assert X.shapes.tolist() == [1, 1, 6, 9]
         assert X.attrs['scale_h'] == 2.
         assert X.attrs['scale_w'] == 3.
         assert X.attrs['data_layout'] == 'NCHW'
@@ -724,7 +724,7 @@ class TestONNXL2Convolutions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Upsampling2D' in X.type
-        assert X.shapes.tolist() == [-1, 1, 6, 9]
+        assert X.shapes.tolist() == [1, 1, 6, 9]
         assert X.attrs['scale_h'] == 2.
         assert X.attrs['scale_w'] == 3.
         assert X.attrs['data_layout'] == 'NCHW'

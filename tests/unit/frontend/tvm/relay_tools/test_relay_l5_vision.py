@@ -127,15 +127,15 @@ class TestRelayL5VisionOperationConversions(unittest.TestCase):
 
             if supported:
                 assert layers[1].type[0] == "Transpose"
-                assert layers[1].shapes == [-1, c, h_in, w_in]
+                assert layers[1].shapes == [1, c, h_in, w_in]
                 assert layers[2].type[0] == "Upsampling2D"
-                assert layers[2].shapes == [-1, c, h_out, w_out]
+                assert layers[2].shapes == [1, c, h_out, w_out]
                 assert layers[3].type[0] == "Transpose"
-                assert layers[3].shapes == [-1, h_out, w_out, c]
+                assert layers[3].shapes == [1, h_out, w_out, c]
             else:
                 assert len(layers) == 2
                 assert layers[1].type[0] == "AnyOp"
-                assert layers[1].shapes == [-1, h_out, w_out, c]
+                assert layers[1].shapes == [1, h_out, w_out, c]
 
         _test_image_resize2d((1, 20, 20, 32), [40, 40])
         _test_image_resize2d((1, 20, 20, 32), [10, 10])

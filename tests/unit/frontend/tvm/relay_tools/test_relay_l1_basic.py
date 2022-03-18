@@ -106,11 +106,11 @@ class TestRelayL1BasicConversions(unittest.TestCase):
 
         assert layers[1].type[0] == "Scale"
         assert layers[1].tops[0][:11] == "nn_bias_add"
-        assert layers[1].shapes == [-1, 3, 2, 2]
+        assert layers[1].shapes == [1, 3, 2, 2]
         assert "relay_id" in layers[1].attrs
 
         assert layers[2].type[0] == "BiasAdd"
-        assert layers[2].shapes == [-1, 3, 2, 2]
+        assert layers[2].shapes == [1, 3, 2, 2]
         assert "relay_id" in layers[2].attrs
 
     @unittest.skipIf(skip, "Could not import TVM and/or TVM frontend")

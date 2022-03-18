@@ -55,7 +55,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
 
             assert X.name == 'y'
             assert 'AnyOp' in X.type
-            assert X.shapes.tolist() == [-1, 2, 3, 3]
+            assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_add_two_constants(self):
         a = np.array([[[[1, 2, 3],
@@ -122,7 +122,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert 'BiasAdd' in X.type
         assert X.bottoms == ['b']
         np.testing.assert_array_equal(X.data[0], a)
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
         assert X.attrs['axis'] == 1
 
     def test_add_tensor_constant(self):
@@ -193,7 +193,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Eltwise' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_batchnorm(self):
         x = np.array([[[[1, 2, 3]],
@@ -232,7 +232,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'BatchNorm' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 2, 1, 3]
+        assert X.shapes.tolist() == [1, 2, 1, 3]
         assert X.attrs['axis'] == 1
         assert X.attrs['epsilon'] == 1e-05
 
@@ -270,7 +270,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Concat' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
         assert X.attrs['axis'] == 1
 
     def test_concat_negative_axis(self):
@@ -307,7 +307,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Concat' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
         assert X.attrs['axis'] == 1
 
     def test_divide(self):
@@ -343,7 +343,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Divide' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_dropout(self):
         x = np.array([[[[1, 2, 3],
@@ -373,7 +373,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Dropout' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
         assert math.isclose(X.attrs['rate'], 0.7, rel_tol=1e-5)
 
     def test_exp(self):
@@ -403,7 +403,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Exp' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_gemm_basic(self):
         x = np.array([[1, 2]]).astype(np.float32)  # 1 x 2
@@ -437,10 +437,10 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'BiasAdd' in X.type
         assert X.bottoms == ['y_Dense']
-        assert X.shapes.tolist() == [-1, 3]
+        assert X.shapes.tolist() == [1, 3]
 
         assert dX.name == 'y_Dense'
-        assert dX.shapes == [-1, 3]
+        assert dX.shapes == [1, 3]
         assert dX.bottoms == ['x']
         assert dX.attrs['units'] == 3
         assert dX.attrs['W_shape'] == [3, 2]
@@ -472,7 +472,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Log' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_matmul_basic(self):
         x = np.array([[1, 2]]).astype(np.float32)  # 1 x 2
@@ -503,7 +503,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Dense' in X.type
-        assert X.shapes.tolist() == [-1, 3]
+        assert X.shapes.tolist() == [1, 3]
 
     def test_matmul_integer_basic(self):
         x = np.array([[1, 2]]).astype(np.int32)  # 1 x 2
@@ -534,7 +534,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Dense' in X.type
-        assert X.shapes.tolist() == [-1, 3]
+        assert X.shapes.tolist() == [1, 3]
 
     def test_mod(self):
         a = np.array([[[[1, 2, 3],
@@ -569,7 +569,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'AnyOp' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_multiply_two_constants(self):
         a = np.array([[[[1, 2, 3],
@@ -640,7 +640,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert 'Scale' in X.type
         assert X.bottoms == ['b']
         np.testing.assert_array_equal(X.data.gamma, a)
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
         assert X.attrs['axis'] == -1
 
     def test_mul_tensor_constant(self):
@@ -676,7 +676,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert 'Scale' in X.type
         assert X.bottoms == ['a']
         np.testing.assert_array_equal(X.data.gamma, b)
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
         assert X.attrs['axis'] == -1
 
     def test_multiply(self):
@@ -712,7 +712,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Multiply' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_qlinear_matmul(self):
         a = np.array([[1, 2]]).astype(np.float32)  # 1 x 2
@@ -744,7 +744,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 3]
+        assert X.shapes.tolist() == [1, 3]
 
     def test_relu(self):
         x = np.array([[[[1, 2, 3],
@@ -773,7 +773,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'ReLU' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_sigmoid(self):
         x = np.array([[[[1, 2, 3],
@@ -802,7 +802,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Sigmoid' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_softmax(self):
         x = np.array([[[[1, 2, 3],
@@ -831,7 +831,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Softmax' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_sqrt(self):
         x = np.array([[[[1, 2, 3],
@@ -860,7 +860,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Sqrt' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_sub_two_constants(self):
         a = np.array([[[[1, 2, 3],
@@ -929,7 +929,7 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Sub' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_sum(self):
         a = np.array([[[[1, 2, 3],
@@ -968,13 +968,13 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Add' in X.type
         assert X.bottoms == ['a', 'b']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
         X = Xs[1]
         assert X.name == 'y2'
         assert 'Add' in X.type
         assert X.bottoms == ['y', 'c']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_tanh(self):
         x = np.array([[[[1, 2, 3],
@@ -1003,4 +1003,4 @@ class TestONNXL1BasicNN(unittest.TestCase):
         assert X.name == 'y'
         assert 'Tanh' in X.type
         assert X.bottoms == ['x']
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]

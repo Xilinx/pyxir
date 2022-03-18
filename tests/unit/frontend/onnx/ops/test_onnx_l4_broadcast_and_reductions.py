@@ -63,7 +63,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
             assert X.name == 'y'
             assert 'AnyOp' in X.type
-            assert X.shapes.tolist() == [-1, 2, 3, 3]
+            assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_argmax(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -90,7 +90,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_argmax_keepdims_fals(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -118,7 +118,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 3, 3]
+        assert X.shapes.tolist() == [1, 3, 3]
 
     def test_argmin(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -145,7 +145,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_argmin_keepdims_fals(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -173,7 +173,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 3, 3]
+        assert X.shapes.tolist() == [1, 3, 3]
 
     def test_compress(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -204,7 +204,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 1, 3]
+        assert X.shapes.tolist() == [1, 2, 1, 3]
 
     def test_depth_to_space(self):
         a = np.zeros((1, 8, 3, 3), dtype=np.float32)
@@ -234,7 +234,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 6, 6]
+        assert X.shapes.tolist() == [1, 2, 6, 6]
 
     def test_equal(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -262,11 +262,11 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_expand(self):
         a = np.zeros((1, 3, 3), dtype=np.float32)
-        b = np.array([-1, 1, 3, 3])
+        b = np.array([1, 1, 3, 3])
 
         node = onnx.helper.make_node(
             'Expand',
@@ -290,7 +290,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 1, 3, 3]
+        assert X.shapes.tolist() == [1, 1, 3, 3]
 
     def test_gather(self):
         a = np.zeros((1, 5, 3, 3), dtype=np.float32)
@@ -319,7 +319,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'Take' in X.type
-        assert X.shapes.tolist() == [-1, 3, 3, 3]
+        assert X.shapes.tolist() == [1, 3, 3, 3]
 
     def test_gather_elements(self):
         a = np.zeros((3, 3), dtype=np.float32)
@@ -402,7 +402,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_greater_or_equal(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -430,7 +430,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_max(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -461,7 +461,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_mean(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -492,7 +492,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_min(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -523,7 +523,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_reduce_to_any_op(self):
         ops = ['ReduceL1', 'ReduceL2', 'ReduceLogSum', 'ReduceMax',
@@ -556,7 +556,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
             assert X.name == 'y'
             assert 'AnyOp' in X.type
-            assert X.shapes.tolist() == [-1, 2, 1, 1]
+            assert X.shapes.tolist() == [1, 2, 1, 1]
 
     def test_resize(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -586,7 +586,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 4]
+        assert X.shapes.tolist() == [1, 2, 3, 4]
 
     def test_roi_align(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -649,7 +649,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_scatter_elements(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -679,7 +679,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_scatter_nd(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -709,7 +709,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 3, 3]
+        assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_slice(self):
         a = np.zeros((1, 2, 5, 5), dtype=np.float32)
@@ -744,7 +744,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 2, 2, 1]
+        assert X.shapes.tolist() == [1, 2, 2, 1]
 
     def test_space_to_depth(self):
         a = np.zeros((1, 2, 6, 6), dtype=np.float32)
@@ -773,7 +773,7 @@ class TestONNXL4BroadcastAndReductions(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, 8, 3, 3]
+        assert X.shapes.tolist() == [1, 8, 3, 3]
 
     def test_where(self):
         condition = np.array([[1, 0], [1, 1]], dtype=np.bool)

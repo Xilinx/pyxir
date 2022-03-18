@@ -57,4 +57,4 @@ class TestONNXL5Vision(unittest.TestCase):
 
         assert X.name == 'y'
         assert 'AnyOp' in X.type
-        assert X.shapes.tolist() == [-1, -1, 4]
+        assert X.shapes.tolist() == [1, -1, 4]

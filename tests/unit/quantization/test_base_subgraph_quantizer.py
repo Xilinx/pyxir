@@ -137,7 +137,7 @@ class TestBaseSubgraphQuantizer(unittest.TestCase):
             XLayer(
                 name='pool1',
                 type=['Pooling'],
-                shapes=[1, 2, 2, 2],
+                shapes=[-1, 2, 2, 2],
                 sizes=[8],
                 bottoms=['conv1'],
                 tops=['pool2'],
@@ -157,7 +157,7 @@ class TestBaseSubgraphQuantizer(unittest.TestCase):
             XLayer(
                 name='pool2',
                 type=['Pooling'],
-                shapes=[1, 2, 1, 1],
+                shapes=[-1, 2, 1, 1],
                 sizes=[2],
                 bottoms=['pool1'],
                 tops=[],

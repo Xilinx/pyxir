@@ -122,7 +122,7 @@ class XGraphBaseSubgraphQuantizer(XGraphBaseQuantizer):
         logger.debug("START Compute subgraph inputs for quantization")
         inputs = self.inputs_func(0)
         in_size = inputs[input_names[0]].shape[0]
-        batch_size = input_shapes[0][0]
+        batch_size = input_shape[0] if input_shape[0] is not None else 1
         subgraph_inpts = [[] * len(self.subgraph_input_names)]
         for i in range(in_size // batch_size):
             in_batch = {

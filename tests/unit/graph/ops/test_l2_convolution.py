@@ -352,7 +352,7 @@ class TestL2Convolution(unittest.TestCase):
         conv2d_test_util(
             (1, 2, 3, 3),
             (4, 2, 3, 3),
-            (-1, 4, 3, 3),
+            (1, 4, 3, 3),
             padding=(1, 1, 1, 1),
             strides=(1, 1),
             dilation=(1, 1),
@@ -363,7 +363,18 @@ class TestL2Convolution(unittest.TestCase):
         conv2d_test_util(
             (1, 3, 3, 2),
             (4, 2, 3, 3),
-            (-1, 3, 3, 4),
+            (1, 3, 3, 4),
+            padding=(1, 1, 1, 1),
+            strides=(1, 1),
+            dilation=(1, 1),
+            groups=1,
+            data_layout="NHWC",
+            kernel_layout="OIHW",
+        )
+        conv2d_test_util(
+            (4, 3, 3, 2),
+            (4, 2, 3, 3),
+            (4, 3, 3, 4),
             padding=(1, 1, 1, 1),
             strides=(1, 1),
             dilation=(1, 1),
@@ -376,7 +387,7 @@ class TestL2Convolution(unittest.TestCase):
         conv2d_test_util(
             (1, 3, 3, 2),
             (4, 3, 3, 2),
-            (-1, 3, 3, 4),
+            (1, 3, 3, 4),
             padding=(1, 1, 1, 1),
             strides=(1, 1),
             dilation=(1, 1),
@@ -438,10 +449,13 @@ class TestL2Convolution(unittest.TestCase):
 
     def test_global_pooling_layer(self):
         global_pool2d_test_util(
-            in_shape=(1, 2, 7, 7), out_shape=(-1, 2, 1, 1), pool_type="Max",
+            in_shape=(1, 2, 7, 7), out_shape=(1, 2, 1, 1), pool_type="Max",
         )
         global_pool2d_test_util(
-            in_shape=(1, 2, 8, 8), out_shape=(-1, 2, 1, 1), pool_type="Avg",
+            in_shape=(1, 2, 8, 8), out_shape=(1, 2, 1, 1), pool_type="Avg",
+        )
+        global_pool2d_test_util(
+            in_shape=(3, 2, 8, 8), out_shape=(3, 2, 1, 1), pool_type="Avg",
         )
 
     def test_pad_layer(self):
@@ -511,7 +525,7 @@ class TestL2Convolution(unittest.TestCase):
     def test_pooling_layer(self):
         pool2d_test_util(
             in_shape=(1, 2, 5, 5),
-            out_shape=(-1, 2, 3, 3),
+            out_shape=(1, 2, 3, 3),
             pool_type="Avg",
             pool_size=[3, 3],
             padding=[1, 1, 1, 1],
@@ -519,7 +533,15 @@ class TestL2Convolution(unittest.TestCase):
         )
         pool2d_test_util(
             in_shape=(1, 2, 6, 6),
-            out_shape=(-1, 2, 7, 7),
+            out_shape=(1, 2, 7, 7),
+            pool_type="Max",
+            pool_size=[3, 3],
+            padding=[2, 2, 1, 1],
+            strides=[1, 1],
+        )
+        pool2d_test_util(
+            in_shape=(16, 2, 6, 6),
+            out_shape=(16, 2, 7, 7),
             pool_type="Max",
             pool_size=[3, 3],
             padding=[2, 2, 1, 1],

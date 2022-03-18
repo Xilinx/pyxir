@@ -217,9 +217,7 @@ class TestRelayL3MathAndTransform(unittest.TestCase):
 
             xgraph = xf_relay.from_relay(mod, {})
             layers = xgraph.get_layers()
-            
-            
-            expected_shape[0] = -1
+
             assert layers[1].type[0] == "Reshape"
             assert layers[1].shapes == expected_shape
 

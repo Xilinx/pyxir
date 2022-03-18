@@ -96,7 +96,7 @@ class TestONNXFrontend(unittest.TestCase):
 
     def test_simple_model(self):
         x = helper.make_tensor_value_info('x', TensorProto.FLOAT,
-                                          [None, 1, 4, 4])
+                                          [1, 1, 4, 4])
         x_val = np.array([[[[1, 2, 3, 4],
                             [5, 6, 7, 8],
                             [9, 10, 11, 12],
@@ -106,7 +106,7 @@ class TestONNXFrontend(unittest.TestCase):
 
         # Create one output (ValueInfoProto)
         z = helper.make_tensor_value_info('z', TensorProto.FLOAT,
-                                          [None, 2, 2, 2])
+                                          [1, 2, 2, 2])
 
         W_val = np.array([[[[1, 1],
                             [1, 1]]],
@@ -156,12 +156,12 @@ class TestONNXFrontend(unittest.TestCase):
 
         assert xlayers[0].name == 'x'
         assert xlayers[0].type[0] == 'Input'
-        assert xlayers[0].shapes == [-1, 1, 4, 4]
+        assert xlayers[0].shapes == [1, 1, 4, 4]
         assert xlayers[0].attrs['onnx_id'] == 'x'
 
         assert xlayers[1].name == 'y_Conv'
         assert xlayers[1].type[0] == 'Convolution'
-        assert xlayers[1].shapes == [-1, 2, 4, 4]
+        assert xlayers[1].shapes == [1, 2, 4, 4]
         assert xlayers[1].attrs['padding'] == [(0, 0), (0, 0), (1, 0), (1, 0)]
         assert xlayers[1].attrs['strides'] == [1, 1]
         assert xlayers[1].attrs['dilation'] == [1, 1]
@@ -173,12 +173,12 @@ class TestONNXFrontend(unittest.TestCase):
         assert xlayers[1].attrs['onnx_id'] == 'y'
 
         assert xlayers[2].name == 'y'
-        assert xlayers[2].shapes == [-1, 2, 4, 4]
+        assert xlayers[2].shapes == [1, 2, 4, 4]
         assert xlayers[2].attrs['axis'] == 1
         assert xlayers[2].attrs['onnx_id'] == 'y'
 
         assert xlayers[3].name == 'z'
-        assert xlayers[3].shapes == [-1, 2, 2, 2]
+        assert xlayers[3].shapes == [1, 2, 2, 2]
         assert xlayers[3].type[0] == 'Pooling'
         assert xlayers[3].attrs['padding'] == [[0, 0], [0, 0], [0, 0], [0, 0]]
         assert xlayers[3].attrs['strides'] == [2, 2]
@@ -189,7 +189,7 @@ class TestONNXFrontend(unittest.TestCase):
 
     def test_simple_model_opaque_func(self):
         x = helper.make_tensor_value_info('x', TensorProto.FLOAT,
-                                          [None, 1, 4, 4])
+                                          [1, 1, 4, 4])
         x_val = np.array([[[[1, 2, 3, 4],
                             [5, 6, 7, 8],
                             [9, 10, 11, 12],
@@ -199,7 +199,7 @@ class TestONNXFrontend(unittest.TestCase):
 
         # Create one output (ValueInfoProto)
         z = helper.make_tensor_value_info('z', TensorProto.FLOAT,
-                                          [None, 2, 2, 2])
+                                          [1, 2, 2, 2])
 
         W_val = np.array([[[[1, 1],
                             [1, 1]]],
@@ -255,12 +255,12 @@ class TestONNXFrontend(unittest.TestCase):
 
         assert xlayers[0].name == 'x'
         assert xlayers[0].type[0] == 'Input'
-        assert xlayers[0].shapes == [-1, 1, 4, 4]
+        assert xlayers[0].shapes == [1, 1, 4, 4]
         assert xlayers[0].attrs['onnx_id'] == 'x'
 
         assert xlayers[1].name == 'y_Conv'
         assert xlayers[1].type[0] == 'Convolution'
-        assert xlayers[1].shapes == [-1, 2, 4, 4]
+        assert xlayers[1].shapes == [1, 2, 4, 4]
         assert xlayers[1].attrs['padding'] == [(0, 0), (0, 0), (1, 0), (1, 0)]
         assert xlayers[1].attrs['strides'] == [1, 1]
         assert xlayers[1].attrs['dilation'] == [1, 1]
@@ -272,12 +272,12 @@ class TestONNXFrontend(unittest.TestCase):
         assert xlayers[1].attrs['onnx_id'] == 'y'
 
         assert xlayers[2].name == 'y'
-        assert xlayers[2].shapes == [-1, 2, 4, 4]
+        assert xlayers[2].shapes == [1, 2, 4, 4]
         assert xlayers[2].attrs['axis'] == 1
         assert xlayers[2].attrs['onnx_id'] == 'y'
 
         assert xlayers[3].name == 'z'
-        assert xlayers[3].shapes == [-1, 2, 2, 2]
+        assert xlayers[3].shapes == [1, 2, 2, 2]
         assert xlayers[3].type[0] == 'Pooling'
         assert xlayers[3].attrs['padding'] == [[0, 0], [0, 0], [0, 0], [0, 0]]
         assert xlayers[3].attrs['strides'] == [2, 2]

@@ -61,7 +61,7 @@ class TestONNXL11Quantization(unittest.TestCase):
 
             assert X.name == 'y'
             assert 'AnyOp' in X.type
-            assert X.shapes.tolist() == [-1, 2, 3, 3]
+            assert X.shapes.tolist() == [1, 2, 3, 3]
 
     def test_dynamic_quantize_linear(self):
         a = np.zeros((1, 2, 3, 3), dtype=np.float32)
@@ -87,12 +87,12 @@ class TestONNXL11Quantization(unittest.TestCase):
 
         assert X.name == 'dql-x'
         assert 'AnyOp' in X.type
-        assert X.shapes == TupleShape([TensorShape([-1, 2, 3, 3]),
+        assert X.shapes == TupleShape([TensorShape([1, 2, 3, 3]),
                                        TensorShape([1]),
                                        TensorShape([1])])
 
         assert Xs[1].name == 'x'
-        assert Xs[1].shapes == TensorShape([-1, 2, 3, 3])
+        assert Xs[1].shapes == TensorShape([1, 2, 3, 3])
         assert Xs[2].name == 'y'
         assert 'TupleGetItem' in Xs[2].type
         assert Xs[2].shapes == TensorShape([1])

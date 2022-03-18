@@ -198,7 +198,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
         conv2d_test_util(
             in_shape=(1, 256, 28, 28),
             weight_shape=(256, 256, 3, 3),
-            out_shape=(-1, 256, 28, 28),
+            out_shape=(1, 256, 28, 28),
             padding=(2, 2, 2, 2),
             dilation=(2, 2),
             data_layout="NCHW",
@@ -207,7 +207,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
         conv2d_test_util(
             in_shape=(1, 256, 28, 28),
             weight_shape=(256, 256, 3, 3),
-            out_shape=(-1, 256, 28, 28),
+            out_shape=(1, 256, 28, 28),
             padding=(36, 36, 36, 36),
             dilation=(36, 36),
             data_layout="NCHW",
@@ -216,7 +216,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
         conv2d_test_util(
             in_shape=(1, 1, 4, 4),
             weight_shape=(2, 1, 2, 2),
-            out_shape=(-1, 2, 2, 2),
+            out_shape=(1, 2, 2, 2),
             padding=(0, 0, 0, 0),
             dilation=(2, 2),
             data_layout="NCHW",
@@ -388,7 +388,7 @@ class TestRelayL2Convolutions(unittest.TestCase):
         X = layers[1]
         assert X.type[0] == "Pad"
         assert X.bottoms == ["var"]
-        assert X.shapes == [-1, 2, 5, 5]
+        assert X.shapes == [1, 2, 5, 5]
         assert "relay_id" in X.attrs
         assert X.attrs["padding"] == [[0, 0], [0, 0], [0, 1], [0, 1]]
 
