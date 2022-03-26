@@ -15,10 +15,8 @@
 """The PyXIR module"""
 
 import os
-
 from . import __import
 from .base import *
-from .runtime import rt_manager
 from .graph import ops
 from .target_registry import TargetRegistry, register_op_support_check
 from pyxir.targets.cpu import build_for_cpu_execution,\
@@ -51,16 +49,6 @@ def get_lib_dir():
     file_dir = os.path.dirname(os.path.abspath(__file__))
     lib_dir = os.path.join(file_dir, '../')
     return os.path.abspath(lib_dir)
-
-
-def register_rt(rt_name, rt_graph, rt_ops):
-    # type: (str, BaseRuntime, dict) -> None
-    rt_manager.register_rt(rt_name, rt_graph, rt_ops)
-
-
-def register_op(rt_name, op_type, setup_func):
-    # type: (str, str, Function) -> None
-    rt_manager.register_op(rt_name, op_type, setup_func)
 
 
 def register_target(target,
