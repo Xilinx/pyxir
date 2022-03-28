@@ -38,9 +38,9 @@ from .opaque_func import OpaqueFunc
 from pyxir.shared.xbuffer import XBuffer
 from pyxir.graph.xgraph import XGraph
 from pyxir.graph.io.xgraph_io import XGraphIO
+
 from pyxir.io.api import visualize, save, load, get_xgraph_str
-from pyxir.runtime import runtime_factory
-from pyxir.runtime.base_runtime import BaseRuntime
+
 from pyxir.graph.partitioning.xgraph_partitioner import XGraphPartitioner
 from pyxir.graph.transformers.layout_transformation_pass \
     import XGraphLayoutTransformationPass
@@ -328,6 +328,11 @@ def build(xgraph: XGraph,
         the directory where to put the build files
     """
 
+    # TODO: This is a workaround
+    # Eagerly load runtime_factory to avoid pybind11 free(): invalid pointer issue at 
+    #   clean up time when TF has been imported from C++
+    from pyxir.runtime import runtime_factory
+
     fancy_logger.banner("BUILD `{}` RUNTIME GRAPH".format(target))
 
     if not work_dir:
@@ -542,7 +547,7 @@ def build_online_quant_rt_opaque_func(xgraph: XGraph,
 ###########
 
 
-def run(rt_mod: BaseRuntime,
+def run(rt_mod: "BaseRuntime",
         inputs: Dict[str, np.ndarray],
         outputs: List[str] = [],
         batch_size: int = 100,
