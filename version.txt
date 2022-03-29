@@ -12,6 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.3.4 ////////////////
+NEW FEATURES:
+    - Add DPUCVDX8G-DWC target
+    - Add u50-lv and u55c targets
+UPDATES:
+    - /
+BUG FIXES:
+    - Eagerly load runtime modules to avoid Tensorflow being imported if not needed
+      (Fix for TVM: https://github.com/apache/tvm/issues/10696#issuecomment-1081764081)
+UNFIXED ISSUES:
+    - /
 
 //////////////// VERSION 0.3.3 ////////////////
 NEW FEATURES:
