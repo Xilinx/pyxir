@@ -30,12 +30,16 @@ namespace onnx {
 
 PX_API void import_py_onnx()
 {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   auto onnx_api = py::module::import("pyxir.frontend.onnx");
 }
 
 PX_API std::shared_ptr<graph::XGraph> import_onnx_model(
   const std::string &file_path
 ) {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   pyxir::onnx::import_py_onnx();
   if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.onnx.from_onnx"))
     throw std::runtime_error("Cannot import ONNX model from file because"
@@ -57,6 +61,8 @@ PX_API std::shared_ptr<graph::XGraph> import_onnx_model(
 PX_API std::shared_ptr<graph::XGraph> import_onnx_model(
   std::istringstream &sstream
 ) {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   pyxir::onnx::import_py_onnx();
   if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.onnx.from_onnx_bytes"))
     throw std::runtime_error("Cannot import ONNX model from file because"

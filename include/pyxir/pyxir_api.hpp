@@ -17,6 +17,8 @@
 #pragma once
 
 #include <iostream>
+#include <string>
+#include <array>
 
 #ifndef PX_API
 #define PX_API __attribute__((visibility("default")))
@@ -76,4 +78,37 @@ inline bool is_verbose() {
     return verbose == "True" || verbose == "true" || verbose == "1";
   }
   return false;
+}
+
+inline std::string exec_cmd(const std::string& cmd) {
+  std::array<char, 128> buffer;
+  std::string result;
+  
+  auto pipe = popen(cmd.c_str(), "r");
+  if (!pipe) throw std::runtime_error("popen() failed to execute command: " + cmd);
+  while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+    result += buffer.data();
+  }
+  return result;
+}
+
+namespace pyxir {
+/**
+ * @brief Return whether the Python interpreter is initialized (for
+ *  internal use)
+ */
+PX_API bool py_is_initialized();
+
+/**
+ * @brief Structure for setting up Python interpreter and application when this
+ *  library is initialized
+ */
+struct PyInitializer
+{
+  PyInitializer() { }
+  ~PyInitializer() { finalize_py(); }
+  void initialize_py();
+  void finalize_py();
+};
+extern PyInitializer py_initializer;
 }

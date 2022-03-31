@@ -25,7 +25,9 @@
 #include "runtime/run_options.hpp"
 #include "runtime/runtime_module_factory.hpp"
 
+
 namespace pyxir {
+
 
 /**
  * @brief Partition the provided XGraph for the given target(s)
@@ -69,13 +71,6 @@ PX_API RtModHolder build_rt(std::shared_ptr<graph::XGraph> &xg,
  */
 PX_API std::shared_ptr<graph::XGraph> load(const std::string &model_path,
                                            const std::string &params_path);
-
-
-/**
- * @brief Return whether the Python interpreter is initialized (for
- *  internal use)
- */
-PX_API bool py_is_initialized();
 
 } // pyxir
 

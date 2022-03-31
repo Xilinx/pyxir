@@ -33,7 +33,7 @@ pyxir.register_target('DPUCADX8G',
                       xgraph_dpu_op_support_annotator)
 
 # Register layer
-pyxir.register_op('cpu-np', 'DPU', base.get_layer(DPULayer))
+# pyxir.register_op('cpu-np', 'DPU', base.get_layer(DPULayer))
 
 # Register op support
 from .components.DPUCADX8G import dpu_op_support
