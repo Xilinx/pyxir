@@ -12,6 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+//////////////// VERSION 0.3.5 ////////////////
+NEW FEATURES:
+    - /
+UPDATES:
+    - /
+BUG FIXES:
+    - Refactor py_initialize to avoid starting python interpreter if not needed
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.3.4 ////////////////
 NEW FEATURES:
     - Add DPUCVDX8G-DWC target
