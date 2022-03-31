@@ -31,6 +31,8 @@ namespace pyxir {
 
 void write(XGraphHolder &xg, PxOStringStream &sstream)
 {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.io.to_string"))
     throw std::runtime_error("Cannot write XGraph to string stream because"
                              " `pyxir.io.to_string` opaque function is"
@@ -55,6 +57,8 @@ PX_API void write(XGraphHolder &xg, std::ostringstream &sstream)
 
 void read(XGraphHolder &xg, PxIStringStream &sstream)
 {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.io.from_string"))
     throw std::runtime_error("Cannot create XGraph from string stream because"
                              " `pyxir.io.from_string` opaque function is"

@@ -14,6 +14,7 @@
  *  limitations under the License.
  */
 
+#include <dlfcn.h>
 #include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
@@ -28,6 +29,36 @@ namespace py = pybind11;
 
 namespace pyxir {
 
+  // INITIALIZATION RELATED CODE
+
+bool py_is_initialized() { return Py_IsInitialized(); }
+
+void PyInitializer::initialize_py() {
+  // Only initialize Python interpreter if it the intepreter hasn't been
+  //  initialized yet
+  if (!py_is_initialized()) {
+    // dlopen python library for potential issue: https://github.com/pybind/pybind11/issues/3555
+    // auto py_version = exec_cmd("python3 --version");
+    // py_handle_ = dlopen("libpython3.7m.so", RTLD_LAZY | RTLD_GLOBAL);
+    py::initialize_interpreter();
+
+    py::list sys_modules = py::module::import("sys").attr("modules");
+    bool px_imported = sys_modules.attr("__contains__")("pyxir").cast<bool>();
+    if (!px_imported) {
+      auto px = py::module::import("pyxir");
+    }
+  } 
+}
+
+void PyInitializer::finalize_py() {
+  // Only manually finalize Python interpreter if it the intepreter hasn't been finalized yet
+  if (py_is_initialized()) {
+    py::finalize_interpreter();
+  } 
+}
+
+PyInitializer py_initializer;
+
 // PARTITIONING RELATED CODE
 
 PX_API void partition(
@@ -35,6 +66,8 @@ PX_API void partition(
   const std::vector<std::string> &targets,
   const std::string &last_layer
 ) {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   if (!OpaqueFuncRegistry::Exists("pyxir.partition"))
     throw std::runtime_error("Cannot partition XGraph because "
                              " `pyxir.partition` opaque function is not "
@@ -53,6 +86,8 @@ PX_API RtModHolder build_rt(std::shared_ptr<graph::XGraph> &xg,
                             const std::string &runtime,
                             RunOptionsHolder const &run_options)
 {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   return runtime::RuntimeModuleFactory::GetRuntimeModule(
     xg, target, in_tensor_names, out_tensor_names, runtime, run_options
   );
@@ -61,6 +96,8 @@ PX_API RtModHolder build_rt(std::shared_ptr<graph::XGraph> &xg,
 PX_API std::shared_ptr<graph::XGraph> load(
   const std::string &model_path, const std::string &params_path
 ) {
+  // Setup python port on first API call
+  py_initializer.initialize_py();
   if (!pyxir::OpaqueFuncRegistry::Exists("pyxir.io.load"))
     throw std::runtime_error("Cannot import ONNX model from file because"
                              " `pyxir.io.load` opaque function is"
@@ -80,54 +117,13 @@ PX_API std::shared_ptr<graph::XGraph> load(
 // Global variables
 
 REGISTER_OPAQUE_FUNC("pyxir.use_dpuczdx8g_vart")
-    ->set_func([](pyxir::OpaqueArgs &args) 
-    {
-      #if defined(USE_DPUCZDX8G_VART) || defined(USE_VART_EDGE_DPU)
-        args[0]->get_str_container()->set_string("True");
-      #else
-        args[0]->get_str_container()->set_string("False");
-      #endif
-    }, std::vector<pxTypeCode>{pxStrContainerHandle});
-
-
-// INITIALIZATION RELATED CODE
-
-bool py_is_initialized() { return Py_IsInitialized(); }
-
-
-/**
- * @brief Structure for setting up Python interpreter and application when this
- *  library is initialized
- */
-struct PyInitializer
-{
-  PyInitializer() { initialize_py(); }
-  ~PyInitializer() { finalize_py(); }
-
-  void initialize_py()
+  ->set_func([](pyxir::OpaqueArgs &args) 
   {
-    // Only initialize Python interpreter if it the intepreter hasn't been
-    //  initialized yet
-    if (!py_is_initialized()) {
-      py::initialize_interpreter();
-      // auto pyxir_onnx = py::module::import("pyxir.frontend.onnx");
-      // pyxir::contrib::import_dpuv1_target();
-    }
-    py::list sys_modules = py::module::import("sys").attr("modules");
-    bool px_imported = sys_modules.attr("__contains__")("pyxir").cast<bool>();
-    if (!px_imported)
-      auto pyxir = py::module::import("pyxir");
-  }
-
-  void finalize_py()
-  {
-    // Only manually finalize Python interpreter if it the intepreter hasn't
-    //  been finalized yet
-    if (py_is_initialized())
-      py::finalize_interpreter();
-  }
-  
-};
-PyInitializer py_initializer;
+    #if defined(USE_DPUCZDX8G_VART) || defined(USE_VART_EDGE_DPU)
+      args[0]->get_str_container()->set_string("True");
+    #else
+      args[0]->get_str_container()->set_string("False");
+    #endif
+  }, std::vector<pxTypeCode>{pxStrContainerHandle});
 
 } // pyxir
