@@ -15,6 +15,7 @@ add_subdirectory(lib/pybind11)
 include_directories(include)
 
 add_definitions(-DTEST_FEATURE=1)
+add_definitions(-DPYTHON_LIB="${PYTHON_LIBRARY}")
 
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 file(GLOB_RECURSE HEADERS "include/*.hpp")
