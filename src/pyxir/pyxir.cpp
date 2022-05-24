@@ -39,6 +39,8 @@ void PyInitializer::initialize_py() {
   if (!py_is_initialized()) {
     // dlopen python library for potential issue: https://github.com/pybind/pybind11/issues/3555
     // auto py_version = exec_cmd("python3 --version");
+	void* const libpython_handle = dlopen("libpython3.6m.so", RTLD_LAZY | RTLD_GLOBAL);
+
     // py_handle_ = dlopen("libpython3.7m.so", RTLD_LAZY | RTLD_GLOBAL);
     py::initialize_interpreter();
 
