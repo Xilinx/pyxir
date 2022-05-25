@@ -15,6 +15,8 @@
  */
 
 #include <dlfcn.h>
+#include <filesystem>
+#include <cassert>
 #include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
@@ -39,7 +41,9 @@ void PyInitializer::initialize_py() {
   if (!py_is_initialized()) {
     // dlopen python library for potential issue: https://github.com/pybind/pybind11/issues/3555
     // auto py_version = exec_cmd("python3 --version");
-	void* const libpython_handle = dlopen(PYTHON_LIB, RTLD_LAZY | RTLD_GLOBAL);
+	std::string python_lib_path=PYTHON_LIB;
+    	assert(std::filesystem::exist(python_lib_path));
+    	void* const libpython_handle = dlopen(python_lib_path.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 
     // py_handle_ = dlopen("libpython3.7m.so", RTLD_LAZY | RTLD_GLOBAL);
     py::initialize_interpreter();
