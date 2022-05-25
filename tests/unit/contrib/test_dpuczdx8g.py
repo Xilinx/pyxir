@@ -106,8 +106,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
 
@@ -124,8 +124,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
 
@@ -144,8 +144,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         # Strided
@@ -162,8 +162,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -179,8 +179,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         # Padded
@@ -197,8 +197,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -214,8 +214,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         # Dilated
@@ -232,8 +232,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -249,8 +249,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         xcompiler_conv2d_pool2d_nhwc_oihw_test(
@@ -266,8 +266,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
 
@@ -288,8 +288,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         
@@ -308,8 +308,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         # Strided
@@ -326,8 +326,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         conv2d_pool2d_nhwc_oihw_test(
@@ -343,8 +343,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         # Padded
@@ -361,8 +361,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         conv2d_pool2d_nhwc_oihw_test(
@@ -378,8 +378,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         # Dilated
@@ -396,8 +396,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         conv2d_pool2d_nhwc_oihw_test(
@@ -413,8 +413,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
         conv2d_pool2d_nhwc_oihw_test(
@@ -430,8 +430,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
 
@@ -451,7 +451,7 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-som",
             ],
             expected_nb_subgraphs=3,
         )
@@ -495,8 +495,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
 
@@ -512,8 +512,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
 
@@ -530,8 +530,8 @@ class TestDPUCZDX8G(unittest.TestCase):
                 "DPUCZDX8G-zcu104",
                 "DPUCZDX8G-zcu102",
                 "DPUCZDX8G-kv260",
-                "DPUCZDX8G-ultra96",
-                "DPUCZDX8G-som",
+                #"DPUCZDX8G-ultra96",
+                #"DPUCZDX8G-som",
             ],
         )
 
