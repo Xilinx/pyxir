@@ -28,10 +28,10 @@ runtime_factory = RuntimeFactory()
 
 try:
     # NOTE use RTLD_DEEPBIND dlopen flag to make sure TF uses it's own version of protobuf 
-    flags = sys.getdlopenflags()
-    sys.setdlopenflags(flags | os.RTLD_DEEPBIND)
+    #flags = sys.getdlopenflags()
+    #sys.setdlopenflags(flags | os.RTLD_DEEPBIND)
     import tensorflow as tf
-    sys.setdlopenflags(flags)
+    #sys.setdlopenflags(flags)
     # Register if we can import tensorflow
     from .tensorflow.runtime_tf import RuntimeTF, X_2_TF
     rt_manager.register_rt('cpu-tf', RuntimeTF, X_2_TF)
