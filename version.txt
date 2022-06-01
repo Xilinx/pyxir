@@ -12,6 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+//////////////// VERSION 0.4.0 ////////////////
+NEW FEATURES:
+    - Upgrade for Vitis AI 2.5
+UPDATES:
+    - Disable Ultra96 and SOM backends as DPU description has changed
+BUG FIXES:
+    - Fix some library related issues encountered with TF
+UNFIXED ISSUES:
+    - /
+
 //////////////// VERSION 0.3.5 ////////////////
 NEW FEATURES:
     - /
